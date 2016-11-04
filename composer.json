@@ -11,5 +11,10 @@
     "require": {
 
         "ext-swoole":"~1.8.12"
+    },
+    "autoload":{
+        "psr-4":{
+            "ZPHP\\":"ZPHP"
+        }
     }
 }
