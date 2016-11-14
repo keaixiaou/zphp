@@ -23,10 +23,10 @@ class Session
      * @throws \Exception
      */
     public static function get($request, $response){
-        $sid = $request->cookie[self::$_sessionKey];
         $session = [];
         $config = ZConfig::get('session');
-        if(!empty($sid)){
+        if(!empty($request->cookie[self::$_sessionKey])){
+            $sid = $request->cookie[self::$_sessionKey];
             $sessionType = $config['adapter'];
             $handler = Factory::getInstance($sessionType, $config);
             $data = $handler->read($sid);
@@ -48,7 +48,8 @@ class Session
      * @throws \Exception
      */
     public static function set($session, $request, $response){
-        $sid = $request->cookie[self::$_sessionKey];
+        $sid = NULL;
+        if(!empty($request->cookie[self::$_sessionKey]))$sid = $request->cookie[self::$_sessionKey];
         $config = ZConfig::get('session');
         if(empty($sid)){
             $sid = Rand::string(8);
