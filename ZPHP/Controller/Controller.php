@@ -8,6 +8,9 @@
 
 namespace ZPHP\Controller;
 
+use ZPHP\Core\Config;
+use ZPHP\Session\Session;
+
 class Controller {
     /**
      * @var 请求参数
@@ -41,7 +44,7 @@ class Controller {
     public function coroutineApiStart(){
         $result = yield call_user_func([$this, $this->method]);
         $result = json_encode($result);
-//        Log::write('result:' . ($result), Log::INFO);
+        $this->doBeforeEnd();
         $this->response->header('Content-Type', 'application/json');
         $this->response->end($result);
         $this->destroy();
@@ -101,10 +104,24 @@ class Controller {
         include "{$tplFile}";
         $content = ob_get_contents();
         \ob_end_clean();
+        $this->doBeforeEnd();
         $this->response->status(200);
         $this->response->header('Content-Type','text/html');
         $this->response->end($content);
     }
+
+
+    /**
+     * 请求结束前做的一些处理
+     * @throws \Exception
+     */
+    protected function doBeforeEnd(){
+        if(!empty(Config::getField('session', 'enable'))){
+            Session::set($_SESSION, $this->request, $this->response);
+        }
+    }
+
+
     /**
      * 传入变量到模板
      * @param $name
