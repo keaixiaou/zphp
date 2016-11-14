@@ -14,16 +14,6 @@ use ZPHP\ZPHP;
 
 class Controller {
     /**
-     * @var 请求参数
-     */
-    public $post;
-    public $get;
-    public $cookie;
-    public $header;
-    public $server;
-    public $files;
-
-    /**
      * @var $response
      */
     public $isApi=false;
