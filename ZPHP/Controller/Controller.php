@@ -9,6 +9,7 @@
 namespace ZPHP\Controller;
 
 use ZPHP\Core\Config;
+use ZPHP\Core\Swoole;
 use ZPHP\Session\Session;
 use ZPHP\ZPHP;
 
