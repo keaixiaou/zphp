@@ -7,7 +7,7 @@
  */
 
 namespace ZPHP\Controller;
-class Apicontroller{
+class Apicontroller extends  Controller{
 
-    public $is_api = true;
+    public $isApi = true;
 }
