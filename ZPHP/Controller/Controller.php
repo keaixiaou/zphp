@@ -112,12 +112,18 @@ class Controller {
 
 
     /**
-     * 请求结束前做的一些处理
+     * 请求结束前做的一些处理,如session和cookie的写入
      * @throws \Exception
      */
     protected function doBeforeEnd(){
         if(!empty(Config::getField('session', 'enable'))){
             Session::set($_SESSION, $this->request, $this->response);
+        }
+        if(!empty(Config::getField('cookie', 'enable'))){
+            $cacheExpire = Config::getField('cookie', 'cache_expire', 3600);
+            foreach($_COOKIE as $key => $value){
+                $this->response->cookie($key, $value, time()+$cacheExpire);
+            }
         }
     }
 
