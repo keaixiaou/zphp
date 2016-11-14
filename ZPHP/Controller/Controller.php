@@ -10,6 +10,7 @@ namespace ZPHP\Controller;
 
 use ZPHP\Core\Config;
 use ZPHP\Session\Session;
+use ZPHP\ZPHP;
 
 class Controller {
     /**
