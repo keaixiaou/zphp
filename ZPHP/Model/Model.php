@@ -113,6 +113,7 @@ class Model {
     // where子单元分析
     protected function parseWhereItem($key,$val) {
         $whereStr = '';
+        $key = '`'.$key.'`';
         if(is_array($val)) {
             if(is_string($val[0])) {
                 $exp	=	strtolower($val[0]);
