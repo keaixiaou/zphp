@@ -51,14 +51,13 @@ class Model {
     //执行查询部分
     public function query($sql){
         $_sql = trim($sql);
-        if(empty($_sql)){
+        if (empty($_sql)) {
             throw new \Exception('sql 不能为空');
         }
         Db::setSql($_sql);
-        $mysqlCoroutine =  new MySqlCoroutine($this->mysqlPool);
+        $mysqlCoroutine = new MySqlCoroutine($this->mysqlPool);
         yield $mysqlCoroutine->query($_sql);
     }
-
 
     /**
      * value分析
@@ -178,11 +177,12 @@ class Model {
 
 
     /**
-     * 获取表的所有数据
+     * 获取筛选条件的所有数据
      * @return array
      */
     public function get(){
-        return $this->query($this->makesql());
+        $data =  yield $this->query($this->makesql());
+        return !empty($data['result'])?$data['result']:NULL;
     }
 
 
@@ -192,12 +192,47 @@ class Model {
      */
     public function find(){
         $this->limit(1);
-        return $this->get();
-//        $data = $this->query($this->makesql());
-//        Log::write('data:'.json_encode($data));
-//        return empty($data[0])?null:$data[0];
+        $data = yield  $this->get();
+        return !empty($data[0])?$data[0]:NULL;
     }
 
+    /**
+     * 插入数据
+     * @param $data
+     * @param bool $replace
+     * @return \Generator
+     * @throws \Exception
+     */
+    public function add($data, $replace=false){
+        $fields = [];
+        $values = [];
+        foreach($data as $key => $value){
+            $fields[] = $key;
+            $values[] = $this->parseValue($value);
+        }
+        $sql = (true===$replace?'REPLACE':'INSERT').' INTO '.$this->table
+            .' ('.'`' . implode('`,`', $fields) . '`'.') VALUES ('.implode(',', $values).')';
+        $data = yield $this->query($sql);
+        return $data['result']===false?false:$data['insert_id'];
+    }
+
+
+    /**
+     * 更新操作
+     * @param $data
+     * @return bool
+     * @throws \Exception
+     */
+    public function save($data){
+        $updateField = '';
+        foreach($data as $key => $value){
+            $updateField[] = '`' .$key. '` = ' .$this->parseValue($value);
+        }
+        $sql =  "UPDATE {$this->table} SET ".implode(',', $updateField)." {$this->where}";
+        $data = yield $this->query($sql);
+        Log::write('data:'.json_encode($data));
+        return $data['result']===false?false:$data['affected_rows'];
+    }
 
     /**
      * 查询的条数
@@ -243,6 +278,7 @@ class Model {
 //        Log::write('sql:'.$sql);
         return $sql;
     }
+
 
 
     protected function reset(){

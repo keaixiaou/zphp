@@ -37,7 +37,8 @@ class Mongo
             if(!empty($config['options'])) {
                 $options = $config['options'];
             }
-            $this->mongo = new \MongoClient($config['dsn'], $options);
+            $this->mongo = new \MongoDB\Driver\Manager($config['dsn'], $options);
+//            $this->mongo = new \MongoClient($config['dsn'], $options);
             
         }
     }

@@ -36,6 +36,9 @@ class Controller {
     public function coroutineApiStart(){
         $result = yield call_user_func([$this, $this->method]);
         $result = json_encode($result);
+        if(!empty(Config::get('response_filter'))){
+            $result = $this->strNull($result);
+        }
         $this->doBeforeEnd();
         $this->response->header('Content-Type', 'application/json');
         $this->response->end($result);
@@ -102,6 +105,16 @@ class Controller {
         $this->response->end($content);
     }
 
+
+
+    /**
+     * 返回null 替换
+     * @access protected
+     * @return String
+     */
+    protected function strNull($str){
+        return str_replace(array('NULL', 'null'), '""', $str);
+    }
 
     /**
      * 请求结束前做的一些处理,如session和cookie的写入

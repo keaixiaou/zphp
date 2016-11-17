@@ -43,7 +43,7 @@ class CoroutineTask{
                     return;
                 }
                 $value = $routine->current();
-//                Log::write(__METHOD__.print_r($value, true));
+//                Log::write('value:'.__METHOD__.print_r($value, true));
                 //嵌套的协程
                 if ($value instanceof \Generator) {
 //                    Log::write('嵌套');
@@ -70,9 +70,10 @@ class CoroutineTask{
                     try {
                         $return = $routine->getReturn();
                     }catch(\Exception $e){
+//                        Log::write('exception');
                         $return = null;
                     }
-                    if(!empty($return)){
+                    if(!is_null($return)) {
                         $this->callbackData = $return;
                     }
 //                    Log::write('return:'.__METHOD__.print_r($return, true));
