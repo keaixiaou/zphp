@@ -21,15 +21,8 @@ class Redis{
     //redis操作
     public function cache($key, $value='', $expire=3600){
         $redisCoroutine = new RedisCoroutine($this->pool);
-        if($value!==''){
-            $value = serialize($value);
-        }
         $data = yield $redisCoroutine->cache($key, $value, $expire);
-        if($value===''){
-            if(!empty($data)){
-                $data = unserialize($data);
-            }
-        }else{
+        if($value!==''){
             $data = !empty($data)?true:false;
         }
         return $data;
