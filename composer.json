@@ -8,6 +8,7 @@
             "homepage":"https://github.com/keaixiaou"
         }
     ],
+    "license": "MIT",
     "require": {
 
         "ext-swoole":">=1.8.0,<2.0.0"
