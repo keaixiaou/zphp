@@ -126,7 +126,6 @@ class MysqlAsynPool extends AsynPool{
                 } else {
                     $client->isAffair = false;
                     $client->client_id = $tmpClient ? $tmpClient->client_id : $nowConnectNo;
-//                Log::write(__METHOD__.print_r($client, true));
                     $this->pushToPool($client);
                 }
             }catch(\Exception $e){

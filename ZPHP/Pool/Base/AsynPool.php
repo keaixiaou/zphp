@@ -60,10 +60,8 @@ abstract class AsynPool implements IAsynPool
     {
         $callback = $this->callBacks[$data['token']];
         unset($this->callBacks[$data['token']]);
-//        Log::write(__METHOD__.print_r($this->pool));
         if ($callback != null) {
             call_user_func_array($callback, ['data'=>$data['result']]);
-//            call_user_func($callback, $data['result']);
         }
     }
 
@@ -72,7 +70,6 @@ abstract class AsynPool implements IAsynPool
      * 清空连接池
      */
     protected function clearPool(){
-        Log::write("client been closed!");
         while(!$this->pool->isEmpty()){
             $client = $this->pool->dequeue();
             unset($client);
