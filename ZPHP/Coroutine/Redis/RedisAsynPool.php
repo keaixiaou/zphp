@@ -21,7 +21,6 @@ class RedisAsynPool extends AsynPool
         'password'  =>  ['op'=>'auth','next'=>'select'],
         'select'    =>  ['op'=>'select','next'=>''],
     ];
-    protected $redis_max_count = 0;
     /**
      * 连接
      * @var array
@@ -88,10 +87,15 @@ class RedisAsynPool extends AsynPool
                 //给worker发消息
                 call_user_func([$this, 'distribute'], $data);
             };
+            $res = true;
             if ($data['value'] === '') {
-                $client->get($data['key'], $callback);
+                $res = $client->get($data['key'], $callback);
             } else {
-                $client->set($data['key'], $data['value'], $callback);
+                $res = $client->set($data['key'], $data['value'], $callback);
+            }
+            if(empty($res)){
+                $data['result']['exception'] = "redis客户端操作失败";
+                call_user_func([$this, 'distribute'], $data);
             }
         }
     }
@@ -102,14 +106,16 @@ class RedisAsynPool extends AsynPool
      */
     public function prepareOne($data)
     {
-        if ($this->redis_max_count > $this->config['asyn_max_count']) {
+        if ($this->max_count > $this->config['asyn_max_count']) {
             return;
         }
-        $this->redis_max_count++;
-        $nowConnectNo = $this->redis_max_count;
+        $this->max_count++;
+        $nowConnectNo = $this->max_count;
 
         $client = new \swoole_redis;
-//        $callback = ;
+        $client->on('Close', function($client){
+            call_user_func([$this, 'clearPool']);
+        });
         if ($this->connect == null) {
             $this->connect = [$this->config['ip'], $this->config['port']];
         }
@@ -117,7 +123,7 @@ class RedisAsynPool extends AsynPool
             function (\swoole_redis $client, $result) use ($nowConnectNo, $data) {
                 try {
                     if (!$result) {
-                        $this->redis_max_count--;
+                        $this->max_count--;
                         throw new \Exception('[redis连接失败]' . $client->errMsg);
                     }
                     call_user_func([$this, 'initRedis'], $client, 'password', $nowConnectNo, $data);
@@ -145,7 +151,7 @@ class RedisAsynPool extends AsynPool
                     try {
                         if (!$result) {
                             $errMsg = $client->errMsg;
-                            $this->redis_max_count--;
+                            $this->max_count--;
                             unset($client);
                             throw new \Exception('[redis连接失败]'.$errMsg);
                         }

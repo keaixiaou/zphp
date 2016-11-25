@@ -10,6 +10,8 @@
 namespace ZPHP\Pool\Base;
 
 
+use ZPHP\Core\Log;
+
 abstract class AsynPool implements IAsynPool
 {
     const MAX_TOKEN = DEBUG===true?100:650000;
@@ -20,6 +22,7 @@ abstract class AsynPool implements IAsynPool
     protected $server;
     protected $swoole_server;
     protected $token = 0;
+    protected $max_count=0;
     //避免爆发连接的锁
     protected $prepareLock = false;
     /**
@@ -64,6 +67,18 @@ abstract class AsynPool implements IAsynPool
         }
     }
 
+
+    /**
+     * 清空连接池
+     */
+    protected function clearPool(){
+        Log::write("client been closed!");
+        while(!$this->pool->isEmpty()){
+            $client = $this->pool->dequeue();
+            unset($client);
+            $this->max_count -- ;
+        }
+    }
 
     /**
      * @param $workerid

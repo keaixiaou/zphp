@@ -20,7 +20,6 @@ class MysqlAsynPool extends AsynPool{
      * @var array
      */
     public $bind_pool;
-    protected $mysql_max_count = 0;
 
     public function __construct()
     {
@@ -67,7 +66,7 @@ class MysqlAsynPool extends AsynPool{
         }
 
         $sql = $data['sql'];
-        $client->query($sql, function ($client, $result) use ($data) {
+        $res = $client->query($sql, function ($client, $result) use ($data) {
             try {
                 if ($result === false) {
                     if ($client->errno == 2006 || $client->errno == 2013) {//断线重连
@@ -95,6 +94,10 @@ class MysqlAsynPool extends AsynPool{
                 call_user_func([$this, 'distribute'], $data);
             }
         });
+        if(empty($res)){
+            $data['result']['exception'] = "执行sql[$sql]失败";
+            call_user_func([$this, 'distribute'], $data);
+        }
     }
 
     /**
@@ -106,16 +109,19 @@ class MysqlAsynPool extends AsynPool{
     {
         if ($tmpClient == null) {
             $client = new \swoole_mysql();
+            $client->on('Close', function($client){
+                call_user_func([$this, 'clearPool']);
+            });
         }else{
             $client = $tmpClient;
         }
         $set = $this->config;
-        $nowConnectNo = $this->mysql_max_count;
+        $nowConnectNo = $this->max_count;
         unset($set['asyn_max_count']);
         $client->connect($set, function ($client, $result) use($tmpClient,$nowConnectNo, $data) {
             try {
                 if (!$result) {
-                    // $this->mysql_max_count --;
+                    $this->max_count --;
                     throw new \Exception("[mysql连接失败]".$client->connect_error);
                 } else {
                     $client->isAffair = false;
@@ -135,11 +141,11 @@ class MysqlAsynPool extends AsynPool{
      */
     public function prepareOne($data)
     {
-        if ($this->mysql_max_count >= $this->config['asyn_max_count']) {
+        if ($this->max_count >= $this->config['asyn_max_count']) {
             return;
         }
 
-        $this->mysql_max_count ++;
+        $this->max_count ++;
         $this->reconnect($data);
     }
 
