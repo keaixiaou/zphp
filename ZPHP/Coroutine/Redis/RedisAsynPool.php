@@ -21,6 +21,8 @@ class RedisAsynPool extends AsynPool
         'password'  =>  ['op'=>'auth','next'=>'select'],
         'select'    =>  ['op'=>'select','next'=>''],
     ];
+
+    protected $cmd = ['set', 'get', 'lpop', 'lpush'];
     /**
      * 连接
      * @var array
@@ -44,23 +46,12 @@ class RedisAsynPool extends AsynPool
      * @param $name
      * @param $arguments
      */
-    public function cache($callback, $data)
+    public function command($callback, $data)
     {
         $data['token'] = $this->addTokenCallback($callback);
-
         call_user_func([$this, 'execute'], $data);
     }
 
-    /**
-     * 协程模式
-     * @param $name
-     * @param $arguments
-     * @return RedisCoroutine
-     */
-    public function coroutineSend($name, ...$arg)
-    {
-        return new RedisCoroutine($this, $name, $arg);
-    }
 
     /**
      * 执行redis命令
@@ -68,7 +59,7 @@ class RedisAsynPool extends AsynPool
      */
     public function execute($data)
     {
-        if (count($this->pool) == 0) {//代表目前没有可用的连接
+        if ($this->pool->isEmpty()) {//代表目前没有可用的连接
             $this->prepareOne($data);
             $this->commands->push($data);
         } else {
@@ -87,14 +78,22 @@ class RedisAsynPool extends AsynPool
                 //给worker发消息
                 call_user_func([$this, 'distribute'], $data);
             };
-            $res = true;
-            if ($data['value'] === '') {
-                $res = $client->get($data['key'], $callback);
-            } else {
-                $res = $client->set($data['key'], $data['value'], $callback);
-            }
-            if(empty($res)){
-                $data['result']['exception'] = "redis客户端操作失败";
+            try{
+                $res = true;
+                if(!in_array($data['command'], $this->cmd)){
+                    throw new \Exception("[".$data['command']."]此操作暂时不支持");
+                }
+                $command = $data['command'];
+                if ($data['value'] === '') {
+                    $res = $client->$command($data['key'], $callback);
+                } else {
+                    $res = $client->$command($data['key'], $data['value'], $callback);
+                }
+                if(empty($res)){
+                    throw new \Exception("redis客户端操作失败");
+                }
+            }catch(\Exception $e){
+                $data['result']['exception'] = $e->getMessage();
                 call_user_func([$this, 'distribute'], $data);
             }
         }
@@ -165,7 +164,6 @@ class RedisAsynPool extends AsynPool
                 $this->initRedis($client, $this->operator[$now]['next'],$nowConnectNo,$data);
             }
         }else{
-//            $client->client_id = $nowConnectNo;
             $this->pushToPool($client);
         }
 

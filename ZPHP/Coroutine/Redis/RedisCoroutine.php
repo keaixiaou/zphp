@@ -32,17 +32,15 @@ class RedisCoroutine implements ICoroutineBase
     }
 
 
-    public function cache($key, $value='', $expire=3600){
-        $this->data['key'] = $key;
-        $this->data['value'] = $value;
-        $this->data['expire'] = $expire;
+    public function command($data){
+        $this->data = $data;
         yield $this;
     }
 
 
     public function send(callable $callback)
     {
-        $this->redisAsynPool->cache($callback, $this->data);
+        $this->redisAsynPool->command($callback, $this->data);
     }
 
     public function getResult()

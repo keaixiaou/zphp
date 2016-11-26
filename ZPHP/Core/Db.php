@@ -131,7 +131,7 @@ class Db {
     }
 
     /**
-     * pdo 查询获取pdo
+     * pdo 查询获取pdo(同步)
      * @param string $db_key
      * @return mixed
      * @throws \Exception
