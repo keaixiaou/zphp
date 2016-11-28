@@ -76,11 +76,9 @@ abstract class SwooleHttp extends CSwoole
 
 
     public function errorResponse($error){
-
         $errorMsg = DEBUG===true?"{$error['message']} ({$error['file']}:{$error['line']})":'application internal error!';
-        Log::write('error:'.$errorMsg);
-        $this->currentResponse->status(500);
-        $this->currentResponse->end(Swoole::info($errorMsg));
+        Log::write('errorResponse:'.$errorMsg);
+        echo "errorResponse:".$errorMsg;
         $this->afterResponese();
     }
 

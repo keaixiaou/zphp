@@ -36,22 +36,22 @@ class Redis{
     }
 
     /**
-     * redis命令操作
+     * redis命令操作(php暂时不支持在__call里面使用yield)
      * @param $method
      * @param $param
      * @return bool
      */
-    public function __call($method,$param){
-        $commandData = ['key'=>$param[0]];
-        $commandData['value'] = !empty($param[1])? $param[1]:'';
-        $commandData['expire'] = !empty($param[2])? $param[2]:3600;
-        $commandData['command'] = $method;
-        $data = yield $this->_redisCoroutine->command($commandData);
-        if($commandData['value']!==''){
-            $data = !empty($data)?true:false;
-        }
-        return $data;
-    }
+//    public function __call($method,$param){
+//        $commandData = ['key'=>$param[0]];
+//        $commandData['value'] = !empty($param[1])? $param[1]:'';
+//        $commandData['expire'] = !empty($param[2])? $param[2]:3600;
+//        $commandData['command'] = $method;
+//        $data = yield $this->_redisCoroutine->command($commandData);
+//        if($commandData['value']!==''){
+//            $data = !empty($data)?true:false;
+//        }
+//        return $data;
+//    }
 
 
     public function lpush($key, $value){

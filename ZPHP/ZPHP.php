@@ -91,7 +91,6 @@ class ZPHP
 
     final public static function autoLoader($class)
     {
-
         if(isset(self::$classPath[$class])) {
             require self::$classPath[$class];
             return;
