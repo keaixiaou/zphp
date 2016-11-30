@@ -30,13 +30,14 @@ abstract class SwooleHttp extends CSwoole
     }
 
 
+    /**
+     * http 请求回调函数
+     * @param $request
+     * @param $response
+     */
     public function doRequest($request, $response)
     {
-        Protocol\Request::setRequest($request);
-        Protocol\Response::setResponse($response);
         $this->onRequest($request, $response);
-        Protocol\Request::setRequest(null);
-        Protocol\Response::setResponse(null);
         $this->afterResponese();
     }
 

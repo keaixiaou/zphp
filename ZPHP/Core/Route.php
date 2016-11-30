@@ -10,10 +10,38 @@
 namespace ZPHP\Core;
 
 class Route {
-
-    static protected $routeList = [];
+    static public $matchRouteList=[];
+    static public $routeList = [];
     static public function init(){
+        $routeConfig = Config::get('route');
+        foreach($routeConfig as $key => $value){
+            $method = strtoupper($key);
+            foreach($value as $k => $v){
+                $routeK = $k;
+                if(is_string($v)){
+                    $v = trim($v, '\\');
+                }
+                if(preg_match_all('/(.*?)\/{.*?}/',$k,$match)){
+                    $routeK = str_replace('{','(?P<', $routeK);
+                    $routeK = str_replace('}','>[^/]++)',$routeK);
+                    $routeK = '#^'.$routeK.'$#';
+                    if($method=='ANY'){
+                        self::$matchRouteList['POST'][$routeK] = $v;
+                        self::$matchRouteList['GET'][$routeK] = $v;
+                    }else{
+                        self::$matchRouteList[$method][$routeK] = $v;
+                    }
+                }else{
+                    if($method=='ANY'){
+                        self::$routeList['POST'][$routeK] = $v;
+                        self::$routeList['GET'][$routeK] = $v;
+                    }else{
+                        self::$routeList[$method][$routeK] = $v;
+                    }
+                }
 
+            }
+        }
     }
 
     /**
@@ -24,38 +52,68 @@ class Route {
      * @throws \Exception
      */
     static public function parse($uri, $method){
-        $routeConfig = Config::get('route');
-        $match = false;
-        $uriResult = null;
-        if(!empty($routeConfig[$method][$uri])){
-            $match = true;
-            $uriResult = $routeConfig[$method][$uri];
-            if(is_string($uriResult)){
-                $explodeNum = substr_count($uriResult, '\\');
-                if($explodeNum>=1){
-                    if($explodeNum==1){
-                        $mvcConfig = Config::getField('project','mvc');
-                        $mvc = explode('\\', $uriResult);
-                        $uriResult = [
-                            'module' => $mvcConfig[0],
-                            'controller' => $mvc[0],
-                            'action' => $mvc[1],
-                        ];
-                    }else{
-                        $mvc = explode('\\', $uriResult);
-                        $uriResult = [
-                            'module' => $mvc[0],
-                            'controller' => $mvc[1],
-                            'action' => $mvc[2],
-                        ];
-                    }
-                }
-            }
-        }
-        if(!$match){
+        $uriResult = self::routeParse($uri, $method);
+        if(empty($uriResult)){
             $uriResult = self::defaultParse($uri);
         }
         return $uriResult;
+    }
+
+    /**
+     * 配置文件的路由解析
+     * @param $uri
+     * @param $method
+     * @throws \Exception
+     */
+    static public function routeParse($uri, $method){
+        $method = strtoupper($method);
+        $uriResult = null;
+        if(!empty(self::$routeList[$method][$uri])){
+            $uriResult = self::$routeList[$method][$uri];
+            if(is_string($uriResult)){
+                $uriResult = self::parseString($uriResult);
+            }else if($uriResult instanceof \Closure){
+                $uriResult = ['callback'=>$uriResult];
+            }
+        }else if(!empty(self::$matchRouteList[$method])){
+            $methodMatchList = self::$matchRouteList[$method];
+            foreach($methodMatchList as $key => $value){
+                if(preg_match($key, $uri, $tmpMatch)){
+                    if(is_string($value))$uriResult = self::parseString($value);
+                    else $uriResult = ['callback'=>$value,'param'=>$tmpMatch];
+                }
+            }
+
+        }
+        return $uriResult;
+    }
+
+    /**
+     * 解析路由里字符串
+     * @param $str
+     * @return array
+     * @throws \Exception
+     */
+    protected function parseString($str){
+        $mvc = explode('\\', $str);
+        $explodeNum = count($mvc)-1;
+        if($explodeNum>=1){
+            if($explodeNum==1){
+                $mvcConfig = Config::getField('project','mvc');
+                $uriResult = [
+                    'module' => $mvcConfig['module'],
+                    'controller' => $mvc[0],
+                    'action' => $mvc[1],
+                ];
+            }else{
+                $uriResult = [
+                    'module' => $mvc[0],
+                    'controller' => $mvc[1],
+                    'action' => $mvc[2],
+                ];
+            }
+        }
+        return ['mvc'=>self::dealUcfirst($uriResult)];
     }
 
     /**
@@ -81,7 +139,7 @@ class Route {
                 $mvc['action'] = $url_array[0];
             }
         }
-        $mvc = self::dealUcword($mvc);
+        $mvc = [ 'mvc'=> self::dealUcfirst($mvc)];
         return $mvc;
     }
 
@@ -91,7 +149,7 @@ class Route {
      * @param $mvc
      * @return array
      */
-    static function dealUcword($mvc){
+    static function dealUcfirst($mvc){
         return [
             'module'=>ucwords($mvc['module']),
             'controller'=>ucwords($mvc['controller']),

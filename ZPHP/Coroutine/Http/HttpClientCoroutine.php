@@ -29,7 +29,8 @@ class HttpClientCoroutine implements ICoroutineBase{
     public function request($url, $postData=[]){
         $this->url = $url;
         $this->postData = $postData;
-        yield $this;
+        $genData = yield $this;
+        return $genData;
     }
 
 

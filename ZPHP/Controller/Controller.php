@@ -9,6 +9,7 @@
 namespace ZPHP\Controller;
 
 use ZPHP\Core\Config;
+use ZPHP\Core\Log;
 use ZPHP\Core\Swoole;
 use ZPHP\Session\Session;
 use ZPHP\ZPHP;
@@ -28,14 +29,17 @@ class Controller {
     protected $tmodule ;
     protected $tcontroller;
     protected $tmethod;
+    public $coroutineMethod;
+    public $coroutineParam=[];
 
     /**
      * api接口请求总入口
      *
      */
     public function coroutineApiStart(){
-        $result = yield call_user_func([$this, $this->method]);
+        $result = yield call_user_func_array($this->coroutineMethod, $this->coroutineParam);
         $result = json_encode($result);
+        Log::write('result:'.$result);
         if(!empty(Config::get('response_filter'))){
             $result = $this->strNull($result);
         }
@@ -87,7 +91,7 @@ class Controller {
         $this->tmodule = $this->module;
         $this->tcontroller = $this->controller;
         $this->tmethod = $this->method;
-        $data = yield call_user_func([$this, $this->method]);
+        $data = yield call_user_func_array($this->coroutineMethod, $this->coroutineParam);
         $this->analysisTplFile($this->tplFile);
         $tplPath = Config::getField('project', 'tpl_path', ZPHP::getRootPath() . DS.'apps'.DS  . 'view' . DS );
         $tplFile = $tplPath.$this->tmodule.DS.$this->tcontroller.DS.$this->tmethod.'.html';;
@@ -172,5 +176,7 @@ class Controller {
     protected function destroy(){
         if (ob_get_contents()) ob_end_clean();
         unset($this->response);
+        unset($this->request);
     }
+
 }

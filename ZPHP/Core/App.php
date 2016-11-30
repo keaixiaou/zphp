@@ -45,7 +45,7 @@ abstract class App{
      */
     static public function getModel($name){
         if(empty(self::$modelList[$name])){
-            self::$modelList[$name] = self::$_di->get($name, 'model');
+            self::$modelList[$name] = self::get($name, 'model');
         }
         return self::$modelList[$name];
     }
@@ -57,11 +57,24 @@ abstract class App{
      */
     static public function getService($name){
         if(empty(self::$serviceList[$name])){
-            self::$serviceList[$name] = self::$_di->get($name, 'service');
+            self::$serviceList[$name] = self::get($name, 'service');
         }
         return self::$serviceList[$name];
     }
 
+
+    /**
+     * get相关的依赖class
+     * @param $name
+     * @param $type
+     */
+    static public function get($name, $type){
+        $class = self::$_di->get($name, $type);
+        if(empty($class)){
+            throw new \Exception($name.ucfirst($type).' not found!');
+        }
+        return $class;
+    }
 
 
 }

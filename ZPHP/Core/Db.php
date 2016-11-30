@@ -72,7 +72,6 @@ class Db {
     static public function freeMysqlPool(){
         self::$instance->mysqlPool->freeCallback();
         unset(self::$instance->mysqlPool);
-//        unset(self::$instance);
     }
 
     /**
@@ -96,6 +95,14 @@ class Db {
             self::$instance->redisPool = new RedisAsynPool();
             self::$instance->redisPool->initWorker($workId);
         }
+    }
+
+    /**
+     * free redis pool
+     */
+    static public function freeRedisPool(){
+        self::$instance->redisPool->freeCallback();
+        unset(self::$instance->redisPool);
     }
 
     /**

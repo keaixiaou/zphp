@@ -34,7 +34,8 @@ class RedisCoroutine implements ICoroutineBase
 
     public function command($data){
         $this->data = $data;
-        yield $this;
+        $genData = yield $this;
+        return $genData;
     }
 
 

@@ -56,7 +56,8 @@ class Model {
         }
         Db::setSql($_sql);
         $mysqlCoroutine = new MySqlCoroutine($this->mysqlPool);
-        yield $mysqlCoroutine->query($_sql);
+        $data = yield $mysqlCoroutine->query($_sql);
+        return $data;
     }
 
     /**
@@ -183,7 +184,7 @@ class Model {
      */
     public function get(){
         $data =  yield $this->query($this->makesql());
-        return !empty($data['result'])?$data['result']:NULL;
+        return !empty($data['result'])?$data['result']:[];
     }
 
 
@@ -194,7 +195,7 @@ class Model {
     public function find(){
         $this->limit(1);
         $data = yield  $this->get();
-        return !empty($data[0])?$data[0]:NULL;
+        return !empty($data[0])?$data[0]:(object)[];
     }
 
     /**
@@ -231,7 +232,6 @@ class Model {
         }
         $sql =  "UPDATE {$this->table} SET ".implode(',', $updateField)." {$this->where}";
         $data = yield $this->query($sql);
-        Log::write('data:'.json_encode($data));
         return $data['result']===false?false:$data['affected_rows'];
     }
 
