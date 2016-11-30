@@ -13,6 +13,10 @@ abstract class App{
 
     static protected $modelList = [];
     static protected $serviceList = [];
+    static protected $controllerList = [];
+    /**
+     * @var DI $_id;
+     */
     static protected $_di;
 
 
@@ -23,6 +27,7 @@ abstract class App{
         self::$_di = $di;
         self::initClosureList('model');
         self::initClosureList('service');
+        self::initClosureList('controller');
     }
 
 
@@ -40,6 +45,7 @@ abstract class App{
 
 
     /**
+     * 获取全局model
      * @param $name
      * @return mixed
      */
@@ -52,6 +58,7 @@ abstract class App{
 
 
     /**
+     * 获取全局service
      * @param $name
      * @return mixed
      */
@@ -62,6 +69,19 @@ abstract class App{
         return self::$serviceList[$name];
     }
 
+
+    /**
+     * 获取全局controller
+     * @param $name
+     * @return mixed
+     * @throws \Exception
+     */
+    static public function getController($name){
+        if(empty(self::$controllerList[$name])){
+            self::$controllerList[$name] = self::get($name, 'controller');
+        }
+        return self::$controllerList[$name];
+    }
 
     /**
      * get相关的依赖class
