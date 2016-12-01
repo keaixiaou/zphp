@@ -22,7 +22,7 @@ class RedisAsynPool extends AsynPool
         'select'    =>  ['op'=>'select','next'=>''],
     ];
 
-    protected $cmd = ['set', 'get', 'lpop', 'lpush'];
+    protected $cmd = ['set', 'get', 'lpop', 'lpush','setex'];
     /**
      * 连接
      * @var array
@@ -87,7 +87,11 @@ class RedisAsynPool extends AsynPool
                 if ($data['value'] === '') {
                     $res = $client->$command($data['key'], $callback);
                 } else {
-                    $res = $client->$command($data['key'], $data['value'], $callback);
+                    if(!empty($data['expire'])){
+                        $res = $client->$command($data['key'], $data['expire'], $data['value'],  $callback);
+                    }else {
+                        $res = $client->$command($data['key'], $data['value'], $callback);
+                    }
                 }
                 if(empty($res)){
                     throw new \Exception("redis客户端操作失败");

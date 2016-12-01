@@ -9,7 +9,9 @@
 namespace ZPHP\Controller;
 
 use ZPHP\Core\Config;
+use ZPHP\Core\Httpinput;
 use ZPHP\Core\Log;
+use ZPHP\Core\Request;
 use ZPHP\Core\Swoole;
 use ZPHP\Session\Session;
 use ZPHP\ZPHP;
@@ -19,6 +21,10 @@ class Controller {
      * @var $response
      */
     public $isApi=false;
+    /**
+     * @var Request $requestDeal;
+     */
+    public $requestDeal;
     public $request;
     public $response;
     public $module;
@@ -31,15 +37,20 @@ class Controller {
     protected $tmethod;
     public $coroutineMethod;
     public $coroutineParam=[];
+    /**
+     * @var Httpinput $input;
+     */
+    public $input;
 
     /**
      * api接口请求总入口
      *
      */
     public function coroutineApiStart(){
+        $this->doBeforeExecute();
         $result = yield call_user_func_array($this->coroutineMethod, $this->coroutineParam);
         $result = json_encode($result);
-        Log::write('result:'.$result);
+//        Log::write('result:'.$result);
         if(!empty(Config::get('response_filter'))){
             $result = $this->strNull($result);
         }
@@ -120,17 +131,25 @@ class Controller {
         return str_replace(array('NULL', 'null'), '""', $str);
     }
 
+
+    /**
+     * 全局变量的初始化
+     */
+    public function doBeforeExecute()
+    {
+    }
+
     /**
      * 请求结束前做的一些处理,如session和cookie的写入
      * @throws \Exception
      */
     protected function doBeforeEnd(){
         if(!empty(Config::getField('session', 'enable'))){
-            Session::set($_SESSION, $this->request, $this->response);
+            Session::set($this->input->session(), $this->request, $this->response);
         }
         if(!empty(Config::getField('cookie', 'enable'))){
             $cacheExpire = Config::getField('cookie', 'cache_expire', 3600);
-            foreach($_COOKIE as $key => $value){
+            foreach($this->input->cookie() as $key => $value){
                 $this->response->cookie($key, $value, time()+$cacheExpire);
             }
         }
@@ -173,10 +192,12 @@ class Controller {
         $this->response->end(Swoole::info($message));
         $this->destroy();
     }
-    protected function destroy(){
+
+    public function destroy(){
         if (ob_get_contents()) ob_end_clean();
         unset($this->response);
         unset($this->request);
+        unset($this);
     }
 
 }

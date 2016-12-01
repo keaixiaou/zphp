@@ -9,7 +9,6 @@
 namespace ZPHP\Core;
 use ZPHP\Controller\Controller;
 use ZPHP\Coroutine\Base\CoroutineTask;
-use ZPHP\Session\Session;
 
 class Request{
 
@@ -33,7 +32,6 @@ class Request{
     public function init($request, $response){
         $this->request = $request;
         $this->response = $response;
-        $this->doBeforeStart($this->request, $this->response);
     }
 
     /**
@@ -45,26 +43,6 @@ class Request{
             $this->request->server['request_method']);
     }
 
-    /**
-     * 处理请求前的一些操作
-     * @param $request
-     * @param $response
-     * @throws \Exception
-     */
-    protected function doBeforeStart($request, $response){
-        //获取session
-        if(!empty(Config::getField('session','enable'))) {
-            $_SESSION = Session::get($request, $response);
-        }
-        //传入请求参数
-        if(!empty($request->cookie))$_COOKIE = $request->cookie;
-        $_POST = !empty($request->post)?$request->post:[];
-        $_GET = !empty($request->get)?$request->get:[];
-        $methodType = $request->server['request_method'];
-        $_REQUEST = $methodType=='GET'?array_merge($_GET, $_POST):array_merge($_POST, $_GET);
-        $_FILES = !empty($request->files)?$request->files:[];
-        $_SERVER = !empty($request->server)?$request->server:[];
-    }
 
 
     /**
@@ -97,6 +75,8 @@ class Request{
      * @return mixed|string
      */
     protected function executeGeneratorScheduler(Controller $controller){
+        $controller->input = clone Factory::getInstance(\ZPHP\Core\Httpinput::class);
+        $controller->input->init($this->request, $this->response);
         $action = 'coroutine'.(!empty($controller->isApi)?'Api':'Html').'Start';
         try{
             $generator = call_user_func([$controller, $action]);
@@ -105,7 +85,6 @@ class Request{
                 $task = clone $this->coroutineTask;
                 $task->setRoutine($generator);
                 $task->work($task->getRoutine());
-                unset($controller);
             }else{
                 return $generator;
             }
@@ -148,8 +127,6 @@ class Request{
         $controller->request = $this->request;
         $controller->response = $this->response;
         return $this->executeGeneratorScheduler($controller);
-
-
     }
 
 

@@ -21,13 +21,18 @@ class Redis{
     }
 
     //redis操作
-    public function cache($key, $value='', $expire=3600){
+    public function cache($key, $value='', $expire=0){
         $commandData = ['key'=>$key, 'value'=>$value,'expire'=>$expire];
         if($value===''){
             $commandData['command'] = 'get';
         }else{
-            $commandData['command'] = 'set';
+            if(!empty($expire)){
+                $commandData['command'] = 'setex';
+            }else {
+                $commandData['command'] = 'set';
+            }
         }
+
         $data = yield $this->_redisCoroutine->command($commandData);
         if($value!==''){
             $data = !empty($data)?true:false;

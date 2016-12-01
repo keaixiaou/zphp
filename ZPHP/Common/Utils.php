@@ -21,4 +21,14 @@ class Utils
         }
         return false;
     }
+
+
+    /**
+     * 过滤变量
+     * @param $variable
+     * @return string
+     */
+    static public function filter($variable){
+        return htmlspecialchars(strip_tags($variable));
+    }
 }

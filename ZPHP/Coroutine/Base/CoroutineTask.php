@@ -152,10 +152,4 @@ class CoroutineTask{
         $this->routine = $routine;
     }
 
-
-    public function __destruct()
-    {
-        // TODO: Implement __destruct() method.
-        unset($this->routine);
-    }
 }
