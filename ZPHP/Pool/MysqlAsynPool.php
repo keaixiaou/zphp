@@ -32,8 +32,8 @@ class MysqlAsynPool extends AsynPool{
      */
     public function initWorker($workId)
     {
-        parent::initWorker($workId);
         $this->config = Config::getField('database','master');
+        parent::initWorker($workId);
     }
 
     /**

@@ -65,6 +65,38 @@ class Dir
         return $result;
     }
 
+
+    /**
+     * * 获取相关目录下的类
+     * @param $dir
+     * @param string $filter
+     * @param array $result
+     * @param string $before
+     * @return array
+     * @throws \Exception
+     */
+    static public function getClass($dir, $filter='', &$result=[], $before=''){
+        if(empty($filter)){
+            throw new \Exception("过滤条件错误");
+        }
+        $files = new \DirectoryIterator($dir);
+        foreach ($files as $file) {
+            if ($file->isDot()) {
+                continue;
+            }
+            $filename = $file->getFilename();
+            if ($file->isDir()) {
+                $before .= $filename . '\\';
+                self::getClass($dir.DS. $filename, $filter, $result, $before);
+            }else{
+                if(preg_match($filter,$filename, $match)){
+                    $result[] = $before.str_replace('.php','',$filename);
+                }
+            }
+        }
+        return $result;
+    }
+
     /**
      * 递归删除目录
      * @param $dir

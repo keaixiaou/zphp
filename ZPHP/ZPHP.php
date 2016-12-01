@@ -5,6 +5,7 @@
  * 初始化框架相关信息
  */
 namespace ZPHP;
+use ZPHP\Common\Dir;
 use ZPHP\Core\Swoole;
 use ZPHP\Platform\Linux;
 use ZPHP\Platform\Windows;
@@ -175,7 +176,6 @@ class ZPHP
             echo "=====================================================\n";
             exit;
         }else {
-
             defined('DS') || define('DS', DIRECTORY_SEPARATOR);
             self::$zPath = $rootPath;
             self::setRootPath($rootPath);
@@ -192,6 +192,7 @@ class ZPHP
             //设置app目录
             $appPath = Config::get('app_path', self::$appPath);
             self::setAppPath($appPath);
+            define("APPPATH", ROOTPATH.DS.self::$appPath);
             $eh = Config::getField('project', 'exception_handler', __CLASS__ . '::exceptionHandler');
             \set_exception_handler($eh);
             //致命错误

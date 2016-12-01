@@ -66,6 +66,8 @@ class Httpinput{
      * @return string
      */
     protected function _getHttpVal($variableArray, $key, $filter){
+        if(!isset($variableArray[$key]))
+            return null;
         if($filter)
             return Utils::filter($variableArray[$key]);
         else

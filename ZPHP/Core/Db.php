@@ -70,7 +70,7 @@ class Db {
 
 
     static public function freeMysqlPool(){
-        self::$instance->mysqlPool->freeCallback();
+        self::$instance->mysqlPool->free();
         unset(self::$instance->mysqlPool);
     }
 
@@ -101,7 +101,7 @@ class Db {
      * free redis pool
      */
     static public function freeRedisPool(){
-        self::$instance->redisPool->freeCallback();
+        self::$instance->redisPool->free();
         unset(self::$instance->redisPool);
     }
 

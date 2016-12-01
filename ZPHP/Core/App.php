@@ -9,11 +9,14 @@
 
 namespace ZPHP\Core;
 
+use ZPHP\Common\Dir;
+
 abstract class App{
 
     static protected $modelList = [];
     static protected $serviceList = [];
     static protected $controllerList = [];
+    static protected $compenontType = ['controller','service','model'];
     /**
      * @var DI $_id;
      */
@@ -25,9 +28,13 @@ abstract class App{
      */
     static public function init($di){
         self::$_di = $di;
-        self::initClosureList('model');
-        self::initClosureList('service');
-        self::initClosureList('controller');
+        foreach(self::$compenontType as $type){
+            self::initClosureList($type);
+            $classList = Dir::getClass(APPPATH.DS.$type, '/.php$/');
+            foreach($classList as $class){
+                self::$type($class);
+            }
+        }
     }
 
 
@@ -40,7 +47,9 @@ abstract class App{
         $modelConfig = Config::get($type);
         if(!empty($modelConfig)) {
             foreach ($modelConfig as $key => $value) {
+                $key = self::getComponentName($key);
                 self::$_di->set($key, $type, $value);
+                self::$type($key);
             }
         }
     }

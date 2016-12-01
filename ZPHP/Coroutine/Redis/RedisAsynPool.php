@@ -37,8 +37,8 @@ class RedisAsynPool extends AsynPool
 
 
     public function initWorker($workId){
-        parent::initWorker($workId);
         $this->config = Config::get('redis');
+        parent::initWorker($workId);
     }
 
     /**

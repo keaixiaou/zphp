@@ -78,11 +78,31 @@ abstract class AsynPool implements IAsynPool
     }
 
     /**
+     * 清空命令
+     */
+    protected function clearCommand(){
+        while(!$this->commands->isEmpty()){
+            $command = $this->commands->dequeue();
+            unset($command);
+        }
+    }
+
+    /**
+     * 清空callback
+     */
+    protected function clearCallbak(){
+        unset($this->callBacks);
+    }
+
+    /**
      * @param $workerid
      */
     public function initWorker($workerId)
     {
         $this->workerId = $workerId;
+        while($this->max_count < $this->config['asyn_max_count']){
+            $this->prepareOne(null);
+        }
     }
 
     /**
@@ -99,9 +119,11 @@ abstract class AsynPool implements IAsynPool
     }
 
     /**
-     *
+     * 释放连接池
      */
-    public function freeCallback(){
-        unset($this->callBacks);
+    public function free(){
+        $this->clearPool();
+        $this->clearCallbak();
+        $this->clearCommand();
     }
 }
