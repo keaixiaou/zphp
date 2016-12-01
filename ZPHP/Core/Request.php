@@ -100,15 +100,13 @@ class Request{
      */
     public function defaultDistribute($mvc)
     {
-        $controllerClass = Config::get('ctrl_path', 'controllers') . '\\'
-            .$mvc['module'].'\\'.$mvc['controller'];
-        $FController = Factory::getInstance($controllerClass);
+        $controllerClass = $mvc['module'].'\\'.$mvc['controller'];
+        if(!empty(Config::getField('project','reload'))&& extension_loaded('runkit')){
+            App::clear($controllerClass);
+        }
+        $FController = App::controller($controllerClass);
         if(empty($FController)){
             throw new \Exception(404);
-        }
-
-        if(!empty(Config::getField('project','reload'))&& extension_loaded('runkit')){
-            $FController = Factory::reload($controllerClass);
         }
         $controller = clone $FController;
         $action = $mvc['action'];

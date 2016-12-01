@@ -31,12 +31,7 @@ class DI{
      */
     static public function get($key, $type='model'){
         if(empty(self::$closureList[$type][$key])){
-            if($type=='controller'){
-                $objectName = $type."s\\Home\\".ucfirst($key);
-            }else{
-                $objectName = $type."\\".$key;
-            }
-
+            $objectName = $type."\\".$key;
             self::set($key, $type, $objectName);
         }
         return call_user_func(self::$closureList[$type][$key]);

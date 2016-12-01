@@ -60,7 +60,7 @@ abstract class App{
             throw new \Exception("组件名不能为空");
         }
         $listName = $name.'List';
-        $key = ucfirst($arguments[0]);
+        $key = self::getComponentName($arguments[0]);
         if(empty(self::$$listName[$key])){
             self::$$listName[$key] = self::get($key, $name);
         }
@@ -68,6 +68,23 @@ abstract class App{
     }
 
 
+    /**
+     * 获取组件名
+     * @param $name
+     * @return string
+     */
+    static protected function getComponentName($name){
+        if(strpos($name, '\\')){
+            $keyArray = explode('\\', $name);
+            foreach($keyArray as $k=>$v){
+                $keyArray[$k] = ucfirst($v);
+            }
+            $key = implode('\\', $keyArray);
+        }else{
+            $key = ucfirst($name);
+        }
+        return $key;
+    }
 
     /**
      * get相关的依赖class
@@ -82,4 +99,15 @@ abstract class App{
         return $class;
     }
 
+
+    /**
+     * 清楚容器里的组件
+     * @param $name
+     * @param $type
+     */
+    static public function clear($name, $type){
+        $key = self::getComponentName($name);
+        $listName = $type.'List';
+        unset(self::$$listName[$key]);
+    }
 }
