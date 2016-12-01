@@ -34,7 +34,7 @@ class DI{
             if($type=='controller'){
                 $objectName = $type."s\\Home\\".ucfirst($key);
             }else{
-                $objectName = $type."\\".$key.ucfirst($type);
+                $objectName = $type."\\".$key;
             }
 
             self::set($key, $type, $objectName);

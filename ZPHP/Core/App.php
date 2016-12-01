@@ -38,50 +38,36 @@ abstract class App{
      */
     static public function initClosureList($type){
         $modelConfig = Config::get($type);
-        foreach($modelConfig as $key => $value) {
-            self::$_di->set($key, $type, $value);
+        if(!empty($modelConfig)) {
+            foreach ($modelConfig as $key => $value) {
+                self::$_di->set($key, $type, $value);
+            }
         }
     }
 
 
     /**
-     * 获取全局model
-     * @param $name
-     * @return mixed
-     */
-    static public function getModel($name){
-        if(empty(self::$modelList[$name])){
-            self::$modelList[$name] = self::get($name, 'model');
-        }
-        return self::$modelList[$name];
-    }
-
-
-    /**
-     * 获取全局service
-     * @param $name
-     * @return mixed
-     */
-    static public function getService($name){
-        if(empty(self::$serviceList[$name])){
-            self::$serviceList[$name] = self::get($name, 'service');
-        }
-        return self::$serviceList[$name];
-    }
-
-
-    /**
-     * 获取全局controller
-     * @param $name
+     * 获取容器组件
+     * @param $name - service、model、controller
+     * @param $arguments
      * @return mixed
      * @throws \Exception
      */
-    static public function getController($name){
-        if(empty(self::$controllerList[$name])){
-            self::$controllerList[$name] = self::get($name, 'controller');
+    static public function __callStatic($name, $arguments)
+    {
+        // TODO: Implement __call() method.
+        if(empty($arguments)){
+            throw new \Exception("组件名不能为空");
         }
-        return self::$controllerList[$name];
+        $listName = $name.'List';
+        $key = ucfirst($arguments[0]);
+        if(empty(self::$$listName[$key])){
+            self::$$listName[$key] = self::get($key, $name);
+        }
+        return self::$$listName[$key];
     }
+
+
 
     /**
      * get相关的依赖class
@@ -91,10 +77,9 @@ abstract class App{
     static public function get($name, $type){
         $class = self::$_di->get($name, $type);
         if(empty($class)){
-            throw new \Exception($name.ucfirst($type).' not found!');
+            throw new \Exception($type.':'.$name.' not found!');
         }
         return $class;
     }
-
 
 }

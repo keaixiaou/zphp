@@ -183,8 +183,6 @@ class ZPHP
 
             \spl_autoload_register(__CLASS__ . '::autoLoader');
             $config_path = self::getConfigPath();
-//            echo $config_path;die;
-//            Config::load($config_path);
             Config::load($config_path);
             //设置项目lib目录
             self::$libPath = Config::get('lib_path', self::$zPath . DS . 'lib');
