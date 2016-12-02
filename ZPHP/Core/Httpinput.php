@@ -17,13 +17,13 @@ use ZPHP\Session\Session;
  */
 class Httpinput{
 
-    protected $post;
-    protected $get;
-    protected $request;
-    protected $session;
-    protected $cookie;
-    protected $files;
-    protected $server;
+    public $post;
+    public $get;
+    public $request;
+    public $session;
+    public $cookie;
+    public $files;
+    public $server;
 
     function __construct()
     {
@@ -54,7 +54,7 @@ class Httpinput{
         if(empty($param)){
             return $this->$method;
         }else {
-            return $this->_getHttpVal($this->$method, $param[0], isset($param[1]) ? $param[1]:true );
+            return isset($this->$method[$param[0]])?$this->_getHttpVal($this->$method[$param[0]], isset($param[1]) ? $param[1]:true ):null;
         }
     }
 
@@ -65,13 +65,13 @@ class Httpinput{
      * @param $filter
      * @return string
      */
-    protected function _getHttpVal($variableArray, $key, $filter){
-        if(!isset($variableArray[$key]))
+    protected function _getHttpVal($value, $filter){
+        if(!isset($value))
             return null;
         if($filter)
-            return Utils::filter($variableArray[$key]);
+            return Utils::filter($value);
         else
-            return $variableArray[$key];
+            return $value;
     }
 
 }

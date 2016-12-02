@@ -30,9 +30,12 @@ abstract class App{
         self::$_di = $di;
         foreach(self::$compenontType as $type){
             self::initClosureList($type);
-            $classList = Dir::getClass(APPPATH.DS.$type, '/.php$/');
-            foreach($classList as $class){
-                self::$type($class);
+            $dir = APPPATH.DS.$type;
+            if(is_dir($dir)) {
+                $classList = Dir::getClass($dir, '/.php$/');
+                foreach ($classList as $class) {
+                    self::$type($class);
+                }
             }
         }
     }

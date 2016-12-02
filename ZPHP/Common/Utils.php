@@ -7,6 +7,7 @@
 
 namespace ZPHP\Common;
 
+
 class Utils
 {
 
@@ -29,6 +30,13 @@ class Utils
      * @return string
      */
     static public function filter($variable){
-        return htmlspecialchars(strip_tags($variable));
+        if(is_array($variable)){
+            foreach($variable as $key => $value){
+                $variable[$key] = self::filter($value);
+            }
+        }else{
+            $variable = htmlspecialchars(strip_tags($variable));
+        }
+        return $variable;
     }
 }

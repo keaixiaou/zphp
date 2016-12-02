@@ -14,32 +14,34 @@ class Route {
     static public $routeList = [];
     static public function init(){
         $routeConfig = Config::get('route');
-        foreach($routeConfig as $key => $value){
-            $method = strtoupper($key);
-            foreach($value as $k => $v){
-                $routeK = $k;
-                if(is_string($v)){
-                    $v = trim($v, '\\');
-                }
-                if(preg_match_all('/(.*?)\/{.*?}/',$k,$match)){
-                    $routeK = str_replace('{','(?P<', $routeK);
-                    $routeK = str_replace('}','>[^/]++)',$routeK);
-                    $routeK = '#^'.$routeK.'$#';
-                    if($method=='ANY'){
-                        self::$matchRouteList['POST'][$routeK] = $v;
-                        self::$matchRouteList['GET'][$routeK] = $v;
-                    }else{
-                        self::$matchRouteList[$method][$routeK] = $v;
+        if(!empty($routeConfig)) {
+            foreach ($routeConfig as $key => $value) {
+                $method = strtoupper($key);
+                foreach ($value as $k => $v) {
+                    $routeK = $k;
+                    if (is_string($v)) {
+                        $v = trim($v, '\\');
                     }
-                }else{
-                    if($method=='ANY'){
-                        self::$routeList['POST'][$routeK] = $v;
-                        self::$routeList['GET'][$routeK] = $v;
-                    }else{
-                        self::$routeList[$method][$routeK] = $v;
+                    if (preg_match_all('/(.*?)\/{.*?}/', $k, $match)) {
+                        $routeK = str_replace('{', '(?P<', $routeK);
+                        $routeK = str_replace('}', '>[^/]++)', $routeK);
+                        $routeK = '#^' . $routeK . '$#';
+                        if ($method == 'ANY') {
+                            self::$matchRouteList['POST'][$routeK] = $v;
+                            self::$matchRouteList['GET'][$routeK] = $v;
+                        } else {
+                            self::$matchRouteList[$method][$routeK] = $v;
+                        }
+                    } else {
+                        if ($method == 'ANY') {
+                            self::$routeList['POST'][$routeK] = $v;
+                            self::$routeList['GET'][$routeK] = $v;
+                        } else {
+                            self::$routeList[$method][$routeK] = $v;
+                        }
                     }
-                }
 
+                }
             }
         }
     }

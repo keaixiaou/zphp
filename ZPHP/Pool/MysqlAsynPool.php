@@ -122,15 +122,19 @@ class MysqlAsynPool extends AsynPool{
             try {
                 if (!$result) {
                     $this->max_count --;
-                    throw new \Exception("[mysql连接失败]".$client->connect_error);
+                    $exceptionMsg = "[mysql连接失败]".$client->connect_error;
+                    throw new \Exception($exceptionMsg);
                 } else {
                     $client->isAffair = false;
                     $client->client_id = $tmpClient ? $tmpClient->client_id : $nowConnectNo;
                     $this->pushToPool($client);
                 }
             }catch(\Exception $e){
-                $data['result']['exception'] = $e->getMessage();
-                call_user_func([$this, 'distribute'], $data);
+                Log::write($e->getMessage());
+                if(!empty($data)) {
+                    $data['result']['exception'] = $e->getMessage();
+                    call_user_func([$this, 'distribute'], $data);
+                }
             }
         });
     }
