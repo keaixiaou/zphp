@@ -98,12 +98,14 @@ abstract class AsynPool implements IAsynPool
     public function initWorker($workerId)
     {
         $this->workerId = $workerId;
-        $i = 0;
-        $start_count = $this->config['start_count']>$this->config['asyn_max_count']?
-            $this->config['asyn_max_count']:$this->config['start_count'];
-        while($i<$start_count){
-            $this->prepareOne(null);
-            $i ++ ;
+        if(!empty($this->config['start_count'])) {
+            $i = 0;
+            $start_count = $this->config['start_count'] > $this->config['asyn_max_count'] ?
+                $this->config['asyn_max_count'] : $this->config['start_count'];
+            while ($i < $start_count) {
+                $this->prepareOne(null);
+                $i++;
+            }
         }
     }
 
