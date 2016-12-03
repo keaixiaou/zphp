@@ -101,8 +101,8 @@ class Request{
     public function defaultDistribute($mvc)
     {
         $controllerClass = $mvc['module'].'\\'.$mvc['controller'];
-        if(!empty(Config::getField('project','reload'))&& extension_loaded('runkit')){
-            App::clear($controllerClass);
+        if(!empty(Config::getField('project','reload')) && extension_loaded('runkit')){
+            App::clear($controllerClass, 'controller');
         }
         $FController = App::controller($controllerClass);
         if(empty($FController)){
