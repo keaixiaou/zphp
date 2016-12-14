@@ -26,10 +26,16 @@ class Db {
      */
     public $redisPool;
 
+    /**
+     * @var RedisAsynPool
+     */
+    public $sessionRedisPool;
+
     public static $instance;
     protected static $db;
     protected static $_tables;
     protected static $_redis;
+    protected static $_sessionRedis;
     protected static $_collection;
     private static $lastSql;
     private static $workId;
@@ -60,18 +66,25 @@ class Db {
      * @param $workId
      * 初始化mysql连接池
      */
-    static public function initMysqlPool($workId){
-        if(empty(self::$instance->mysqlPool)) {
-            self::$workId = $workId;
-            self::$instance->mysqlPool = new MysqlAsynPool();
-            self::$instance->mysqlPool->initWorker($workId);
+    static public function initMysqlPool($workId, $config){
+        if(!empty($config)) {
+            if (empty(self::$instance->mysqlPool)) {
+                self::$workId = $workId;
+                self::$instance->mysqlPool = new MysqlAsynPool();
+                self::$instance->mysqlPool->initWorker($workId, $config);
+            }
         }
     }
 
 
+    /**
+     * 释放mysql连接池
+     */
     static public function freeMysqlPool(){
-        self::$instance->mysqlPool->free();
-        unset(self::$instance->mysqlPool);
+        if(isset(self::$instance->mysqlPool)) {
+            self::$instance->mysqlPool->free();
+            unset(self::$instance->mysqlPool);
+        }
     }
 
     /**
@@ -90,10 +103,28 @@ class Db {
     /**
      * @param $workId
      */
-    public static function initRedisPool($workId){
-        if(empty(self::$instance->redisPool)){
-            self::$instance->redisPool = new RedisAsynPool();
-            self::$instance->redisPool->initWorker($workId);
+    public static function initRedisPool($workId, $config){
+        if(!empty($config)) {
+            if (empty(self::$instance->redisPool)) {
+                self::$instance->redisPool = new RedisAsynPool();
+                self::$instance->redisPool->initWorker($workId, $config);
+            }
+        }
+    }
+
+
+    /**
+     * 初始化
+     * @param $workId
+     * @throws \Exception
+     */
+    public static function initSessionRedisPool($workId, $config){
+        if($config['enable'] && strtolower($config['adapter'])=='redis') {
+            if (empty(self::$instance->sessionRedisPool)) {
+                self::$instance->sessionRedisPool = new RedisAsynPool();
+                $sRedisConf = $config['redis'];
+                self::$instance->sessionRedisPool->initWorker($workId, $sRedisConf);
+            }
         }
     }
 
@@ -101,8 +132,14 @@ class Db {
      * free redis pool
      */
     static public function freeRedisPool(){
-        self::$instance->redisPool->free();
-        unset(self::$instance->redisPool);
+        if(isset(self::$instance->redisPool)) {
+            self::$instance->redisPool->free();
+            unset(self::$instance->redisPool);
+        }
+        if(isset(self::$instance->sessionRedisPool)) {
+            self::$instance->sessionRedisPool->free();
+            unset(self::$instance->sessionRedisPool);
+        }
     }
 
     /**
@@ -114,6 +151,19 @@ class Db {
         }
         return self::$_redis;
     }
+
+
+    /**
+     * 用于session的redis连接池
+     * @return Redis
+     */
+    public static function sessionRedis(){
+        if(!isset(self::$_sessionRedis)){
+            self::$_sessionRedis = new Redis(self::$instance->sessionRedisPool);
+        }
+        return self::$_sessionRedis;
+    }
+
 
     /**
      * @param string $collectName

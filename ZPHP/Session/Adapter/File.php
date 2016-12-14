@@ -19,7 +19,7 @@ class File
     public function __construct($config)
     {
         if (!empty($config['cache_expire'])) {
-            $this->gcTime = $config['cache_expire'] * 60;
+            $this->gcTime = $config['cache_expire'];
         }
         $this->config = $config;
     }
@@ -99,6 +99,6 @@ class File
             return call_user_func($this->config['callback'], $path, $sid);
         }
 
-        return $path . DS . 'sess_' . $sid;
+        return $path . DS . $sid;
     }
 }

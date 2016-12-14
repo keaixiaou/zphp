@@ -22,18 +22,20 @@ class Redis{
 
     //redis操作
     public function cache($key, $value='', $expire=0){
-        $commandData = ['key'=>$key, 'value'=>$value,'expire'=>$expire];
         if($value===''){
-            $commandData['command'] = 'get';
+            $commandData = [ $key];
+            $command = 'get';
         }else{
             if(!empty($expire)){
-                $commandData['command'] = 'setex';
+                $command = 'setex';
+                $commandData = [ $key, $expire,  $value ];
             }else {
-                $commandData['command'] = 'set';
+                $command = 'set';
+                $commandData = [ $key, $value];
             }
         }
 
-        $data = yield $this->_redisCoroutine->command($commandData);
+        $data = yield $this->__call($command, $commandData);
         if($value!==''){
             $data = !empty($data)?true:false;
         }
@@ -46,17 +48,12 @@ class Redis{
      * @param $param
      * @return bool
      */
-//    public function __call($method,$param){
-//        $commandData = ['key'=>$param[0]];
-//        $commandData['value'] = !empty($param[1])? $param[1]:'';
-//        $commandData['expire'] = !empty($param[2])? $param[2]:3600;
-//        $commandData['command'] = $method;
-//        $data = yield $this->_redisCoroutine->command($commandData);
-//        if($commandData['value']!==''){
-//            $data = !empty($data)?true:false;
-//        }
-//        return $data;
-//    }
+    public function __call($method,$param){
+        $commandData = $param;
+        array_unshift($commandData, $method);
+        $data = yield $this->_redisCoroutine->command(['execute'=>$commandData]);
+        return $data;
+    }
 
 
     public function lpush($key, $value){
@@ -65,6 +62,22 @@ class Redis{
 
     public function lpop($key){
         return $this->__call('lpop', [$key]);
+    }
+
+    public function incr($key){
+        return $this->__call('incr', [$key]);
+    }
+
+    public function decr($key){
+        return $this->__call('decr', [$key]);
+    }
+
+    public function hset($key, $field, $value){
+        return $this->__call('hset', [$key, $field,$value]);
+    }
+
+    public function hget($key, $field){
+        return $this->__call('hget', [$key,  $field]);
     }
 
 }

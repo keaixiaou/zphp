@@ -33,7 +33,7 @@ class Httpinput{
     public function init($request, $response){
         //获取session
         if(!empty(Config::getField('session','enable'))) {
-            $this->session = Session::get($request, $response);
+            $this->session = yield Session::get($request, $response);
         }
         //传入请求参数
         if(!empty($request->cookie))$this->cookie = $request->cookie;

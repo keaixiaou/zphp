@@ -6,7 +6,8 @@
 
 
 namespace ZPHP\Session\Adapter;
-use ZPHP\Manager;
+
+use ZPHP\Core\Db;
 
 class Redis
 {
@@ -17,9 +18,9 @@ class Redis
     public function __construct($config)
     {
         if (empty($this->redis)) {
-            $this->redis = Manager\Redis::getInstance($config);
+            $this->redis = Db::sessionRedis();
             if (!empty($config['cache_expire'])) {
-                $this->gcTime = $config['cache_expire'] * 60;
+                $this->gcTime = $config['cache_expire'] ;
             }
             $this->config = $config;
         }
@@ -45,9 +46,9 @@ class Redis
         if(!empty($this->config['sid_prefix'])) {
             $sid = str_replace($this->config['sid_prefix'], '', $sid);
         }
-        $data = $this->redis->get($sid);
+        $data = yield $this->redis->cache($sid);
         if (!empty($data)) {
-            $this->redis->setTimeout($sid, $this->gcTime);
+            yield $this->redis->cache($sid, $data, $this->gcTime);
         }
         return $data;
     }
@@ -57,10 +58,8 @@ class Redis
         if(empty($data)) {
             return true;
         }
-        if(!empty($this->config['sid_prefix'])) {
-            $sid = str_replace($this->config['sid_prefix'], '', $sid);
-        }
-        return $this->redis->setex($sid, $this->gcTime, $data);
+        $res = yield $this->redis->cache($sid, $data, $this->gcTime);
+        return $res;
     }
 
     public function destroy($sid)

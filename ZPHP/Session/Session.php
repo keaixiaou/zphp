@@ -8,6 +8,7 @@
 
 namespace ZPHP\Session;
 use ZPHP\Core\Config as ZConfig;
+use ZPHP\Core\Log;
 use ZPHP\Core\Rand;
 
 
@@ -26,10 +27,10 @@ class Session
         $session = [];
         $config = ZConfig::get('session');
         if(!empty($request->cookie[self::$_sessionKey])){
-            $sid = $request->cookie[self::$_sessionKey];
+            $sid = $config['name'].$request->cookie[self::$_sessionKey];
             $sessionType = $config['adapter'];
             $handler = Factory::getInstance($sessionType, $config);
-            $data = $handler->read($sid);
+            $data = yield $handler->read($sid);
             if(!empty($data)) {
                 $session = unserialize($data);
             }
@@ -57,7 +58,8 @@ class Session
         }
         $sessionType = $config['adapter'];
         $handler = Factory::getInstance($sessionType, $config);
-        $res = $handler->write($sid, serialize($session));
+        $sid = $config['name'].$sid;
+        $res = yield $handler->write($sid, serialize($session));
         return $res;
     }
 }

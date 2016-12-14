@@ -9,6 +9,7 @@
 namespace ZPHP\Controller;
 
 use ZPHP\Core\Config;
+use ZPHP\Core\Factory;
 use ZPHP\Core\Httpinput;
 use ZPHP\Core\Log;
 use ZPHP\Core\Request;
@@ -30,6 +31,7 @@ class Controller {
     public $module;
     public $controller;
     public $method;
+    protected $template;
     protected $tplVar = [];
     protected $tplFile = '';
     protected $tmodule ;
@@ -99,28 +101,38 @@ class Controller {
      * html web入口
      */
     public function coroutineHtmlStart(){
+        yield $this->doBeforeExecute();
         $this->tmodule = $this->module;
         $this->tcontroller = $this->controller;
         $this->tmethod = $this->method;
         $data = yield call_user_func_array($this->coroutineMethod, $this->coroutineParam);
         $this->analysisTplFile($this->tplFile);
         $tplPath = Config::getField('project', 'tpl_path', ZPHP::getRootPath() . DS.'apps'.DS  . 'view' . DS );
-        $tplFile = $tplPath.$this->tmodule.DS.$this->tcontroller.DS.$this->tmethod.'.html';;
+        $tplFile = $tplPath.$this->tmodule.DS.$this->tcontroller.DS.$this->tmethod.'.html';
+        $outFile = $tplFile;
+        if(!empty($this->template)){
+            $outFile = $tplPath.'Template'.DS.$this->template.'.html';
+            $this->tplVar['template_content'] =  $tplFile;
+        }
+
         \ob_start();
         extract($this->tplVar);
-        if(!is_file($tplFile)){
+        if(!is_file($outFile)){
             throw new \Exception("模板不存在.");
         }
-        include "{$tplFile}";
+        include "{$outFile}";
         $content = ob_get_contents();
         \ob_end_clean();
-        $this->doBeforeEnd();
+        yield $this->doBeforeEnd();
         $this->response->status(200);
         $this->response->header('Content-Type','text/html');
         $this->response->end($content);
     }
 
 
+    protected function setTemplate($template){
+        $this->template = $template;
+    }
 
     /**
      * 返回null 替换
@@ -137,6 +149,8 @@ class Controller {
      */
     public function doBeforeExecute()
     {
+        $this->input = clone Factory::getInstance(\ZPHP\Core\Httpinput::class);
+        yield $this->input->init($this->request, $this->response);
     }
 
     /**
@@ -145,12 +159,14 @@ class Controller {
      */
     protected function doBeforeEnd(){
         if(!empty(Config::getField('session', 'enable'))){
-            Session::set($this->input->session(), $this->request, $this->response);
+           yield Session::set($this->input->session(), $this->request, $this->response);
         }
         if(!empty(Config::getField('cookie', 'enable'))){
             $cacheExpire = Config::getField('cookie', 'cache_expire', 3600);
-            foreach($this->input->cookie() as $key => $value){
-                $this->response->cookie($key, $value, time()+$cacheExpire);
+            if(!empty($this->input->cookie)) {
+                foreach ($this->input->cookie() as $key => $value) {
+                    $this->response->cookie($key, $value, time() + $cacheExpire);
+                }
             }
         }
     }

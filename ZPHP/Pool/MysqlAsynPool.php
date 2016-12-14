@@ -26,15 +26,6 @@ class MysqlAsynPool extends AsynPool{
         parent::__construct();
     }
 
-    /**
-     * 作为客户端的初始化
-     * @param $worker_id
-     */
-    public function initWorker($workId)
-    {
-        $this->config = Config::getField('database','master');
-        parent::initWorker($workId);
-    }
 
     /**
      * 执行一个sql语句
@@ -130,6 +121,7 @@ class MysqlAsynPool extends AsynPool{
                     $this->pushToPool($client);
                 }
             }catch(\Exception $e){
+                Log::write('$max_count:'.$this->max_count);
                 Log::write($e->getMessage());
                 if(!empty($data)) {
                     $data['result']['exception'] = $e->getMessage();

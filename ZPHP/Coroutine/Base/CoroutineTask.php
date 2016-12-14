@@ -66,6 +66,7 @@ class CoroutineTask{
                     return;
                 }
 
+
                 if(is_null($value)) {
                     try {
                         $return = $routine->getReturn();
@@ -78,15 +79,17 @@ class CoroutineTask{
 //                    Log::write('return:'.json_encode($return));
                 }else {
                     $this->callbackData = $value;
-                    $this->routine->send($this->callbackData);
-                    continue;
-                }
-                if (!$this->stack->isEmpty()) {
-                    $routine = $this->stack->pop();
                     $routine->send($this->callbackData);
                     continue;
                 }
 
+                if (!$this->stack->isEmpty()) {
+//                    Log::write('$this->stack->pop();'.print_r($this->stack, true));
+                    $routine = $this->stack->pop();
+                    $routine->send($this->callbackData);
+                    $this->callbackData = null;
+                    continue;
+                }
                 if ($this->routine->valid()) {
                     $this->routine->next();
                     continue;

@@ -22,7 +22,8 @@ class RedisAsynPool extends AsynPool
         'select'    =>  ['op'=>'select','next'=>''],
     ];
 
-    protected $cmd = ['set', 'get', 'lpop', 'lpush','setex'];
+    protected $cmd = ['set', 'get', 'lpop', 'lpush','setex','decr', 'incr',
+    'hset','hget'];
     /**
      * 连接
      * @var array
@@ -35,11 +36,6 @@ class RedisAsynPool extends AsynPool
         $this->connect = $connect;
     }
 
-
-    public function initWorker($workId){
-        $this->config = Config::get('redis');
-        parent::initWorker($workId);
-    }
 
     /**
      * redis的cache方法
@@ -73,26 +69,20 @@ class RedisAsynPool extends AsynPool
                         $this->pushToPool($client);
                     }
                 }catch(\Exception $e){
+                    Log::write($e->getMessage());
                     $data['result']['exception'] = $e->getMessage();
                 }
                 //给worker发消息
                 call_user_func([$this, 'distribute'], $data);
             };
             try{
-                $res = true;
-                if(!in_array($data['command'], $this->cmd)){
-                    throw new \Exception("[".$data['command']."]此操作暂时不支持");
+                $execute = $data['execute'];
+                $command = array_shift($execute);
+                if(!in_array($command, $this->cmd)){
+                    throw new \Exception("[".$command."]此操作暂时不支持");
                 }
-                $command = $data['command'];
-                if ($data['value'] === '') {
-                    $res = $client->$command($data['key'], $callback);
-                } else {
-                    if(!empty($data['expire'])){
-                        $res = $client->$command($data['key'], $data['expire'], $data['value'],  $callback);
-                    }else {
-                        $res = $client->$command($data['key'], $data['value'], $callback);
-                    }
-                }
+                $execute[] = $callback;
+                $res = call_user_func_array([$client, $command], $execute);
                 if(empty($res)){
                     throw new \Exception("redis客户端操作失败");
                 }
@@ -147,23 +137,23 @@ class RedisAsynPool extends AsynPool
      */
     public function initRedis($client, $now, $nowConnectNo,$data){
 
-        if(!empty($this->operator[$now]['next'])){
+        if(!empty($this->operator[$now]['op'])){
             if(!empty($this->config[$now])){
             $operat = $this->operator[$now]['op'];
-                $client->$operat($this->config[$now], function ($client, $result)use($now, $nowConnectNo,$data) {
-                    try {
-                        if (!$result) {
-                            $errMsg = $client->errMsg;
-                            $this->max_count--;
-                            unset($client);
-                            throw new \Exception('[redis连接失败]'.$errMsg);
-                        }
-                        call_user_func([$this, 'initRedis'], $client, $this->operator[$now]['next'], $nowConnectNo, $data);
-                    }catch(\Exception $e){
-                        $data['result']['exception'] = $e->getMessage();
-                        call_user_func([$this, 'distribute'], $data);
+            $client->$operat($this->config[$now], function ($client, $result)use($now, $nowConnectNo,$data) {
+                try {
+                    if (!$result) {
+                        $errMsg = $client->errMsg;
+                        $this->max_count--;
+                        unset($client);
+                        throw new \Exception('[redis连接失败]'.$errMsg);
                     }
-                });
+                    call_user_func([$this, 'initRedis'], $client, $this->operator[$now]['next'], $nowConnectNo, $data);
+                }catch(\Exception $e){
+                    $data['result']['exception'] = $e->getMessage();
+                    call_user_func([$this, 'distribute'], $data);
+                }
+            });
             }else{
                 $this->initRedis($client, $this->operator[$now]['next'],$nowConnectNo,$data);
             }

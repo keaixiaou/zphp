@@ -10,6 +10,8 @@
 namespace ZPHP\Pool\Base;
 
 
+use ZPHP\Core\Log;
+
 abstract class AsynPool implements IAsynPool
 {
     const MAX_TOKEN = DEBUG===true?100:650000;
@@ -95,8 +97,9 @@ abstract class AsynPool implements IAsynPool
     /**
      * @param $workerid
      */
-    public function initWorker($workerId)
+    public function initWorker($workerId, $config)
     {
+        $this->config = $config;
         $this->workerId = $workerId;
         if(!empty($this->config['start_count'])) {
             $i = 0;

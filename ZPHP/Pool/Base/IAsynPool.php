@@ -16,7 +16,7 @@ interface IAsynPool
 
     function execute($data);
 
-    function initWorker($workerId);
+    function initWorker($workerId, $config);
 
 
     function getMessageType();

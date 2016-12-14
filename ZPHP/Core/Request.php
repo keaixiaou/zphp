@@ -75,8 +75,6 @@ class Request{
      * @return mixed|string
      */
     protected function executeGeneratorScheduler(Controller $controller){
-        $controller->input = clone Factory::getInstance(\ZPHP\Core\Httpinput::class);
-        $controller->input->init($this->request, $this->response);
         $action = 'coroutine'.(!empty($controller->isApi)?'Api':'Html').'Start';
         try{
             $generator = call_user_func([$controller, $action]);
