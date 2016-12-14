@@ -49,14 +49,14 @@ class Controller {
      *
      */
     public function coroutineApiStart(){
-        $this->doBeforeExecute();
+        yield $this->doBeforeExecute();
         $result = yield call_user_func_array($this->coroutineMethod, $this->coroutineParam);
         $result = json_encode($result);
 //        Log::write('result:'.$result);
         if(!empty(Config::get('response_filter'))){
             $result = $this->strNull($result);
         }
-        $this->doBeforeEnd();
+        yield $this->doBeforeEnd();
         $this->response->header('Content-Type', 'application/json');
         $this->response->end($result);
         $this->destroy();
