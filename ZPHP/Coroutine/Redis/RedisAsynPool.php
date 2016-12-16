@@ -121,7 +121,6 @@ class RedisAsynPool extends AsynPool
                     }
                     call_user_func([$this, 'initRedis'], $client, 'password', $nowConnectNo, $data);
                 } catch (\Exception $e) {
-                    Log::write('$max_count:'.$this->max_count);
                     Log::write($e->getMessage());
                     if(!empty($data)){
                         $data['result']['exception'] = $e->getMessage();
@@ -155,8 +154,11 @@ class RedisAsynPool extends AsynPool
                     }
                     call_user_func([$this, 'initRedis'], $client, $this->operator[$now]['next'], $nowConnectNo, $data);
                 }catch(\Exception $e){
-                    $data['result']['exception'] = $e->getMessage();
-                    call_user_func([$this, 'distribute'], $data);
+                    Log::write($e->getMessage());
+                    if(!empty($data)) {
+                        $data['result']['exception'] = $e->getMessage();
+                        call_user_func([$this, 'distribute'], $data);
+                    }
                 }
             });
             }else{
