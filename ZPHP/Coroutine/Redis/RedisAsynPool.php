@@ -11,7 +11,7 @@ namespace ZPHP\Coroutine\Redis;
 
 use ZPHP\Core\Config;
 use ZPHP\Core\Log;
-use ZPHP\Pool\Base\AsynPool;
+use ZPHP\Coroutine\Pool\AsynPool;
 
 class RedisAsynPool extends AsynPool
 {

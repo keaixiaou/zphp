@@ -13,8 +13,8 @@ namespace ZPHP\Model;
 
 use ZPHP\Core\Db;
 use ZPHP\Core\Log;
-use ZPHP\Pool\Base\MysqlAsynPool;
-use ZPHP\Pool\MySqlCoroutine;
+use ZPHP\Coroutine\Mysql\MysqlAsynPool;
+use ZPHP\Coroutine\Mysql\MySqlCoroutine;
 
 class Model {
 

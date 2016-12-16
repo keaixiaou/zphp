@@ -12,7 +12,7 @@ namespace ZPHP\Core;
 use ZPHP\Coroutine\Redis\RedisAsynPool;
 use ZPHP\Db\Mongo;
 use ZPHP\Model\Model;
-use ZPHP\Pool\MysqlAsynPool;
+use ZPHP\Coroutine\Mysql\MysqlAsynPool;
 use ZPHP\Redis\Redis;
 
 class Db {
