@@ -35,16 +35,30 @@ abstract class Log {
         $message = date('Y-m-d H:i:s').substr($timeArray[0],1)." {$level_str}-".$msg."\n";
         self::$log[] = $message;
         if(DEBUG!==true && count(self::$log)<100)return;
+        self::reallyWrite();
+    }
+
+    /**
+     * 实际写日志
+     */
+    static protected function reallyWrite(){
         $str = implode("", self::$log);
         $file_path = ZPHP::getRootPath().'/log/app';
         if(!is_dir($file_path)){
             mkdir($file_path, 0755, true);
         }
         $file_name = $file_path.'/'.date('Y-m-d').'.log';
-
         error_log($str, 3, $file_name);
         self::$log = [];
+    }
 
+    /**
+     * 写完日志(一般用在workstop)
+     */
+    static public function clear(){
+        if(!empty(self::$log)){
+            self::reallyWrite();
+        }
     }
 }
 

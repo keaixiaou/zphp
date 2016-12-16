@@ -96,6 +96,7 @@ abstract class Swoole implements ICallback
 
     public function onWorkerStop($server, $workerId)
     {
+        Core\Log::clear();
     }
 
     public function onWorkerError($server, $workerId, $workerPid, $errorCode)

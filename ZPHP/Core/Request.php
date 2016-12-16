@@ -79,8 +79,8 @@ class Request{
         try{
             $generator = call_user_func([$controller, $action]);
             if ($generator instanceof \Generator) {
-                $generator->controller = $controller;
                 $task = clone $this->coroutineTask;
+                $task->setController($controller);
                 $task->setRoutine($generator);
                 $task->work($task->getRoutine());
             }else{

@@ -127,6 +127,7 @@ class Controller {
         $this->response->status(200);
         $this->response->header('Content-Type','text/html');
         $this->response->end($content);
+        $this->destroy();
     }
 
 
@@ -211,9 +212,7 @@ class Controller {
 
     public function destroy(){
         if (ob_get_contents()) ob_end_clean();
-        unset($this->response);
-        unset($this->request);
-        unset($this);
     }
+
 
 }

@@ -9,6 +9,7 @@
 
 namespace ZPHP\Coroutine\Base;
 
+use ZPHP\Controller\Controller;
 use ZPHP\Core\Log;
 
 class CoroutineTask{
@@ -18,6 +19,7 @@ class CoroutineTask{
      * @var \Generator $routine;
      */
     protected $routine;
+    protected $controller;
     protected $exception = null;
     protected $i;
 
@@ -102,7 +104,7 @@ class CoroutineTask{
                     $routine = $this->stack->pop();
 //                    Log::write('routine:' . print_r($routine, true));
                 }
-                call_user_func_array([$this->routine->controller, 'onExceptionHandle'], ['e'=>$e]);
+                call_user_func_array([$this->controller, 'onExceptionHandle'], ['e'=>$e]);
                 break;
             }
         }
@@ -122,7 +124,7 @@ class CoroutineTask{
          */
 //        Log::write('callback:'.__METHOD__.print_r($data, true));
         if(!empty($data['exception'])){
-            call_user_func_array([$this->routine->controller, 'onSystemException'],
+            call_user_func_array([$this->controller, 'onSystemException'],
                 ['message'=>$data['exception']]);
         }else {
             $gen = $this->stack->pop();
@@ -150,9 +152,14 @@ class CoroutineTask{
     }
 
 
+    public function setController(Controller $controller){
+        $this->controller = $controller;
+    }
+
     public function setRoutine(\Generator $routine)
     {
         $this->routine = $routine;
     }
+
 
 }
