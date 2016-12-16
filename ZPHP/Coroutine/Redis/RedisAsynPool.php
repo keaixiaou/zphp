@@ -123,8 +123,11 @@ class RedisAsynPool extends AsynPool
                 } catch (\Exception $e) {
                     Log::write('$max_count:'.$this->max_count);
                     Log::write($e->getMessage());
-                    $data['result']['exception'] = $e->getMessage();
-                    call_user_func([$this, 'distribute'], $data);
+                    if(!empty($data)){
+                        $data['result']['exception'] = $e->getMessage();
+                        call_user_func([$this, 'distribute'], $data);
+                    }
+
                 }
         });
     }
