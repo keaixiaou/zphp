@@ -18,6 +18,7 @@ use ZPHP\Session\Session;
 class Httpinput{
 
     public $post;
+    public $header;
     public $get;
     public $request;
     public $session;
@@ -35,6 +36,7 @@ class Httpinput{
         if(!empty(Config::getField('session','enable'))) {
             $this->session = yield Session::get($request, $response);
         }
+        $this->header = $request->header;
         //传入请求参数
         if(!empty($request->cookie))$this->cookie = $request->cookie;
         $this->post = !empty($request->post)?$request->post:[];

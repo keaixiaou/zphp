@@ -15,6 +15,7 @@ use ZPHP\Core\Log;
 use ZPHP\Core\Request;
 use ZPHP\Core\Swoole;
 use ZPHP\Session\Session;
+use ZPHP\View\View;
 use ZPHP\ZPHP;
 
 class Controller {
@@ -37,12 +38,22 @@ class Controller {
     protected $tmodule ;
     protected $tcontroller;
     protected $tmethod;
+    /**
+     * @var View
+     */
+    protected $view;
     public $coroutineMethod;
     public $coroutineParam=[];
     /**
      * @var Httpinput $input;
      */
     public $input;
+
+
+    function __construct()
+    {
+        $this->view = Factory::getInstance(\ZPHP\View\View::class);
+    }
 
     /**
      * api接口请求总入口
@@ -97,6 +108,23 @@ class Controller {
         }
     }
 
+
+    /**
+     * 获取真正的view文件
+     * @return string
+     * @throws \Exception
+     */
+    protected function getRealOutFile(){
+        $this->analysisTplFile($this->tplFile);
+        $tplPath = Config::getField('project', 'tpl_path', ZPHP::getRootPath() . DS.'apps'.DS  . 'view' . DS );
+        $tplFile = $tplPath.$this->tmodule.DS.$this->tcontroller.DS.$this->tmethod.'.html';
+        $outFile = $tplFile;
+        if(!empty($this->template)){
+            $outFile = $tplPath.'Template'.DS.$this->template.'.html';
+            $this->tplVar['template_content'] =  $tplFile;
+        }
+        return $outFile;
+    }
     /**
      * html web入口
      */
@@ -106,23 +134,8 @@ class Controller {
         $this->tcontroller = $this->controller;
         $this->tmethod = $this->method;
         $data = yield call_user_func_array($this->coroutineMethod, $this->coroutineParam);
-        $this->analysisTplFile($this->tplFile);
-        $tplPath = Config::getField('project', 'tpl_path', ZPHP::getRootPath() . DS.'apps'.DS  . 'view' . DS );
-        $tplFile = $tplPath.$this->tmodule.DS.$this->tcontroller.DS.$this->tmethod.'.html';
-        $outFile = $tplFile;
-        if(!empty($this->template)){
-            $outFile = $tplPath.'Template'.DS.$this->template.'.html';
-            $this->tplVar['template_content'] =  $tplFile;
-        }
-
-        \ob_start();
-        extract($this->tplVar);
-        if(!is_file($outFile)){
-            throw new \Exception("模板不存在.");
-        }
-        include "{$outFile}";
-        $content = ob_get_contents();
-        \ob_end_clean();
+        $outFile = $this->getRealOutFile();
+        $content = $this->view->fetch($this->tplVar, $outFile);
         yield $this->doBeforeEnd();
         $this->response->status(200);
         $this->response->header('Content-Type','text/html');
@@ -181,14 +194,31 @@ class Controller {
     protected function assign($name, $value){
         $this->tplVar[$name] = $value;
     }
+
+    protected function setViewFile($tplFile=''){
+        if($tplFile!==''){
+            $this->tplFile = $tplFile;
+        }
+    }
+
+    /**
+     * 获取当前请求对应html的内容
+     * @param string $tplFile
+     * @return mixed
+     * @throws \Exception
+     */
+    public function fetch($tplFile=''){
+        $this->setViewFile($tplFile);
+        return $this->view->fetch($this->tplVar, $this->getRealOutFile());
+    }
+
+
     /**
      * 载入模板文件
      * @param string $tplFile
      */
     protected function display($tplFile=''){
-        if($tplFile!==''){
-            $this->tplFile = $tplFile;
-        }
+        $this->setViewFile($tplFile);
     }
     /**
      * 异常处理

@@ -86,16 +86,16 @@ abstract class App{
      * @return string
      */
     static protected function getComponentName($name){
-        if(strpos($name, '\\')){
-            $keyArray = explode('\\', $name);
-            foreach($keyArray as $k=>$v){
-                $keyArray[$k] = ucfirst($v);
-            }
-            $key = implode('\\', $keyArray);
-        }else{
-            $key = ucfirst($name);
-        }
-        return $key;
+//        if(strpos($name, '\\')){
+//            $keyArray = explode('\\', $name);
+//            foreach($keyArray as $k=>$v){
+//                $keyArray[$k] = ucfirst($v);
+//            }
+//            $key = implode('\\', $keyArray);
+//        }else{
+//            $key = ucfirst($name);
+//        }
+        return $name;
     }
 
     /**
