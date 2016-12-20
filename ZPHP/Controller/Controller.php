@@ -28,6 +28,8 @@ class Controller {
      */
     public $requestDeal;
     public $request;
+    protected $hasResponse=false;
+    protected $responseData='';
     public $response;
     public $module;
     public $controller;
@@ -52,26 +54,115 @@ class Controller {
 
     function __construct()
     {
-        $this->view = Factory::getInstance(\ZPHP\View\View::class);
+        $this->view = clone Factory::getInstance(\ZPHP\View\View::class);
+    }
+
+
+
+    /**
+     * 检测response是否结束
+     * @return bool
+     */
+    protected function checkResponse(){
+        if($this->hasResponse){
+            Log::write("ResponseData has been set!", Log::WARN);
+            return false;
+        }
+        return true;
+    }
+
+
+    /**
+     * response已经被设置
+     */
+    protected function setResponse(){
+        $this->hasResponse = true;
+    }
+
+
+    /**
+     * 返回图片
+     * @param $content
+     * @param $type
+     */
+    protected function image($content, $type){
+        if($this->checkResponse()) {
+            $this->response->header('Content-Type', 'image/' . $type);
+            $this->response->status(200);
+            ob_start();
+            $ImageFun = 'image'.$type;
+            $ImageFun($content);
+            $result = ob_get_contents();
+            imagedestroy($content);
+            $this->responseData = $result;
+            $this->setResponse();
+        }
+    }
+
+
+    /**
+     * html return
+     * @param $data
+     */
+    protected function strReturn($data, $code=200){
+        if($this->checkResponse()){
+            $this->response->header('Content-Type', 'text/html');
+            $result = strval($data);
+            $this->response->status($code);
+            $this->responseData = $result;
+            $this->setResponse();
+        }
+    }
+
+
+    /**
+     * json return
+     * @param $data
+     * @throws \Exception
+     */
+    protected function jsonReturn($data){
+        if($this->checkResponse()) {
+            $result = json_encode($data);
+            if (!empty(Config::get('response_filter'))) {
+                $result = $this->strNull($result);
+            }
+            $this->response->status(200);
+            $this->response->header('Content-Type', 'application/json');
+            $this->responseData = $result;
+            $this->setResponse();
+        }
+    }
+
+    protected function _init(){
+        return true;
     }
 
     /**
-     * api接口请求总入口
-     *
+     * 处理请求
+     * @return \Generator
      */
-    public function coroutineApiStart(){
+    public function coroutineStart(){
         yield $this->doBeforeExecute();
-        $result = yield call_user_func_array($this->coroutineMethod, $this->coroutineParam);
-        $result = json_encode($result);
-//        Log::write('result:'.$result);
-        if(!empty(Config::get('response_filter'))){
-            $result = $this->strNull($result);
+        $initRes = true;
+        if(method_exists($this, 'init')){
+            $initRes = yield $this->init();
         }
-        yield $this->doBeforeEnd();
-        $this->response->header('Content-Type', 'application/json');
-        $this->response->end($result);
+        if($initRes){
+            $result = yield call_user_func_array($this->coroutineMethod, $this->coroutineParam);
+        }
+        yield $this->doBeforeDestroy();
+        if(!empty($result) && $this->checkResponse()){
+            if($this->isApi) {
+                $this->jsonReturn($result);
+            }else{
+                $this->strReturn($result);
+            }
+        }
+        $this->response->header('Connection','keep-alive');
+        $this->response->end($this->responseData);
         $this->destroy();
     }
+
     /**
      * 指定模板文件
      * @param $tplFile
@@ -125,23 +216,6 @@ class Controller {
         }
         return $outFile;
     }
-    /**
-     * html web入口
-     */
-    public function coroutineHtmlStart(){
-        yield $this->doBeforeExecute();
-        $this->tmodule = $this->module;
-        $this->tcontroller = $this->controller;
-        $this->tmethod = $this->method;
-        $data = yield call_user_func_array($this->coroutineMethod, $this->coroutineParam);
-        $outFile = $this->getRealOutFile();
-        $content = $this->view->fetch($this->tplVar, $outFile);
-        yield $this->doBeforeEnd();
-        $this->response->status(200);
-        $this->response->header('Content-Type','text/html');
-        $this->response->end($content);
-        $this->destroy();
-    }
 
 
     protected function setTemplate($template){
@@ -165,13 +239,16 @@ class Controller {
     {
         $this->input = clone Factory::getInstance(\ZPHP\Core\Httpinput::class);
         yield $this->input->init($this->request, $this->response);
+        $this->tmodule = $this->module;
+        $this->tcontroller = $this->controller;
+        $this->tmethod = $this->method;
     }
 
     /**
      * 请求结束前做的一些处理,如session和cookie的写入
      * @throws \Exception
      */
-    protected function doBeforeEnd(){
+    protected function doBeforeDestroy(){
         if(!empty(Config::getField('session', 'enable'))){
            yield Session::set($this->input->session(), $this->request, $this->response);
         }
@@ -199,6 +276,7 @@ class Controller {
         if($tplFile!==''){
             $this->tplFile = $tplFile;
         }
+        $this->assign('session', $this->input->session());
     }
 
     /**
@@ -214,12 +292,27 @@ class Controller {
 
 
     /**
+     * 跳转方法
+     * @param $url
+     */
+    protected function redirect($url){
+        $this->response->header('Location', $url);
+        $this->strReturn('', 302);
+    }
+
+
+    /**
      * 载入模板文件
      * @param string $tplFile
      */
     protected function display($tplFile=''){
         $this->setViewFile($tplFile);
+        $outFile = $this->getRealOutFile();
+        $content = $this->view->fetch($this->tplVar, $outFile);
+        $this->strReturn($content);
     }
+
+
     /**
      * 异常处理
      */
@@ -242,6 +335,8 @@ class Controller {
 
     public function destroy(){
         if (ob_get_contents()) ob_end_clean();
+        unset($this->request);
+        unset($this->response);
     }
 
 

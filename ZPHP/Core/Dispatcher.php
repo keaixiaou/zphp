@@ -10,7 +10,6 @@ namespace ZPHP\Core;
 
 class Dispatcher{
 
-    protected $requestDeal;
     public function __construct()
     {
     }
@@ -18,13 +17,12 @@ class Dispatcher{
 
     public function distribute(Request $requestDeal)
     {
-        $this->requestDeal = $requestDeal;
-        $mvc = $this->requestDeal->parse();
+        $mvc = $requestDeal->parse();
         $httpResult = null;
         if(!empty($mvc['callback'])){
-            $httpResult = $this->requestDeal->callbackDistribute($mvc['callback'], $mvc['param']);
+            $httpResult = $requestDeal->callbackDistribute($mvc['callback'], $mvc['param']);
         }else{
-            $httpResult = $this->requestDeal->defaultDistribute($mvc['mvc']);
+            $httpResult = $requestDeal->defaultDistribute($mvc['mvc']);
         }
         return $httpResult;
     }

@@ -127,19 +127,15 @@ class Route {
     static public function defaultParse($uri){
         $mvc = Config::getField('project','mvc');
         $url_array = explode('/', trim($uri,'/'));
-        if(!empty($url_array[3])){
-            throw new \Exception(402);
-        }else{
-            if(!empty($url_array[2])){
-                $mvc['module'] = $url_array[0];
-                $mvc['controller'] = $url_array[1];
-                $mvc['action'] = $url_array[2];
-            }else if(!empty($url_array[1])){
-                $mvc['controller'] = $url_array[0];
-                $mvc['action'] = $url_array[1];
-            }else if(!empty($url_array[0])){
-                $mvc['action'] = $url_array[0];
-            }
+        if(!empty($url_array[2])){
+            $mvc['module'] = $url_array[0];
+            $mvc['controller'] = $url_array[1];
+            $mvc['action'] = $url_array[2];
+        }else if(!empty($url_array[1])){
+            $mvc['controller'] = $url_array[0];
+            $mvc['action'] = $url_array[1];
+        }else if(!empty($url_array[0])){
+            $mvc['module'] = $url_array[0];
         }
         $mvc = [ 'mvc'=> self::dealUcfirst($mvc)];
         return $mvc;

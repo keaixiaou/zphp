@@ -86,8 +86,8 @@ class Dir
             }
             $filename = $file->getFilename();
             if ($file->isDir()) {
-                $before .= $filename . '\\';
-                self::getClass($dir.DS. $filename, $filter, $result, $before);
+                $tmp = $before.$filename . '\\';
+                self::getClass($dir.DS. $filename, $filter, $result, $tmp);
             }else{
                 if(preg_match($filter,$filename, $match)){
                     $result[] = $before.str_replace('.php','',$filename);

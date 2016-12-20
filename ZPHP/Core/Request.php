@@ -75,7 +75,7 @@ class Request{
      * @return mixed|string
      */
     protected function executeGeneratorScheduler(Controller $controller){
-        $action = 'coroutine'.(!empty($controller->isApi)?'Api':'Html').'Start';
+        $action = 'coroutineStart';
         try{
             $generator = call_user_func([$controller, $action]);
             if ($generator instanceof \Generator) {

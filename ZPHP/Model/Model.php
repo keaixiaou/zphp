@@ -82,12 +82,23 @@ class Model {
     }
 
 
+    /**
+     * 获取数量
+     * @param string $field
+     * @return object
+     */
+    public function count($field='*'){
+        $this->select = "count(".$field.") as num";
+        $this->limit(1);
+        $data = yield  $this->get();
+        return !empty($data[0]['num'])?$data[0]['num']:0;
+    }
 
     /*
      * 根据where解析查询条件
      * @zhaoye
      */
-    function where($where){
+    public function where($where){
         $whereStr = '';
         if(is_string($where)) {
             // 直接使用字符串条件
@@ -178,6 +189,12 @@ class Model {
     }
 
 
+
+    public function order($orderStr){
+        $this->order = 'order by '.$orderStr;
+        return $this;
+    }
+
     /**
      * 获取筛选条件的所有数据
      * @return array
@@ -258,6 +275,7 @@ class Model {
         {
             $this->limit = '';
         }
+        return $this;
     }
 
     //生成sql
