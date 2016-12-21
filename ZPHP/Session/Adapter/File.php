@@ -7,6 +7,7 @@
 
 namespace ZPHP\Session\Adapter;
 
+use ZPHP\Core\Config;
 use ZPHP\Manager;
 use ZPHP\ZPHP;
 
@@ -85,7 +86,8 @@ class File
 
     private function getPath()
     {
-        return isset($this->config['save_path']) ? $this->config['save_path'] : ZPHP::getRootPath() . DS . 'session_tmp';
+        return isset($this->config['save_path']) ? $this->config['save_path'] :
+            ZPHP::getRootPath() . DS . Config::getField('session','path');
     }
 
     private function getFileName($sid)

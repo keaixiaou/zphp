@@ -106,7 +106,10 @@ abstract class App{
     static public function get($name, $type){
         $class = self::$_di->get($name, $type);
         if(empty($class)){
-            throw new \Exception($type.':'.$name.' not found!');
+            if(DEBUG){
+                throw new \Exception($type.':'.$name.' not found!');
+            }
+
         }
         return $class;
     }

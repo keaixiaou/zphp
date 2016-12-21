@@ -8,14 +8,19 @@
 
 namespace ZPHP\Session;
 use ZPHP\Core\Config as ZConfig;
+use ZPHP\Core\Config;
 use ZPHP\Core\Log;
 use ZPHP\Core\Rand;
 
 
 class Session
 {
-    private static $_sessionKey = 'PHPSESSID';
+    private static $_sessionKey = 'SESSID';
 
+
+    public static function init(){
+        self::$_sessionKey = Config::get('project_name').self::$_sessionKey;
+    }
     /**
      * 获取session
      * @param $request
