@@ -26,33 +26,56 @@ abstract class App{
     /**
      * 初始化App的容器服务
      */
-    static public function init($di){
+    static public function init($di)
+    {
         self::$_di = $di;
-        foreach(self::$compenontType as $type){
-            self::initClosureList($type);
-            $dir = APPPATH.DS.$type;
-            if(is_dir($dir)) {
-                $classList = Dir::getClass($dir, '/.php$/');
-                foreach ($classList as $class) {
-                    self::$type($class);
+        $allList = [];
+        foreach (self::$compenontType as $type) {
+            self::initConfigList($type, $allList);
+            self::initDefaultList($type, $allList);
+        }
+        try {
+            //初始化加载
+            foreach ($allList as $key => $value) {
+                foreach($value as $k => $v){
+                    self::$key($v);
                 }
             }
+        }catch(\Exception $e){
+            Log::write($e->getMessage());
         }
     }
 
 
     /**
-     * 注入配置里的服务
+     * 默认的初始化
      * @param $type
      * @throws \Exception
      */
-    static public function initClosureList($type){
+    static public function initDefaultList($type, &$allList){
+        $dir = APPPATH.DS.$type;
+        if(is_dir($dir)) {
+            $classList = Dir::getClass($dir, '/.php$/');
+            foreach($classList as $key => $value){
+                $value = self::getComponentName($value);
+                self::$_di->set($value, $type, $type.'\\'.$value);
+                $allList[$type][] = $value;
+            }
+        }
+    }
+
+    /**
+     * 配置文件的服务初始化
+     * @param $type
+     * @throws \Exception
+     */
+    static public function initConfigList($type, &$allList){
         $modelConfig = Config::get($type);
         if(!empty($modelConfig)) {
             foreach ($modelConfig as $key => $value) {
                 $key = self::getComponentName($key);
                 self::$_di->set($key, $type, $value);
-                self::$type($key);
+                $allList[$type][] = $key;
             }
         }
     }
