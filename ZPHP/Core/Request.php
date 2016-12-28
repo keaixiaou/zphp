@@ -76,6 +76,7 @@ class Request{
      */
     protected function executeGeneratorScheduler(Controller $controller){
         $action = 'coroutineStart';
+        $returnRes = 'NULL';
         try{
             $generator = call_user_func([$controller, $action]);
             if ($generator instanceof \Generator) {
@@ -84,14 +85,14 @@ class Request{
                 $task->setRoutine($generator);
                 $task->work($task->getRoutine());
             }else{
-                return $generator;
+                $returnRes = $generator;
             }
         }catch(\Exception $e){
             $this->response->status(500);
             $msg = DEBUG===true?$e->getMessage():'服务器升空了!';
             echo Swoole::info($msg);
         }
-        return 'NULL';
+        return $returnRes;
     }
     /**
      * 默认mvc模式

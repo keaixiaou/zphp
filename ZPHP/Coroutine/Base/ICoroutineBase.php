@@ -11,5 +11,4 @@ interface ICoroutineBase
 {
     function send(callable $callback);
 
-    function getResult();
 }

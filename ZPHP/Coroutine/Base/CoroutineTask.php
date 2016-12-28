@@ -152,7 +152,7 @@ class CoroutineTask{
     }
 
 
-    public function setController(Controller $controller){
+    public function setController(Controller &$controller){
         $this->controller = $controller;
     }
 
@@ -161,5 +161,9 @@ class CoroutineTask{
         $this->routine = $routine;
     }
 
+    public function __destruct()
+    {
+        // TODO: Implement __destruct() method.
+    }
 
 }

@@ -5,6 +5,7 @@
  * 初始化框架相关信息
  */
 namespace ZPHP;
+use ZPHP\Client\SwoolePid;
 use ZPHP\Common\Dir;
 use ZPHP\Core\Swoole;
 use ZPHP\Platform\Linux;
@@ -35,7 +36,7 @@ class ZPHP
     private static $os;
     private static $server_pid;
     private static $server_file;
-
+    private static $appName;
 
     public static function setOs($os){
         self::$os = $os;
@@ -170,9 +171,9 @@ class ZPHP
     public static function run($rootPath, $run=true, $configPath=null)
     {
         global $argv;
-        if(empty($argv[1])||!in_array($argv[1],['stop','start','reload','restart'])){
+        if(empty($argv[1])||!in_array($argv[1],['stop','start','reload','restart','status'])){
             echo "=====================================================\n";
-            echo "Usage: php {$argv[0]} start|stop|reload|restart\n";
+            echo "Usage: php {$argv[0]} start|stop|reload|restart|status\n";
             echo "=====================================================\n";
             exit;
         }else {
@@ -214,12 +215,10 @@ class ZPHP
             }else{
                 self::setOs(new Linux());
             }
-            self::$server_file = Config::getField('project', 'pid_path').DS.Config::get('project_name').'_master.pid';
-            if(!file_exists(self::$server_file)){
-                self::$server_pid = 0;
-            }else{
-                self::$server_pid = file_get_contents(self::$server_file);
-            }
+            self::$appName = Config::get('project_name');
+            self::$server_file = Config::getField('project', 'pid_path').DS.Config::get('project_name').'.pid';
+            $pidList = SwoolePid::getPidList(self::$server_file);
+            self::$server_pid = !empty($pidList['master'])?$pidList['master']:0;
             self::doCommand($argv[1],$run);
         }
 
@@ -240,7 +239,8 @@ class ZPHP
             self::start($run);
         }else if ($argv=='reload'){
             self::reload();
-
+        }else if ($argv=='status'){
+            self::status();
         }
 
 
@@ -248,12 +248,8 @@ class ZPHP
 
 
     protected static function start($run){
-        if(!file_exists(self::$server_file)){
-            self::$server_pid = 0;
-        }else{
-            self::$server_pid = file_get_contents(self::$server_file);
-        }
         if(empty(self::$server_pid)){
+            if(!is_file(self::$server_file))file_put_contents(self::$server_file,'');
             $serverMode = Config::get('server_mode', 'Http');
             //寻找server的socket适配器
             $service = Server\Factory::getInstance($serverMode);
@@ -276,9 +272,13 @@ class ZPHP
         if(empty(self::$server_pid)){
             echo ("Service has shut down!\n");
         }else{
-            self::getOs()->kill(self::$server_pid, SIGTERM);
-            if(is_file(self::$server_file))
-                unlink(self::$server_file);
+            $res = self::getOs()->kill(self::$server_pid, SIGTERM);
+            if($res ) {
+                self::$server_pid = 0;
+            }
+        }
+        if(is_file(self::$server_file)){
+            unlink(self::$server_file);
         }
 
     }
@@ -292,6 +292,91 @@ class ZPHP
         exit;
     }
 
+    protected static function status(){
+        if(empty(self::$server_pid)){
+            exit(self::$appName." Has been Shut Down!\n");
+        }
+        global $argv;
+        if(PHP_OS == 'Linux'){
+            $grepName = self::$appName;
+        }else{
+            $grepName = $argv[0];
+        }
+        exec('ps axu|grep '.$grepName, $output);
+        $output = self::packExeData($output);
+        $pidDetail = SwoolePid::getPidList(self::$server_file);
+        $pidList = [];
+        foreach($pidDetail as $key => $value){
+            if(is_array($value)){
+                foreach($value as $k => $v){
+                    if($v==1) {
+                        $pidList[$k] = ['type'=>$key];
+                    }
+                }
+            }else{
+                $pidList[$value] = ['type'=>$key];
+            }
+        }
+        $pidDetail = [];
+        foreach($output as $key => $value){
+            if(!empty($pidList[$value[1]])){
+                $value[] = $pidList[$value[1]]['type'];
+                $pidDetail[] = $value;
+            }
+        }
+        self::outputStatus($pidDetail);
+    }
 
+    protected static function outputStatus($pidDetail){
+        echo "Welcome ".self::$appName."!\n";
+        $pidStatic = [];
+        foreach($pidDetail as $key => $value){
+            if(empty($pidStatic[$value[11]])){
+                $pidStatic[$value[11]] = 1;
+            }else{
+                $pidStatic[$value[11]] ++;
+            }
+        }
+        foreach($pidStatic as $key => $value){
+            echo ucfirst($key)." Process Num:".$value."\n";
+        }
+
+        echo "-------------PROCESS STATUS--------------\n";
+        echo "Type    Pid   %CPU  %MEM   MEM     Start \n";
+        foreach($pidDetail as $key => $value){
+            echo str_pad($value[11],8).str_pad($value[1],6).str_pad($value[2],6).
+                str_pad($value[3],7).str_pad(round($value[5]/1024,2)."M",8).$value[8]."\n";
+        }
+
+    }
+
+    protected static function packExeData($output){
+        $data = [];
+        foreach($output as $key => $value){
+            $data[] = self::dealSingleData($value);
+        }
+        return $data;
+    }
+
+    protected static function dealSingleData($info){
+        $data = [];
+        $i = 0;
+        $num = 0;
+
+        while($num<=9) {
+            $start = '';
+            while ($info[$i] != ' ') {
+                $start .= $info[$i];
+                $i++;
+            }
+            $data[] = $start;
+            while ($info[$i] == ' ') {
+                $i++;
+            }
+            $num++;
+        }
+        $data[] = substr($info, $i);
+        return $data;
+    }
 
 }

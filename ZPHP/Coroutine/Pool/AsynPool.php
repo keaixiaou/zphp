@@ -119,7 +119,7 @@ abstract class AsynPool implements IAsynPool
     {
         $this->prepareLock = false;
         $this->pool->push($client);
-        if (!$this->commands->isEmpty()) {//有残留的任务
+        if (!$this->commands->isEmpty()) {
             $command = $this->commands->dequeue();
             $this->execute($command);
         }

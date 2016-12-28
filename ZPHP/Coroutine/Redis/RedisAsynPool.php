@@ -178,11 +178,4 @@ class RedisAsynPool extends AsynPool
         return self::AsynName;
     }
 
-    /**
-     * @return int
-     */
-    public function getMessageType()
-    {
-        return SwooleMarco::MSG_TYPE_REDIS_MESSAGE;
-    }
 }

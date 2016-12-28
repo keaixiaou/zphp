@@ -9,10 +9,12 @@
 
 namespace ZPHP\Core;
 
+use ZPHP\Coroutine\Mongo\MongoAsynPool;
 use ZPHP\Coroutine\Redis\RedisAsynPool;
-use ZPHP\Db\Mongo;
+//use ZPHP\Db\Mongo;
 use ZPHP\Model\Model;
 use ZPHP\Coroutine\Mysql\MysqlAsynPool;
+use ZPHP\Mongo\Mongo;
 use ZPHP\Redis\Redis;
 
 class Db {
@@ -26,15 +28,22 @@ class Db {
      */
     public $redisPool;
 
+
+    /**
+     * @var MongoAsynPool
+     */
+    public $mongoPool;
     /**
      * @var RedisAsynPool
      */
     public $sessionRedisPool;
 
+    public static $server;
     public static $instance;
     protected static $db;
     protected static $_tables;
     protected static $_redis;
+    protected static $_mongo;
     protected static $_sessionRedis;
     protected static $_collection;
     private static $lastSql;
@@ -62,6 +71,26 @@ class Db {
         return self::$workId;
     }
 
+
+    /**
+     * DB类初始化
+     * @param $server
+     * @param $workerId
+     * @throws \Exception
+     */
+    static public function init($server, $workerId){
+        self::getInstance();
+        self::$server = $server;
+//        $res = self::$server->task("taskcallback", -1, function (\swoole_server $server, $task_id, $data) {
+//            Log::write( "Task Callback: ");
+//            Log::write('$task_id:'.$task_id.';data:'.print_r( $data, true));
+//        });
+//        Log::write('task res:'.json_encode($res));
+        self::initMysqlPool($workerId, Config::getField('database','master'));
+        self::initRedisPool($workerId, Config::get('redis'));
+        self::initMongoPool($workerId, self::$server, Config::get('mongo'));
+        self::initSessionRedisPool($workerId, Config::get('session'));
+    }
     /**
      * @param $workId
      * 初始化mysql连接池
@@ -128,6 +157,30 @@ class Db {
         }
     }
 
+
+    /**
+     * init mongoPool
+     * @param $workId
+     */
+    public static function initMongoPool($workId, $server, $config){
+        if(empty(self::$instance->mongoPool)){
+            self::$instance->mongoPool = new MongoAsynPool();
+            self::$instance->mongoPool->initMongo($workId, $server, $config);
+        }
+    }
+
+
+    /**
+     * @param $collection
+     * @return Mongo
+     */
+    static public function collection($collection){
+        if(!isset(self::$_mongo[$collection])){
+            self::$_mongo[$collection] = new Mongo($collection,self::$instance->mongoPool);
+        }
+        return self::$_mongo[$collection];
+    }
+
     /**
      * free redis pool
      */
@@ -170,7 +223,7 @@ class Db {
      * @return mixed
      * @throws \Exception
      */
-    public static function collection($collectName = ''){
+    /*public static function collection($collectName = ''){
         if(!isset(self::$_collection[$collectName])){
             $config = Config::get('mongo');
             $host = 'mongodb://'.(!empty($config['username'])?"{$config['username']}":'')
@@ -185,7 +238,7 @@ class Db {
             unset($mongo);
         }
         return self::$_collection[$collectName];
-    }
+    }*/
 
     /**
      * pdo 查询获取pdo(同步)

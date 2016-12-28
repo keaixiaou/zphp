@@ -152,13 +152,6 @@ class MysqlAsynPool extends AsynPool{
         return self::AsynName;
     }
 
-    /**
-     * @return int
-     */
-    public function getMessageType()
-    {
-        return SwooleMarco::MSG_TYPE_MYSQL_MESSAGE;
-    }
 
 
 

@@ -19,10 +19,6 @@ interface IAsynPool
     function initWorker($workerId, $config);
 
 
-    function getMessageType();
-
-
-
     function pushToPool($client);
 
     function prepareOne($data);

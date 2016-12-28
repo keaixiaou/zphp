@@ -158,6 +158,7 @@ class Controller {
                 $this->strReturn($result);
             }
         }
+//        Log::write('response:'.$this->responseData);
         $this->response->header('Connection','keep-alive');
         $this->response->end($this->responseData);
         $this->destroy();
@@ -335,9 +336,14 @@ class Controller {
 
     public function destroy(){
         if (ob_get_contents()) ob_end_clean();
+        unset($this->coroutineMethod);
         unset($this->request);
         unset($this->response);
     }
 
 
+    function __destruct()
+    {
+        // TODO: Implement __destruct() method.
+    }
 }
