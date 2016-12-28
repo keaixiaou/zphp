@@ -63,13 +63,15 @@ class SwooleHttp extends ZSwooleHttp
                 $response->end($httpResult);
             }
         } catch (\Exception $e) {
-            $code = intval($e->getMessage());
+            $message = explode('|',$e->getMessage());
+            $code = intval($message[0]);
             if($code==0){
                 $response->status(500);
                 echo Swoole::info($e->getMessage());
             }else {
                 $response->status($code);
-                echo Swoole::info(Response::$HTTP_HEADERS[$code]);
+                $otherMessage = !empty($message[1])?' '.$message[1]:'';
+                echo Swoole::info(Response::$HTTP_HEADERS[$code].$otherMessage);
             }
         }
         $result = ob_get_contents();

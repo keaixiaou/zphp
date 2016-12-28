@@ -103,9 +103,10 @@ class Request{
         if(!empty(Config::getField('project','reload')) && extension_loaded('runkit')){
             App::clear($controllerClass, 'controller');
         }
-        $FController = App::controller($controllerClass);
-        if(empty($FController)){
-            throw new \Exception(404);
+        try {
+            $FController = App::controller($controllerClass);
+        }catch(\Exception $e) {
+            throw new \Exception('404|'.$e->getMessage());
         }
         $controller = clone $FController;
         $action = $mvc['action'];
