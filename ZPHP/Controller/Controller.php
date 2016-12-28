@@ -133,7 +133,7 @@ class Controller {
         }
     }
 
-    protected function _init(){
+    protected function init(){
         return true;
     }
 
