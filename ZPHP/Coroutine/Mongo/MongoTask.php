@@ -121,4 +121,28 @@ class MongoTask{
         }
         return $result;
     }
+
+
+    /**
+     * aggregate
+     * @param $collection
+     * @param $pipeline
+     * @return array
+     */
+    public function aggregate($collection, $pipeline){
+        $this->checkManager();
+        $command = new \MongoDB\Driver\Command([
+            'aggregate' => $collection,
+            'pipeline' => $pipeline,
+            'cursor' => new \stdClass,
+        ]);
+        $result = [];
+        $cursor = $this->manager->executeCommand($this->config['database'], $command);
+        if($cursor){
+            foreach($cursor as $document){
+                $result[] = (array)$document;
+            }
+        }
+        return $result;
+    }
 }

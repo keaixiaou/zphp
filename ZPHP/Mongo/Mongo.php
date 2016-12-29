@@ -204,6 +204,22 @@ class Mongo{
         return $data;
     }
 
+
+    /**
+     * aggregate
+     * @param $pipeline
+     * @return mixed
+     */
+    public function aggregate($pipeline){
+        $mongoCoroutine = new MongoCoroutine($this->mongoAsynPool);
+        $query = [
+            'method' => 'aggregate',
+            'param' => [$this->collection, $pipeline],
+        ];
+        $data = yield $mongoCoroutine->query($query);
+        return $data;
+    }
+
     protected function reset(){
         $this->filter = [];
         $this->options = [];
