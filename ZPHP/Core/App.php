@@ -42,7 +42,7 @@ abstract class App{
                 }
             }
         }catch(\Exception $e){
-            Log::write($e->getMessage());
+            echo $e->getMessage()."\n";
         }
     }
 
