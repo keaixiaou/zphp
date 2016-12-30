@@ -75,7 +75,6 @@ abstract class SwooleHttp extends CSwoole
 
     public function errorResponse($error){
         $errorMsg = DEBUG===true?"{$error['message']} ({$error['file']}:{$error['line']})":'application internal error!';
-        Log::write('errorResponse:'.$errorMsg);
         echo "errorResponse:".$errorMsg;
         $this->afterResponese();
     }
@@ -88,7 +87,6 @@ abstract class SwooleHttp extends CSwoole
 
     public function onTask($server, $taskId, $fromId, $data)
     {
-//        Log::write('task:'.$taskId.';from:'.$fromId.';data:'.print_r($data, true));
         if(empty($data['class']) || empty($data['method']) || empty($data['param'])){
             return null;
         }
@@ -98,6 +96,7 @@ abstract class SwooleHttp extends CSwoole
         }catch(\Exception $e){
             return ['exception'=>$e->getMessage()];
         }
+
 
 
     }

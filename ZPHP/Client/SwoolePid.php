@@ -15,9 +15,7 @@ use ZPHP\Core\Log;
 abstract class SwoolePid{
 
     static protected $pidth;
-    static protected $pidList;
     static protected $pidFileName;
-    static protected $lockfile;
 
     /**
      * 初始化
@@ -28,10 +26,12 @@ abstract class SwoolePid{
     static public function init($path, $name, $setting){
         self::$pidth = $path;
         self::$pidFileName = self::$pidth.$name;
-        self::$lockfile = self::$pidth.'tmp.lock';
-        self::makeTmpList($setting);
     }
 
+
+    static public function getFileName(){
+        return self::$pidFileName;
+    }
     /**
      * 获取pidList
      * @param $file
@@ -45,27 +45,6 @@ abstract class SwoolePid{
         return !empty($pidList)?$pidList:[];
     }
 
-
-    /**
-     * 生成临时文件列表
-     * @param $setting
-     */
-    static public function makeTmpList($setting){
-        self::$pidList[] = self::$pidth.'master';
-        self::$pidList[] = self::$pidth.'manager';
-        $i = 0;
-        //        'task_worker_num' => 1,
-        while($i<$setting['worker_num']){
-            self::$pidList[] = self::$pidth.'work'.$i;
-            $i++;
-        }
-        $i = 0;
-        while($i<$setting['task_worker_num']){
-            self::$pidList[] = self::$pidth.'task'.$i;
-            $i++;
-        }
-
-    }
 
     /**
      * 输入pidlist

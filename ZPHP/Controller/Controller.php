@@ -14,6 +14,7 @@ use ZPHP\Core\Httpinput;
 use ZPHP\Core\Log;
 use ZPHP\Core\Request;
 use ZPHP\Core\Swoole;
+use ZPHP\Monitor\Monitor;
 use ZPHP\Session\Session;
 use ZPHP\View\View;
 use ZPHP\ZPHP;
@@ -58,6 +59,18 @@ class Controller {
     }
 
 
+
+    public function getNowServiceStatus(){
+        ob_start();
+        /**
+         *  @var Monitor $monitor;
+         */
+        $monitor = Factory::getInstance(\ZPHP\Monitor\Monitor::class);
+        $monitor->outPutWebStatus();
+        $result = ob_get_contents();
+        ob_end_clean();
+        return $result;
+    }
 
     /**
      * 检测response是否结束

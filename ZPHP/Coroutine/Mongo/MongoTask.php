@@ -85,7 +85,7 @@ class MongoTask{
         $bulk = new \MongoDB\Driver\BulkWrite;
         $bulk->update(
             $filter,
-            ['$set' => $update],
+            $update,
             ['multi' => true, 'upsert' => $upsert]
         );
 
@@ -124,25 +124,85 @@ class MongoTask{
 
 
     /**
+     * command类操作
+     * @param $command
+     * @return cursor
+     */
+    protected function executeCommand($command){
+        $this->checkManager();
+        return $this->manager->executeCommand($this->config['database'], new \MongoDB\Driver\Command($command));
+    }
+
+    /**
      * aggregate
      * @param $collection
      * @param $pipeline
      * @return array
      */
     public function aggregate($collection, $pipeline){
-        $this->checkManager();
-        $command = new \MongoDB\Driver\Command([
+        $command = [
             'aggregate' => $collection,
             'pipeline' => $pipeline,
             'cursor' => new \stdClass,
-        ]);
+        ];
         $result = [];
-        $cursor = $this->manager->executeCommand($this->config['database'], $command);
+        $cursor = $this->executeCommand($command);
         if($cursor){
             foreach($cursor as $document){
                 $result[] = (array)$document;
             }
         }
         return $result;
+    }
+
+
+    /**
+     * mongodb group 自定义函数操作
+     * @param $collection
+     * @param $key
+     * @param $initial
+     * @param $reduce
+     * @param $filter
+     * @return array
+     */
+    public function group($collection, $key, $initial, $reduce, $filter){
+        $command = [
+            'group'=>[
+                'ns' => $collection,
+                'key' => $key,
+                'initial' => $initial,
+                '$reduce' => new \MongoDB\BSON\Javascript($reduce),
+                'query' => $filter,
+            ]
+        ];
+        $cursor = $this->executeCommand($command);
+        $data = [];
+        if($cursor) {
+            $resObjArray = $cursor->toArray()[0]->retval;
+            foreach($resObjArray as $obj){
+                $data[] = (array)$obj;
+            }
+        }
+        return $data;
+    }
+
+
+    /**
+     * 返回count
+     * @param $collection
+     * @param $filter
+     * @return int
+     */
+    public function count($collection, $filter){
+        $command = [
+            'count' => $collection,
+            'query' => $filter,
+        ];
+        $cursor = $this->executeCommand($command);
+        $num = 0;
+        if($cursor) {
+            $num = $cursor->toArray()[0]->n;
+        }
+        return $num;
     }
 }

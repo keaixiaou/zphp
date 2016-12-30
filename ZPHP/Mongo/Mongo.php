@@ -180,15 +180,27 @@ class Mongo{
      * @param bool $upsert
      */
     public function save($data, $upsert=false){
+        $updata = ['$set' => $data];
         $mongoCoroutine = new MongoCoroutine($this->mongoAsynPool);
         $query = [
             'method' => 'update',
-            'param' => [$this->collection, $this->filter, $data, $upsert],
+            'param' => [$this->collection, $this->filter, $updata, $upsert],
         ];
         $data = yield $mongoCoroutine->query($query);
         return $data;
     }
 
+
+    public function setInc($field, $num=1){
+        $updata = ['$inc' => [ $field => $num ]];
+        $mongoCoroutine = new MongoCoroutine($this->mongoAsynPool);
+        $query = [
+            'method' => 'update',
+            'param' => [$this->collection, $this->filter, $updata],
+        ];
+        $data = yield $mongoCoroutine->query($query);
+        return $data;
+    }
 
     /**
      *删除
@@ -215,6 +227,43 @@ class Mongo{
         $query = [
             'method' => 'aggregate',
             'param' => [$this->collection, $pipeline],
+        ];
+        $data = yield $mongoCoroutine->query($query);
+        return $data;
+    }
+
+
+    /**
+     * mongodb group 聚合操作
+     * @param $key
+     * @param $initial
+     * @param $reduce
+     * @return mixed
+     */
+    public function group($key, $initial, $reduce){
+        $mongoCoroutine = new MongoCoroutine($this->mongoAsynPool);
+        $query = [
+            'method' => 'group',
+            'param' => [$this->collection, $key, $initial, $reduce, $this->filter],
+        ];
+        $data = yield $mongoCoroutine->query($query);
+        return $data;
+    }
+
+
+    /**
+     * count操作
+     * @param string $field
+     * @return mixed
+     */
+    public function count($field='*'){
+        if($field!=='*'){
+            $this->filter[$field] = ['$exists'=>1];
+        }
+        $mongoCoroutine = new MongoCoroutine($this->mongoAsynPool);
+        $query = [
+            'method' => 'count',
+            'param' => [$this->collection, $this->filter],
         ];
         $data = yield $mongoCoroutine->query($query);
         return $data;
