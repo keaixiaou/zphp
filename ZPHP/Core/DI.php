@@ -10,7 +10,7 @@
 namespace ZPHP\Core;
 
 class DI{
-    static protected $closureList;
+    static public $closureList;
 
     /**
      * 注入

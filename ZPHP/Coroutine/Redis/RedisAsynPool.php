@@ -22,7 +22,7 @@ class RedisAsynPool extends AsynPool
         'select'    =>  ['op'=>'select','next'=>''],
     ];
 
-    protected $cmd = ['set', 'get', 'lpop', 'lpush','setex','decr', 'incr',
+    protected $cmd = ['set', 'get', 'lpop', 'lpush', 'rpush','setex','decr', 'incr',
     'hset','hget'];
     /**
      * 连接

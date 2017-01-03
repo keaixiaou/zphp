@@ -8,6 +8,7 @@ use ZPHP\Socket\ICallback;
 use ZPHP\Core\Config as ZConfig;
 use ZPHP\Core\Log;
 use ZPHP\Protocol;
+use ZPHP\ZPHP;
 
 
 abstract class Swoole implements ICallback
@@ -24,6 +25,9 @@ abstract class Swoole implements ICallback
         SwoolePid::init($pidPath, $pidname, $server->setting);
         if(!empty($pidPath)){
             $this->pidFile = $pidPath . DS . $pidname;
+        }
+        if(!is_dir(ZPHP::getLogPath())){
+            @mkdir(ZPHP::getLogPath(), 0777, true);
         }
         $this->serv = $server;
     }

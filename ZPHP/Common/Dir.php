@@ -97,6 +97,29 @@ class Dir
         return $result;
     }
 
+
+    static public function getFileName($dir, $filter='', &$result=[], $before=''){
+        if(empty($filter)){
+            throw new \Exception("过滤条件错误");
+        }
+        $files = new \DirectoryIterator($dir);
+        foreach ($files as $file) {
+            if ($file->isDot()) {
+                continue;
+            }
+            $filename = $file->getFilename();
+            if ($file->isDir()) {
+                $tmp = $before.$filename . DS;
+                self::getFileName($dir.DS. $filename, $filter, $result, $tmp);
+            }else{
+                if(preg_match($filter,$filename, $match)){
+                    $result[] = $before.$filename;
+                }
+            }
+        }
+        return $result;
+    }
+
     /**
      * 递归删除目录
      * @param $dir

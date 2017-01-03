@@ -60,6 +60,11 @@ class Redis{
         return $this->__call('lpush', [$key, $value]);
     }
 
+    public function rpush($key, $value){
+        return $this->__call('rpush', [$key, $value]);
+    }
+
+
     public function lpop($key){
         return $this->__call('lpop', [$key]);
     }
@@ -79,5 +84,6 @@ class Redis{
     public function hget($key, $field){
         return $this->__call('hget', [$key,  $field]);
     }
+
 
 }

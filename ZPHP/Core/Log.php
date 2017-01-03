@@ -43,7 +43,7 @@ abstract class Log {
      */
     static protected function reallyWrite(){
         $str = implode("", self::$log);
-        $file_path = ZPHP::getRootPath().'/log/app';
+        $file_path = ZPHP::getLogPath().DS.'app';
         if(!is_dir($file_path)){
             mkdir($file_path, 0755, true);
         }

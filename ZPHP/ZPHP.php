@@ -13,6 +13,8 @@ use ZPHP\Monitor\Monitor;
 use ZPHP\Platform\Linux;
 use ZPHP\Platform\Windows;
 use ZPHP\Protocol\Response;
+use ZPHP\Template\Template;
+use ZPHP\Template\ViewCache;
 use ZPHP\View,
     ZPHP\Core\Config,
     ZPHP\Core\Log,
@@ -26,12 +28,14 @@ class ZPHP
      * @var string
      */
     private static $rootPath;
+    private static $tmpPath;
+    private static $logPath;
     /**
      * 配置目录
      * @var string
      */
     private static $configPath = 'default';
-    private static $appPath = 'apps';
+    private static $appPath ;
     private static $zPath;
     private static $libPath='lib';
     private static $classPath = array();
@@ -55,9 +59,19 @@ class ZPHP
     }
 
 
+    public static function getTmpPath(){
+        return self::$tmpPath;
+    }
+
+    public static function getLogPath(){
+        return self::$logPath;
+    }
+
     public static function setRootPath($rootPath)
     {
         self::$rootPath = $rootPath;
+        self::$tmpPath = $rootPath.DS.'tmp';
+        self::$logPath = self::$tmpPath.DS.'log';
     }
 
     public static function getConfigPath()
@@ -102,7 +116,7 @@ class ZPHP
         }
         $baseClasspath = \str_replace('\\', DS, $class) . '.php';
         $libs = array(
-            self::$rootPath . DS . self::$appPath,
+            self::$appPath,
             self::$zPath
         );
         if(is_array(self::$libPath)) {
@@ -195,8 +209,7 @@ class ZPHP
             }
             //设置app目录
             $appPath = Config::get('app_path', self::$appPath);
-            self::setAppPath($appPath);
-            define("APPPATH", ROOTPATH.DS.self::$appPath);
+            self::setAppPath($rootPath.DS.$appPath);
             $eh = Config::getField('project', 'exception_handler', __CLASS__ . '::exceptionHandler');
             \set_exception_handler($eh);
             //致命错误
@@ -250,10 +263,19 @@ class ZPHP
     }
 
 
+    protected static function serviceStart(){
+        if(!is_file(self::$server_file))file_put_contents(self::$server_file,'');
+        Factory::getInstance(\ZPHP\Monitor\Monitor::class, [self::$monitorname, self::$server_file]);
+        $vcacheConfig = Config::getField('project', 'view');
+        if(!empty($vcacheConfig['engine'])) {
+            ViewCache::init();
+            ViewCache::cacheDir(self::getAppPath() . DS . 'view');
+        }
+    }
+
     protected static function start($run){
         if(empty(self::$server_pid)){
-            if(!is_file(self::$server_file))file_put_contents(self::$server_file,'');
-            Factory::getInstance(\ZPHP\Monitor\Monitor::class, [self::$monitorname, self::$server_file]);
+            self::serviceStart();
             $serverMode = Config::get('server_mode', 'Http');
             //寻找server的socket适配器
             $service = Server\Factory::getInstance($serverMode);
@@ -300,6 +322,18 @@ class ZPHP
         if(empty(self::$server_pid)){
             exit(self::$appName." Has been Shut Down!\n");
         }
+
+//        $tfile = ROOTPATH.'/apps/view/Home/Index/index.html';
+//        $file = file_get_contents($tfile);
+//        var_dump(md5_file($tfile));die;
+//        $template = new Template();
+//        $content = $template->parse($file);
+//        $tmp_view = ROOTPATH.'/tmp/view/Home/Index/';
+//        if(!is_dir($tmp_view)){
+//            @mkdir($tmp_view, 0777 ,true);
+//        }
+//        file_put_contents($tmp_view.'index.php',$content);
+//        exit();
         $monitor = Factory::getInstance(\ZPHP\Monitor\Monitor::class, [self::$monitorname, self::$server_file]);
         $monitor->outPutNowStatus();
     }
