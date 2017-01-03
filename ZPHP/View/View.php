@@ -22,12 +22,14 @@ class View{
     protected $tmethod;
     protected $tplPath;
     protected $originPath;
+    protected $tag=null;
 
     function __construct($config)
     {
         $this->config = $config;
         //使用引擎
-        if(!empty($config['engine'])){
+        if(!empty($config['tag'])){
+            $this->tag = $config['tag'];
             $this->tplPath = ZPHP::getTmpPath();
         }else{
             //使用原声php
@@ -111,7 +113,7 @@ class View{
             $outFile = $this->template;
             $this->tplVar['template_content'] =  $this->tplPath.$tplFile;
         }
-        if(!empty($this->config['engine'])) {
+        if(!empty($this->tag)) {
             ViewCache::checkCache($checkFile);
         }
         return $this->tplPath.$outFile;

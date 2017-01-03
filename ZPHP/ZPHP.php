@@ -267,7 +267,7 @@ class ZPHP
         if(!is_file(self::$server_file))file_put_contents(self::$server_file,'');
         Factory::getInstance(\ZPHP\Monitor\Monitor::class, [self::$monitorname, self::$server_file]);
         $vcacheConfig = Config::getField('project', 'view');
-        if(!empty($vcacheConfig['engine'])) {
+        if(!empty($vcacheConfig['tag'])) {
             ViewCache::init();
             ViewCache::cacheDir(self::getAppPath() . DS . 'view');
         }

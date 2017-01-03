@@ -19,6 +19,7 @@ class Cx {
      * @var Template
      */
     protected  $tpl;
+    protected $comparison = array(' nheq '=>' !== ',' heq '=>' === ',' neq '=>' != ',' eq '=>' == ',' egt '=>' >= ',' gt '=>' > ',' elt '=>' <= ',' lt '=>' < ');
 
     function __construct()
     {
