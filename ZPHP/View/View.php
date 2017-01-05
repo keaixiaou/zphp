@@ -24,7 +24,7 @@ class View{
     protected $originPath;
     protected $tag=null;
 
-    function __construct($config)
+    function __construct($config=[])
     {
         $this->config = $config;
         //使用引擎
