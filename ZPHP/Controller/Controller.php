@@ -56,7 +56,11 @@ class Controller {
     function __construct()
     {
         $vConfig = Config::getField('project', 'view');
-        $this->view = clone Factory::getInstance(\ZPHP\View\View::class, $vConfig);
+        if(!empty($vConfig)){
+            $this->view = Factory::getInstance(\ZPHP\View\View::class, $vConfig);
+        }
+
+        $this->input = Factory::getInstance(\ZPHP\Core\Httpinput::class);
     }
 
 
@@ -64,6 +68,7 @@ class Controller {
     {
         // TODO: Implement __clone() method.
         $this->view = clone $this->view;
+        $this->input = clone $this->input;
     }
 
     public function getNowServiceStatus(){
@@ -204,7 +209,6 @@ class Controller {
      */
     public function doBeforeExecute()
     {
-        $this->input = clone Factory::getInstance(\ZPHP\Core\Httpinput::class);
         yield $this->input->init($this->request, $this->response);
         $this->view->init(['module'=>$this->module,'controller'=>$this->controller,'method'=>$this->method]);
     }
