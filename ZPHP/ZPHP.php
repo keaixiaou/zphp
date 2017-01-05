@@ -224,6 +224,7 @@ class ZPHP
             if(!DEBUG){
                 error_reporting(E_ALL^E_NOTICE^E_WARNING);
             }
+            self::$appName = Config::get('project_name');
             self::setOs(new Linux());
             if (PHP_OS == 'Linux')
             {
@@ -231,7 +232,7 @@ class ZPHP
             }else{
                 self::$monitorname = $argv[0];
             }
-            self::$appName = Config::get('project_name');
+
             self::$server_file = Config::getField('project', 'pid_path').DS.Config::get('project_name').'.pid';
             $pidList = SwoolePid::getPidList(self::$server_file);
             self::$server_pid = !empty($pidList['master'])?$pidList['master']:0;
@@ -323,17 +324,6 @@ class ZPHP
             exit(self::$appName." Has been Shut Down!\n");
         }
 
-//        $tfile = ROOTPATH.'/apps/view/Home/Index/index.html';
-//        $file = file_get_contents($tfile);
-//        var_dump(md5_file($tfile));die;
-//        $template = new Template();
-//        $content = $template->parse($file);
-//        $tmp_view = ROOTPATH.'/tmp/view/Home/Index/';
-//        if(!is_dir($tmp_view)){
-//            @mkdir($tmp_view, 0777 ,true);
-//        }
-//        file_put_contents($tmp_view.'index.php',$content);
-//        exit();
         $monitor = Factory::getInstance(\ZPHP\Monitor\Monitor::class, [self::$monitorname, self::$server_file]);
         $monitor->outPutNowStatus();
     }
