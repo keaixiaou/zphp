@@ -67,8 +67,12 @@ class Controller {
     function __clone()
     {
         // TODO: Implement __clone() method.
-        $this->view = clone $this->view;
-        $this->input = clone $this->input;
+        $cloneArray = ['view', 'input'];
+        foreach($cloneArray as $item){
+            if(!empty($this->$item)){
+                $this->$item = clone $this->$item;
+            }
+        }
     }
 
     /**
@@ -231,8 +235,12 @@ class Controller {
      */
     public function doBeforeExecute()
     {
-        yield $this->input->init($this->request, $this->response);
-        $this->view->init(['module'=>$this->module,'controller'=>$this->controller,'method'=>$this->method]);
+        if(!empty($this->input)) {
+            yield $this->input->init($this->request, $this->response);
+        }
+        if(!empty($this->view)) {
+            $this->view->init(['module' => $this->module, 'controller' => $this->controller, 'method' => $this->method]);
+        }
     }
 
     /**
@@ -240,17 +248,20 @@ class Controller {
      * @throws \Exception
      */
     protected function doBeforeDestroy(){
-        if(!empty(Config::getField('session', 'enable'))){
-           yield Session::set($this->input->session(), $this->request, $this->response);
-        }
-        if(!empty(Config::getField('cookie', 'enable'))){
-            $cacheExpire = Config::getField('cookie', 'cache_expire', 3600);
-            if(!empty($this->input->cookie)) {
-                foreach ($this->input->cookie() as $key => $value) {
-                    $this->response->cookie($key, $value, time() + $cacheExpire);
+        if(!empty($this->input)){
+            if(!empty(Config::getField('session', 'enable'))){
+                yield Session::set($this->input->session(), $this->request, $this->response);
+            }
+            if(!empty(Config::getField('cookie', 'enable'))){
+                $cacheExpire = Config::getField('cookie', 'cache_expire', 3600);
+                if(!empty($this->input->cookie)) {
+                    foreach ($this->input->cookie() as $key => $value) {
+                        $this->response->cookie($key, $value, time() + $cacheExpire);
+                    }
                 }
             }
         }
+
     }
 
 
