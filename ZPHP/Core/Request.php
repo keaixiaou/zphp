@@ -135,10 +135,16 @@ class Request{
      */
     public function generatDistribute(\Closure $callback, $paramArray)
     {
-        $type = Config::getField('project', 'type');
-        $controllerName = '\\ZPHP\\Controller\\'.ucfirst(strval($type)).'Controller';
-        $FController = Factory::getInstance($controllerName);
+
+        $FController = Factory::getInstance(\ZPHP\Controller\Controller::class);
+        /**
+         * @var Controller $controller
+         */
         $controller = clone $FController;
+        $type = Config::getField('project', 'type');
+        if(strtolower($type)=='api'){
+            $controller->setApi();
+        }
         $controller->coroutineMethod = $callback;
         $controller->coroutineParam = $paramArray;
         $controller->request = $this->request;

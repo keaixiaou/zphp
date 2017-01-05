@@ -14,6 +14,7 @@ use ZPHP\Core\Httpinput;
 use ZPHP\Core\Log;
 use ZPHP\Core\Request;
 use ZPHP\Core\Swoole;
+use ZPHP\Monitor\Monitor;
 use ZPHP\Session\Session;
 use ZPHP\View\View;
 use ZPHP\ZPHP;
@@ -54,30 +55,79 @@ class Controller {
 
     function __construct()
     {
-        $this->view = clone Factory::getInstance(\ZPHP\View\View::class);
+        $vConfig = Config::getField('project', 'view');
+        if(!empty($vConfig)){
+            $this->view = Factory::getInstance(\ZPHP\View\View::class, $vConfig);
+        }
+
+        $this->input = Factory::getInstance(\ZPHP\Core\Httpinput::class);
     }
 
 
+    function __clone()
+    {
+        // TODO: Implement __clone() method.
+        $this->view = clone $this->view;
+        $this->input = clone $this->input;
+    }
 
     /**
-     * 检测response是否结束
+     * controller初始操作,可用于后期加入中间介等
+     * 必须返回true才会执行后面的操作
      * @return bool
+     *
      */
-    protected function checkResponse(){
-        if($this->hasResponse){
-            Log::write("ResponseData has been set!", Log::WARN);
-            return false;
-        }
+    protected function init(){
         return true;
     }
 
 
+
     /**
-     * response已经被设置
+     * 处理请求
+     * @return \Generator
      */
-    protected function setResponse(){
-        $this->hasResponse = true;
+    public function coroutineStart(){
+        yield $this->doBeforeExecute();
+        $initRes = true;
+        if(method_exists($this, 'init')){
+            $initRes = yield $this->init();
+        }
+        if($initRes){
+            $result = yield call_user_func_array($this->coroutineMethod, $this->coroutineParam);
+        }
+        yield $this->doBeforeDestroy();
+        if(!empty($result) && $this->checkResponse()){
+            if(!is_string($result) && $this->checkApi()){
+                $this->jsonReturn($result);
+            }else{
+                $this->strReturn($result);
+            }
+
+        }
+//        Log::write('response:'.$this->responseData);
+        $this->response->header('Connection','keep-alive');
+        $this->response->end($this->responseData);
+        $this->destroy();
     }
+
+    /**
+     * 获取自身服务状态
+     * @return string
+     */
+    public function getNowServiceStatus(){
+        ob_start();
+        /**
+         *  @var Monitor $monitor;
+         */
+        $monitor = Factory::getInstance(\ZPHP\Monitor\Monitor::class);
+        $monitor->outPutWebStatus();
+        $result = ob_get_contents();
+        ob_end_clean();
+        return $result;
+    }
+
+
 
 
     /**
@@ -133,94 +183,37 @@ class Controller {
         }
     }
 
-    protected function init(){
+
+    public function setApi(){
+        $this->isApi = true;
+    }
+
+    public function checkApi(){
+        return $this->isApi;
+    }
+
+    /**
+     * 检测response是否结束
+     * @return bool
+     */
+    protected function checkResponse(){
+        if($this->hasResponse){
+            Log::write("ResponseData has been set!", Log::WARN);
+            return false;
+        }
         return true;
     }
 
-    /**
-     * 处理请求
-     * @return \Generator
-     */
-    public function coroutineStart(){
-        yield $this->doBeforeExecute();
-        $initRes = true;
-        if(method_exists($this, 'init')){
-            $initRes = yield $this->init();
-        }
-        if($initRes){
-            $result = yield call_user_func_array($this->coroutineMethod, $this->coroutineParam);
-        }
-        yield $this->doBeforeDestroy();
-        if(!empty($result) && $this->checkResponse()){
-            if($this->isApi) {
-                $this->jsonReturn($result);
-            }else{
-                $this->strReturn($result);
-            }
-        }
-//        Log::write('response:'.$this->responseData);
-        $this->response->header('Connection','keep-alive');
-        $this->response->end($this->responseData);
-        $this->destroy();
-    }
 
     /**
-     * 指定模板文件
-     * @param $tplFile
-     * @throws \Exception
+     * response已经被设置
      */
-    protected function analysisTplFile($tplFile){
-        if(!empty($tplFile)){
-            $tplExplode = explode('/', trim($this->tplFile,'/'));
-            $tplCount = count($tplExplode);
-            if($tplCount>3) {
-                throw new \Exception("模板文件目录有误");
-            }else if($tplCount==1){
-                if(!empty($tplExplode[0])){
-                    $this->tmethod = $tplExplode[0];
-                }
-            }else if($tplCount==2){
-                if(!empty($tplExplode[0])){
-                    $this->tcontroller = $tplExplode[0];
-                }
-                if(!empty($tplExplode[1])){
-                    $this->tmethod = $tplExplode[1];
-                }
-            }else{
-                if(!empty($tplExplode[0])){
-                    $this->tmodule = $tplExplode[0];
-                }
-                if(!empty($tplExplode[1])){
-                    $this->tcontroller = $tplExplode[1];
-                }
-                if(!empty($tplExplode[2])){
-                    $this->tmethod = $tplExplode[2];
-                }
-            }
-        }
+    protected function setResponse(){
+        $this->hasResponse = true;
     }
-
-
-    /**
-     * 获取真正的view文件
-     * @return string
-     * @throws \Exception
-     */
-    protected function getRealOutFile(){
-        $this->analysisTplFile($this->tplFile);
-        $tplPath = Config::getField('project', 'tpl_path', ZPHP::getRootPath() . DS.'apps'.DS  . 'view' . DS );
-        $tplFile = $tplPath.$this->tmodule.DS.$this->tcontroller.DS.$this->tmethod.'.html';
-        $outFile = $tplFile;
-        if(!empty($this->template)){
-            $outFile = $tplPath.'Template'.DS.$this->template.'.html';
-            $this->tplVar['template_content'] =  $tplFile;
-        }
-        return $outFile;
-    }
-
 
     protected function setTemplate($template){
-        $this->template = $template;
+        $this->view->setTemplate($template);
     }
 
     /**
@@ -238,11 +231,8 @@ class Controller {
      */
     public function doBeforeExecute()
     {
-        $this->input = clone Factory::getInstance(\ZPHP\Core\Httpinput::class);
         yield $this->input->init($this->request, $this->response);
-        $this->tmodule = $this->module;
-        $this->tcontroller = $this->controller;
-        $this->tmethod = $this->method;
+        $this->view->init(['module'=>$this->module,'controller'=>$this->controller,'method'=>$this->method]);
     }
 
     /**
@@ -273,12 +263,6 @@ class Controller {
         $this->tplVar[$name] = $value;
     }
 
-    protected function setViewFile($tplFile=''){
-        if($tplFile!==''){
-            $this->tplFile = $tplFile;
-        }
-        $this->assign('session', $this->input->session());
-    }
 
     /**
      * 获取当前请求对应html的内容
@@ -287,8 +271,8 @@ class Controller {
      * @throws \Exception
      */
     public function fetch($tplFile=''){
-        $this->setViewFile($tplFile);
-        return $this->view->fetch($this->tplVar, $this->getRealOutFile());
+        $this->assign('session', $this->input->session());
+        return $this->view->fetch($this->tplVar, $tplFile);
     }
 
 
@@ -306,10 +290,8 @@ class Controller {
      * 载入模板文件
      * @param string $tplFile
      */
-    protected function display($tplFile=''){
-        $this->setViewFile($tplFile);
-        $outFile = $this->getRealOutFile();
-        $content = $this->view->fetch($this->tplVar, $outFile);
+    public function display($tplFile=''){
+        $content = $this->fetch($tplFile);
         $this->strReturn($content);
     }
 

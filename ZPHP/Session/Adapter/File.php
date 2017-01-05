@@ -87,7 +87,7 @@ class File
     private function getPath()
     {
         return isset($this->config['save_path']) ? $this->config['save_path'] :
-            ZPHP::getRootPath() . DS . Config::getField('session','path');
+            Config::getField('session','path');
     }
 
     private function getFileName($sid)

@@ -7,10 +7,14 @@
 namespace ZPHP;
 use ZPHP\Client\SwoolePid;
 use ZPHP\Common\Dir;
+use ZPHP\Core\Factory;
 use ZPHP\Core\Swoole;
+use ZPHP\Monitor\Monitor;
 use ZPHP\Platform\Linux;
 use ZPHP\Platform\Windows;
 use ZPHP\Protocol\Response;
+use ZPHP\Template\Template;
+use ZPHP\Template\ViewCache;
 use ZPHP\View,
     ZPHP\Core\Config,
     ZPHP\Core\Log,
@@ -24,16 +28,19 @@ class ZPHP
      * @var string
      */
     private static $rootPath;
+    private static $tmpPath;
+    private static $logPath;
     /**
      * 配置目录
      * @var string
      */
     private static $configPath = 'default';
-    private static $appPath = 'apps';
+    private static $appPath ;
     private static $zPath;
     private static $libPath='lib';
     private static $classPath = array();
     private static $os;
+    private static $monitorname;
     private static $server_pid;
     private static $server_file;
     private static $appName;
@@ -52,9 +59,19 @@ class ZPHP
     }
 
 
+    public static function getTmpPath(){
+        return self::$tmpPath;
+    }
+
+    public static function getLogPath(){
+        return self::$logPath;
+    }
+
     public static function setRootPath($rootPath)
     {
         self::$rootPath = $rootPath;
+        self::$tmpPath = $rootPath.DS.'tmp';
+        self::$logPath = self::$tmpPath.DS.'log';
     }
 
     public static function getConfigPath()
@@ -99,7 +116,7 @@ class ZPHP
         }
         $baseClasspath = \str_replace('\\', DS, $class) . '.php';
         $libs = array(
-            self::$rootPath . DS . self::$appPath,
+            self::$appPath,
             self::$zPath
         );
         if(is_array(self::$libPath)) {
@@ -192,8 +209,7 @@ class ZPHP
             }
             //设置app目录
             $appPath = Config::get('app_path', self::$appPath);
-            self::setAppPath($appPath);
-            define("APPPATH", ROOTPATH.DS.self::$appPath);
+            self::setAppPath($rootPath.DS.$appPath);
             $eh = Config::getField('project', 'exception_handler', __CLASS__ . '::exceptionHandler');
             \set_exception_handler($eh);
             //致命错误
@@ -208,12 +224,12 @@ class ZPHP
             if(!DEBUG){
                 error_reporting(E_ALL^E_NOTICE^E_WARNING);
             }
-
-            if (PHP_OS == 'WINNT')
+            self::setOs(new Linux());
+            if (PHP_OS == 'Linux')
             {
-                self::setOs(new Windows());
+                self::$monitorname = self::$appName;
             }else{
-                self::setOs(new Linux());
+                self::$monitorname = $argv[0];
             }
             self::$appName = Config::get('project_name');
             self::$server_file = Config::getField('project', 'pid_path').DS.Config::get('project_name').'.pid';
@@ -247,9 +263,19 @@ class ZPHP
     }
 
 
+    protected static function serviceStart(){
+        if(!is_file(self::$server_file))file_put_contents(self::$server_file,'');
+        Factory::getInstance(\ZPHP\Monitor\Monitor::class, [self::$monitorname, self::$server_file]);
+        $vcacheConfig = Config::getField('project', 'view');
+        if(!empty($vcacheConfig['tag'])) {
+            ViewCache::init();
+            ViewCache::cacheDir(self::getAppPath() . DS . 'view');
+        }
+    }
+
     protected static function start($run){
         if(empty(self::$server_pid)){
-            if(!is_file(self::$server_file))file_put_contents(self::$server_file,'');
+            self::serviceStart();
             $serverMode = Config::get('server_mode', 'Http');
             //寻找server的socket适配器
             $service = Server\Factory::getInstance($serverMode);
@@ -296,87 +322,24 @@ class ZPHP
         if(empty(self::$server_pid)){
             exit(self::$appName." Has been Shut Down!\n");
         }
-        global $argv;
-        if(PHP_OS == 'Linux'){
-            $grepName = self::$appName;
-        }else{
-            $grepName = $argv[0];
-        }
-        exec('ps axu|grep '.$grepName, $output);
-        $output = self::packExeData($output);
-        $pidDetail = SwoolePid::getPidList(self::$server_file);
-        $pidList = [];
-        foreach($pidDetail as $key => $value){
-            if(is_array($value)){
-                foreach($value as $k => $v){
-                    if($v==1) {
-                        $pidList[$k] = ['type'=>$key];
-                    }
-                }
-            }else{
-                $pidList[$value] = ['type'=>$key];
-            }
-        }
-        $pidDetail = [];
-        foreach($output as $key => $value){
-            if(!empty($pidList[$value[1]])){
-                $value[] = $pidList[$value[1]]['type'];
-                $pidDetail[] = $value;
-            }
-        }
-        self::outputStatus($pidDetail);
+
+//        $tfile = ROOTPATH.'/apps/view/Home/Index/index.html';
+//        $file = file_get_contents($tfile);
+//        var_dump(md5_file($tfile));die;
+//        $template = new Template();
+//        $content = $template->parse($file);
+//        $tmp_view = ROOTPATH.'/tmp/view/Home/Index/';
+//        if(!is_dir($tmp_view)){
+//            @mkdir($tmp_view, 0777 ,true);
+//        }
+//        file_put_contents($tmp_view.'index.php',$content);
+//        exit();
+        $monitor = Factory::getInstance(\ZPHP\Monitor\Monitor::class, [self::$monitorname, self::$server_file]);
+        $monitor->outPutNowStatus();
     }
 
-    protected static function outputStatus($pidDetail){
-        echo "Welcome ".self::$appName."!\n";
-        $pidStatic = [];
-        foreach($pidDetail as $key => $value){
-            if(empty($pidStatic[$value[11]])){
-                $pidStatic[$value[11]] = 1;
-            }else{
-                $pidStatic[$value[11]] ++;
-            }
-        }
-        foreach($pidStatic as $key => $value){
-            echo ucfirst($key)." Process Num:".$value."\n";
-        }
 
-        echo "-------------PROCESS STATUS--------------\n";
-        echo "Type    Pid   %CPU  %MEM   MEM     Start \n";
-        foreach($pidDetail as $key => $value){
-            echo str_pad($value[11],8).str_pad($value[1],6).str_pad($value[2],6).
-                str_pad($value[3],7).str_pad(round($value[5]/1024,2)."M",8).$value[8]."\n";
-        }
 
-    }
 
-    protected static function packExeData($output){
-        $data = [];
-        foreach($output as $key => $value){
-            $data[] = self::dealSingleData($value);
-        }
-        return $data;
-    }
-
-    protected static function dealSingleData($info){
-        $data = [];
-        $i = 0;
-        $num = 0;
-
-        while($num<=9) {
-            $start = '';
-            while ($info[$i] != ' ') {
-                $start .= $info[$i];
-                $i++;
-            }
-            $data[] = $start;
-            while ($info[$i] == ' ') {
-                $i++;
-            }
-            $num++;
-        }
-        $data[] = substr($info, $i);
-        return $data;
-    }
 
 }

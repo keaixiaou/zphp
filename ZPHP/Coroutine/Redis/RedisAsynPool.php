@@ -23,7 +23,7 @@ class RedisAsynPool extends AsynPool
     ];
 
     protected $cmd = ['set', 'get', 'lpop', 'lpush', 'rpush','setex','decr', 'incr',
-        'hset','hget'];
+    'hset','hget'];
     /**
      * 连接
      * @var array
@@ -143,24 +143,24 @@ class RedisAsynPool extends AsynPool
 
         if(!empty($this->operator[$now]['op'])){
             if(!empty($this->config[$now])){
-                $operat = $this->operator[$now]['op'];
-                $client->$operat($this->config[$now], function ($client, $result)use($now, $nowConnectNo,$data) {
-                    try {
-                        if (!$result) {
-                            $errMsg = $client->errMsg;
-                            $this->max_count--;
-                            unset($client);
-                            throw new \Exception('[redis连接失败]'.$errMsg);
-                        }
-                        call_user_func([$this, 'initRedis'], $client, $this->operator[$now]['next'], $nowConnectNo, $data);
-                    }catch(\Exception $e){
-                        Log::write($e->getMessage());
-                        if(!empty($data)) {
-                            $data['result']['exception'] = $e->getMessage();
-                            call_user_func([$this, 'distribute'], $data);
-                        }
+            $operat = $this->operator[$now]['op'];
+            $client->$operat($this->config[$now], function ($client, $result)use($now, $nowConnectNo,$data) {
+                try {
+                    if (!$result) {
+                        $errMsg = $client->errMsg;
+                        $this->max_count--;
+                        unset($client);
+                        throw new \Exception('[redis连接失败]'.$errMsg);
                     }
-                });
+                    call_user_func([$this, 'initRedis'], $client, $this->operator[$now]['next'], $nowConnectNo, $data);
+                }catch(\Exception $e){
+                    Log::write($e->getMessage());
+                    if(!empty($data)) {
+                        $data['result']['exception'] = $e->getMessage();
+                        call_user_func([$this, 'distribute'], $data);
+                    }
+                }
+            });
             }else{
                 $this->initRedis($client, $this->operator[$now]['next'],$nowConnectNo,$data);
             }

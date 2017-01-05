@@ -68,7 +68,7 @@ class Model {
      */
     protected function parseValue($value) {
         if(is_string($value)) {
-            $value =  strpos($value,':') === 0 && in_array($value,array_keys($this->bind))? $this->escapeString($value) : '\''.addslashes($value).'\'';
+            $value =  strpos($value,':') === 0 && in_array($value,array_keys($this->bind))? addslashes($value) : '\''.addslashes($value).'\'';
         }elseif(isset($value[0]) && is_string($value[0]) && strtolower($value[0]) == 'exp'){
             $value =  addslashes($value[1]);
         }elseif(is_array($value)) {
