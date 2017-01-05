@@ -71,6 +71,50 @@ class Controller {
         $this->input = clone $this->input;
     }
 
+    /**
+     * controller初始操作,可用于后期加入中间介等
+     * 必须返回true才会执行后面的操作
+     * @return bool
+     *
+     */
+    protected function init(){
+        return true;
+    }
+
+
+
+    /**
+     * 处理请求
+     * @return \Generator
+     */
+    public function coroutineStart(){
+        yield $this->doBeforeExecute();
+        $initRes = true;
+        if(method_exists($this, 'init')){
+            $initRes = yield $this->init();
+        }
+        if($initRes){
+            $result = yield call_user_func_array($this->coroutineMethod, $this->coroutineParam);
+        }
+        yield $this->doBeforeDestroy();
+        if(!empty($result) && $this->checkResponse()){
+            if(!is_string($result) && $this->checkApi()){
+                $this->jsonReturn($result);
+            }else{
+                $this->strReturn($result);
+            }
+
+        }
+//        Log::write('response:'.$this->responseData);
+        $this->response->header('Connection','keep-alive');
+        $this->response->end($this->responseData);
+        $this->destroy();
+    }
+
+    /**
+     * 获取自身服务状态
+     * @return string
+     */
     public function getNowServiceStatus(){
         ob_start();
         /**
@@ -83,25 +127,7 @@ class Controller {
         return $result;
     }
 
-    /**
-     * 检测response是否结束
-     * @return bool
-     */
-    protected function checkResponse(){
-        if($this->hasResponse){
-            Log::write("ResponseData has been set!", Log::WARN);
-            return false;
-        }
-        return true;
-    }
 
-
-    /**
-     * response已经被设置
-     */
-    protected function setResponse(){
-        $this->hasResponse = true;
-    }
 
 
     /**
@@ -157,38 +183,34 @@ class Controller {
         }
     }
 
-    protected function init(){
-        return true;
+
+    public function setApi(){
+        $this->isApi = true;
+    }
+
+    public function checkApi(){
+        return $this->isApi;
     }
 
     /**
-     * 处理请求
-     * @return \Generator
+     * 检测response是否结束
+     * @return bool
      */
-    public function coroutineStart(){
-        yield $this->doBeforeExecute();
-        $initRes = true;
-        if(method_exists($this, 'init')){
-            $initRes = yield $this->init();
+    protected function checkResponse(){
+        if($this->hasResponse){
+            Log::write("ResponseData has been set!", Log::WARN);
+            return false;
         }
-        if($initRes){
-            $result = yield call_user_func_array($this->coroutineMethod, $this->coroutineParam);
-        }
-        yield $this->doBeforeDestroy();
-        if(!empty($result) && $this->checkResponse()){
-            if($this->isApi) {
-                $this->jsonReturn($result);
-            }else{
-                $this->strReturn($result);
-            }
-        }
-//        Log::write('response:'.$this->responseData);
-        $this->response->header('Connection','keep-alive');
-        $this->response->end($this->responseData);
-        $this->destroy();
+        return true;
     }
 
 
+    /**
+     * response已经被设置
+     */
+    protected function setResponse(){
+        $this->hasResponse = true;
+    }
 
     protected function setTemplate($template){
         $this->view->setTemplate($template);
