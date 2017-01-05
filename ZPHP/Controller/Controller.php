@@ -56,10 +56,7 @@ class Controller {
     function __construct()
     {
         $vConfig = Config::getField('project', 'view');
-        if(!empty($vConfig)){
-            $this->view = Factory::getInstance(\ZPHP\View\View::class, $vConfig);
-        }
-
+        $this->view = Factory::getInstance(\ZPHP\View\View::class, $vConfig);
         $this->input = Factory::getInstance(\ZPHP\Core\Httpinput::class);
     }
 
