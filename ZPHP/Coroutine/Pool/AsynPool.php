@@ -11,6 +11,7 @@ namespace ZPHP\Coroutine\Pool;
 
 
 use ZPHP\Core\Log;
+use ZPHP\Coroutine\Base\TaskDistribute;
 
 abstract class AsynPool implements IAsynPool
 {
@@ -23,6 +24,13 @@ abstract class AsynPool implements IAsynPool
     protected $swoole_server;
     protected $token = 0;
     protected $max_count=0;
+    protected $taskName;
+    //存储taskwork进程编号
+    /**
+     * @var \SplQueue $taskList
+     */
+    protected $taskList;
+
     //避免爆发连接的锁
     protected $prepareLock = false;
     /**
@@ -92,6 +100,26 @@ abstract class AsynPool implements IAsynPool
      */
     protected function clearCallbak(){
         unset($this->callBacks);
+    }
+
+
+    /**
+     * task 类异步
+     * @param $workId
+     * @param $config
+     * @param $server
+     */
+    public function initTaskWorker($workerId, $config, $server){
+        $this->server = $server;
+        $taskList = TaskDistribute::getSingleTaskNum($this->taskName);
+        if(!empty($taskList)){
+            $myWorkTaskList = $taskList[$workerId];
+            foreach ($myWorkTaskList as $taskId) {
+                $this->taskList->enqueue($taskId);
+            }
+            $this->initWorker($workerId, $config);
+        }
+
     }
 
     /**

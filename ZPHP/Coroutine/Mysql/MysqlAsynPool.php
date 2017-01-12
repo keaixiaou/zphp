@@ -58,6 +58,7 @@ class MysqlAsynPool extends AsynPool{
 
         $sql = $data['sql'];
         $res = $client->query($sql, function ($client, $result) use ($data) {
+            Log::write('res:'.print_r($result, true));
             try {
                 if ($result === false) {
                     if ($client->errno == 2006 || $client->errno == 2013) {//断线重连
@@ -85,6 +86,7 @@ class MysqlAsynPool extends AsynPool{
                 call_user_func([$this, 'distribute'], $data);
             }
         });
+        Log::write('res:'.print_r($res, true));
         if(empty($res)){
             $data['result']['exception'] = "执行sql[$sql]失败";
             call_user_func([$this, 'distribute'], $data);

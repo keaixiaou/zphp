@@ -87,17 +87,5 @@ abstract class SwooleHttp extends CSwoole
 
     public function onTask($server, $taskId, $fromId, $data)
     {
-        if(empty($data['class']) || empty($data['method']) || empty($data['param'])){
-            return null;
-        }
-        try{
-            $res = call_user_func_array([$data['class'], $data['method']], $data['param']);
-            return ['result'=>$res];
-        }catch(\Exception $e){
-            return ['exception'=>$e->getMessage()];
-        }
-
-
-
     }
 }

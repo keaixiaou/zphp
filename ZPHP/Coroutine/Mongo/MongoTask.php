@@ -15,10 +15,10 @@ class MongoTask{
     public $taskId;
     protected $manager;
     protected $config;
-    function __construct($taskId, $config)
+    function __construct($param=[])
     {
-        $this->taskId = $taskId;
-        $this->config = $config;
+        $this->taskId = $param['taskId'];
+        $this->config = $param['config'];
 
     }
 

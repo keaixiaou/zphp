@@ -9,10 +9,8 @@
 
 namespace ZPHP\Client;
 
-use ZPHP\Protocol\Request;
+use ZPHP\Core\Log;
 use ZPHP\Socket\Callback\SwooleWebSocket as ZSwooleWebSocket;
-use ZPHP\Socket\IClient;
-use ZPHP\Core\Route as ZRoute;
 
 class SwooleWebSocket extends ZSwooleWebSocket
 {
@@ -21,6 +19,7 @@ class SwooleWebSocket extends ZSwooleWebSocket
 
     public function onMessage($server, $frame)
     {
+        Log::write('finish:'.print_r($frame, true));
         if(empty($frame->finish)) { //数据未完
             if(empty($this->buff[$frame->fd])) {
                 $this->buff[$frame->fd] = $frame->data;
@@ -33,9 +32,18 @@ class SwooleWebSocket extends ZSwooleWebSocket
                 unset($this->buff[$frame->fd]);
             }
         }
-        Request::parse($frame->data);
-        $result = ZRoute::route();
-        $server->push($frame->fd, $result);
+//        Request::parse($frame->data);
+//        $result = ZRoute::route();
+        Log::write('data:'.$frame->data);
+        $server->push($frame->fd, $frame->data);
+    }
+
+    public function onClose(){
+        $args_array = func_get_args();
+        $swoole_server = $args_array[0];
+        $fd = $args_array[1];
+        $from_id = $args_array[2];
+        Log::write('func_get_args:'.print_r($fd, true));
     }
 
 }

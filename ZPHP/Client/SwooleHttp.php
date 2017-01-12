@@ -42,6 +42,8 @@ class SwooleHttp extends ZSwooleHttp
     /**
      * @var Coroutine
      */
+
+    protected $taskObjectArray;
     public function onRequest($request, $response)
     {
         ob_start();
@@ -120,6 +122,30 @@ class SwooleHttp extends ZSwooleHttp
             Db::getInstance()->freeRedisPool();
         }
         parent::onWorkerStop($server, $workerId);
+    }
+
+
+    public function onTask($server, $taskId, $fromId, $data)
+    {
+        if(empty($data['class']) || empty($data['method']) || empty($data['param'])){
+            return null;
+        }
+        if(empty($this->taskObjectArray[$data['class']])){
+            $classParam = !empty($data['class_param'])?$data['class_param']:null;
+            $this->taskObjectArray[$data['class']] = Factory::getInstance($data['class'],$classParam);
+            $taskObject = $this->taskObjectArray[$data['class']];
+            if(method_exists($taskObject, 'init')){
+                call_user_func([$taskObject, 'init']);
+            }
+        }else{
+            $taskObject = $this->taskObjectArray[$data['class']];
+        }
+        try{
+            $res = call_user_func_array([$taskObject, $data['method']], $data['param']);
+            return ['result'=>$res];
+        }catch(\Exception $e){
+            return ['exception'=>$e->getMessage()];
+        }
     }
 
 }

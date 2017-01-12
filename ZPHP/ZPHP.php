@@ -224,8 +224,8 @@ class ZPHP
             if(!DEBUG){
                 error_reporting(E_ALL^E_NOTICE^E_WARNING);
             }
-            self::$appName = Config::get('project_name');
             self::setOs(new Linux());
+            self::$appName = Config::get('project_name');
             if (PHP_OS == 'Linux')
             {
                 self::$monitorname = self::$appName;
@@ -323,7 +323,6 @@ class ZPHP
         if(empty(self::$server_pid)){
             exit(self::$appName." Has been Shut Down!\n");
         }
-
         $monitor = Factory::getInstance(\ZPHP\Monitor\Monitor::class, [self::$monitorname, self::$server_file]);
         $monitor->outPutNowStatus();
     }

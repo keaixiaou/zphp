@@ -9,9 +9,11 @@
 
 namespace ZPHP\Core;
 
+use ZPHP\Coroutine\Memcache\MemcacheAsynPool;
 use ZPHP\Coroutine\Mongo\MongoAsynPool;
 use ZPHP\Coroutine\Redis\RedisAsynPool;
 //use ZPHP\Db\Mongo;
+use ZPHP\Memcache\Memcache;
 use ZPHP\Model\Model;
 use ZPHP\Coroutine\Mysql\MysqlAsynPool;
 use ZPHP\Mongo\Mongo;
@@ -34,6 +36,10 @@ class Db {
      */
     public $mongoPool;
     /**
+     * @var MemcacheAsynPool
+     */
+    public $memcachePool;
+    /**
      * @var RedisAsynPool
      */
     public $sessionRedisPool;
@@ -44,6 +50,7 @@ class Db {
     protected static $_tables;
     protected static $_redis;
     protected static $_mongo;
+    protected static $_memcache;
     protected static $_sessionRedis;
     protected static $_collection;
     private static $lastSql;
@@ -90,6 +97,7 @@ class Db {
         self::initRedisPool($workerId, Config::get('redis'));
         self::initMongoPool($workerId, self::$server, Config::get('mongo'));
         self::initSessionRedisPool($workerId, Config::get('session'));
+        self::initMemcachePool($workerId, self::$server, Config::get('memcache'));
     }
     /**
      * @param $workId
@@ -165,11 +173,17 @@ class Db {
     public static function initMongoPool($workId, $server, $config){
         if(empty(self::$instance->mongoPool)){
             self::$instance->mongoPool = new MongoAsynPool();
-            self::$instance->mongoPool->initMongo($workId, $server, $config);
+            self::$instance->mongoPool->initTaskWorker($workId, $config, $server);
         }
     }
 
 
+    public static function initMemcachePool($workId, $server, $config){
+        if(empty(self::$instance->memcachePool)){
+            self::$instance->memcachePool = new MemcacheAsynPool();
+            self::$instance->memcachePool->initTaskWorker($workId, $config, $server);
+        }
+    }
     /**
      * @param $collection
      * @return Mongo
@@ -205,6 +219,13 @@ class Db {
         return self::$_redis;
     }
 
+
+    public static function memcache(){
+        if(!isset(self::$_memcache)){
+            self::$_memcache = new Memcache(self::$instance->memcachePool);
+        }
+        return self::$_memcache;
+    }
 
     /**
      * 用于session的redis连接池

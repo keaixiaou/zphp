@@ -98,7 +98,7 @@ class Controller {
             $result = yield call_user_func_array($this->coroutineMethod, $this->coroutineParam);
         }
         yield $this->doBeforeDestroy();
-        if(!empty($result) && $this->checkResponse()){
+        if($this->checkResponse()){
             if(!is_string($result) && $this->checkApi()){
                 $this->jsonReturn($result);
             }else{
@@ -108,6 +108,7 @@ class Controller {
         }
 //        Log::write('response:'.$this->responseData);
         $this->response->header('Connection','keep-alive');
+
         $this->response->end($this->responseData);
         $this->destroy();
     }

@@ -8,6 +8,7 @@
 
 namespace ZPHP\Socket\Adapter;
 use ZPHP\Core\Config;
+use ZPHP\Coroutine\Base\TaskDistribute;
 use ZPHP\Socket\IServer,
     ZPHP\Socket\Callback;
 
@@ -27,9 +28,8 @@ class Swoole implements IServer
             throw new \Exception("no swoole extension. get: https://github.com/swoole/swoole-src");
         }
         $this->config = $config;
-        $mongoCount = intval(Config::getField('mongo', 'asyn_max_count'));
-        $taskNum = !empty($this->config['task_worker_num'])?$this->config['task_worker_num']:0;
-        $this->config['task_worker_num'] = $this->config['worker_num']*$mongoCount + $taskNum;
+        TaskDistribute::init();
+        $this->config['task_worker_num'] = TaskDistribute::getAllTaskNum();
         $socketType = empty($config['server_type']) ? self::TYPE_TCP : strtolower($config['server_type']);
         $this->config['server_type'] = $socketType;
         switch($socketType) {

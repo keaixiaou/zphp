@@ -10,8 +10,6 @@ namespace ZPHP\Coroutine\Pool;
 
 interface IAsynPool
 {
-    function getAsynName();
-
     function distribute($data);
 
     function execute($data);
