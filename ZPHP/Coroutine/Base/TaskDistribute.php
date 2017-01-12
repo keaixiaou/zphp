@@ -22,7 +22,7 @@ class TaskDistribute {
      */
     static public function init(){
         $taskCoroutineConfig = Config::get('task_coroutine');
-        $taskTypeArray = isset($taskCoroutineConfig)?$taskCoroutineConfig:['mongo','memcache'];
+        $taskTypeArray = isset($taskCoroutineConfig)?$taskCoroutineConfig:['mongo','memcached'];
         self::$allTaskNum = 0;
         self::$taskList = [];
         $socketConfig = Config::get('socket');
@@ -42,7 +42,6 @@ class TaskDistribute {
                 $i ++;
             }
         }
-//        Log::write('taskList:'.print_r(self::$taskList, true));
         self::$allTaskNum += intval($socketConfig['task_worker_num']);
     }
 

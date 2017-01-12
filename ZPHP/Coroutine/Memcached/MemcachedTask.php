@@ -6,10 +6,12 @@
  * Time: 下午3:14
  */
 
-namespace ZPHP\Coroutine\Memcache;
+namespace ZPHP\Coroutine\Memcached;
 
 
-class MemcacheTask{
+use ZPHP\Core\Log;
+
+class MemcachedTask{
     public $taskId;
     protected $manager;
     protected $config;
@@ -22,8 +24,8 @@ class MemcacheTask{
 
     protected function checkManager(){
         if(empty($this->manager)) {
-            $this->manager = new \Memcache();
-            $this->manager->connect($this->config['host'], $this->config['port']);
+            $this->manager = new \Memcached();
+            $this->manager->addServer($this->config['host'], $this->config['port']);
         }
     }
 
@@ -34,9 +36,9 @@ class MemcacheTask{
     }
 
 
-    public function set($key, $value, $flag, $time_expire=3600){
+    public function set($key, $value, $time_expire=3600){
         $this->checkManager();
-        return $this->manager->set($key, $value, $flag, $time_expire);
+        return $this->manager->set($key, $value, $time_expire);
     }
 
     public function delete($key){

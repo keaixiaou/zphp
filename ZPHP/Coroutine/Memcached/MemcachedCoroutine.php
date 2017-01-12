@@ -6,28 +6,28 @@
  * Time: 下午4:25
  */
 
-namespace ZPHP\Coroutine\Memcache;
+namespace ZPHP\Coroutine\Memcached;
 
 use ZPHP\Coroutine\Base\CoroutineResult;
 use ZPHP\Coroutine\Base\ICoroutineBase;
-use ZPHP\Coroutine\Memcache\MemcacheAsynPool;
+use ZPHP\Coroutine\Memcached\MemcachedAsynPool;
 
-class MemcacheCoroutine implements ICoroutineBase
+class MemcachedCoroutine implements ICoroutineBase
 {
     /**
-     * @var MemcacheAsynPool
+     * @var MemcachedAsynPool
      */
-    public $memcacheAsynPool;
+    public $memcachedAsynPool;
     /**
      * @var data => ['key'=>'','value'=>'','expire'=>''];
      */
     public $data;
     public $result;
 
-    public function __construct($memcacheAsynPool)
+    public function __construct($memcachedAsynPool)
     {
         $this->result = CoroutineResult::getInstance();
-        $this->memcacheAsynPool = $memcacheAsynPool;
+        $this->memcachedAsynPool = $memcachedAsynPool;
     }
 
 
@@ -40,7 +40,7 @@ class MemcacheCoroutine implements ICoroutineBase
 
     public function send(callable $callback)
     {
-        $this->memcacheAsynPool->command($callback, $this->data);
+        $this->memcachedAsynPool->command($callback, $this->data);
     }
 
     public function getResult()

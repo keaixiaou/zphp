@@ -9,11 +9,11 @@
 
 namespace ZPHP\Core;
 
-use ZPHP\Coroutine\Memcache\MemcacheAsynPool;
+use ZPHP\Coroutine\Memcached\MemcachedAsynPool;
 use ZPHP\Coroutine\Mongo\MongoAsynPool;
 use ZPHP\Coroutine\Redis\RedisAsynPool;
 //use ZPHP\Db\Mongo;
-use ZPHP\Memcache\Memcache;
+use ZPHP\Memcached\Memcached;
 use ZPHP\Model\Model;
 use ZPHP\Coroutine\Mysql\MysqlAsynPool;
 use ZPHP\Mongo\Mongo;
@@ -38,7 +38,7 @@ class Db {
     /**
      * @var MemcacheAsynPool
      */
-    public $memcachePool;
+    public $memcachedPool;
     /**
      * @var RedisAsynPool
      */
@@ -50,7 +50,7 @@ class Db {
     protected static $_tables;
     protected static $_redis;
     protected static $_mongo;
-    protected static $_memcache;
+    protected static $_memcached;
     protected static $_sessionRedis;
     protected static $_collection;
     private static $lastSql;
@@ -88,16 +88,11 @@ class Db {
     static public function init($server, $workerId){
         self::getInstance();
         self::$server = $server;
-//        $res = self::$server->task("taskcallback", -1, function (\swoole_server $server, $task_id, $data) {
-//            Log::write( "Task Callback: ");
-//            Log::write('$task_id:'.$task_id.';data:'.print_r( $data, true));
-//        });
-//        Log::write('task res:'.json_encode($res));
         self::initMysqlPool($workerId, Config::getField('database','master'));
         self::initRedisPool($workerId, Config::get('redis'));
         self::initMongoPool($workerId, self::$server, Config::get('mongo'));
         self::initSessionRedisPool($workerId, Config::get('session'));
-        self::initMemcachePool($workerId, self::$server, Config::get('memcache'));
+        self::initMemcachedPool($workerId, self::$server, Config::get('memcached'));
     }
     /**
      * @param $workId
@@ -178,10 +173,10 @@ class Db {
     }
 
 
-    public static function initMemcachePool($workId, $server, $config){
-        if(empty(self::$instance->memcachePool)){
-            self::$instance->memcachePool = new MemcacheAsynPool();
-            self::$instance->memcachePool->initTaskWorker($workId, $config, $server);
+    public static function initMemcachedPool($workId, $server, $config){
+        if(empty(self::$instance->memcachedPool)){
+            self::$instance->memcachedPool = new MemcachedAsynPool();
+            self::$instance->memcachedPool->initTaskWorker($workId, $config, $server);
         }
     }
     /**
@@ -220,11 +215,11 @@ class Db {
     }
 
 
-    public static function memcache(){
-        if(!isset(self::$_memcache)){
-            self::$_memcache = new Memcache(self::$instance->memcachePool);
+    public static function memcached(){
+        if(!isset(self::$_memcached)){
+            self::$_memcached = new Memcached(self::$instance->memcachedPool);
         }
-        return self::$_memcache;
+        return self::$_memcached;
     }
 
     /**
@@ -237,29 +232,6 @@ class Db {
         }
         return self::$_sessionRedis;
     }
-
-
-    /**
-     * @param string $collectName
-     * @return mixed
-     * @throws \Exception
-     */
-    /*public static function collection($collectName = ''){
-        if(!isset(self::$_collection[$collectName])){
-            $config = Config::get('mongo');
-            $host = 'mongodb://'.(!empty($config['username'])?"{$config['username']}":'')
-                .(!empty($config['password'])?":{$config['password']}@":'')
-                .$config['host'].(!empty($config['port'])?":{$config['port']}":'');
-            $config['dsn'] = $host;
-            $mongo = new Mongo();
-            $mongo->connect($config);
-            $mongo->setDBName($config['database']);
-            $mongo->selectCollection($collectName);
-            self::$_collection[$collectName] = $mongo;
-            unset($mongo);
-        }
-        return self::$_collection[$collectName];
-    }*/
 
     /**
      * pdo 查询获取pdo(同步)

@@ -6,7 +6,7 @@
  * Time: 下午3:00
  */
 
-namespace ZPHP\Coroutine\Memcache;
+namespace ZPHP\Coroutine\Memcached;
 
 use ZPHP\Core\Factory;
 use ZPHP\Core\Log;
@@ -14,8 +14,8 @@ use ZPHP\Coroutine\Base\TaskDistribute;
 use ZPHP\Coroutine\Base\TaskParam;
 use ZPHP\Coroutine\Pool\AsynPool;
 
-class MemcacheAsynPool extends AsynPool{
-    protected $taskName = 'memcache';
+class MemcachedAsynPool extends AsynPool{
+    protected $taskName = 'memcached';
     function __construct()
     {
         parent::__construct();
@@ -41,7 +41,7 @@ class MemcacheAsynPool extends AsynPool{
             $client = $this->pool->dequeue();
         }
         $execute = [];
-        $execute['class'] = '\ZPHP\Coroutine\Memcache\MemcacheTask';
+        $execute['class'] = '\ZPHP\Coroutine\Memcached\MemcachedTask';
         $execute['class_param'] = ['taskId'=>$client->taskId, 'config'=>$client->config];
         $execute['method'] = $data['execute']['method'];
         $execute['param'] = $data['execute']['param'];
@@ -57,7 +57,7 @@ class MemcacheAsynPool extends AsynPool{
 
             });
             if ($exeRes===false) {
-                throw new \Exception("Memcache 执行失败");
+                throw new \Exception("Memcached 执行失败");
             }
         } catch (\Exception $e){
             $data['result']['exception'] = $e->getMessage();
