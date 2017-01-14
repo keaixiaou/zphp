@@ -94,7 +94,7 @@ class Controller {
         if(method_exists($this, 'init')){
             $initRes = yield $this->init();
         }
-        if($initRes){
+        if($this->checkResponse() && $initRes){
             $result = yield call_user_func_array($this->coroutineMethod, $this->coroutineParam);
         }
         yield $this->doBeforeDestroy();
@@ -200,10 +200,10 @@ class Controller {
      */
     protected function checkResponse(){
         if($this->hasResponse){
-            Log::write("ResponseData has been set!", Log::WARN);
             return false;
+        }else {
+            return true;
         }
-        return true;
     }
 
 
@@ -211,6 +211,9 @@ class Controller {
      * response已经被设置
      */
     protected function setResponse(){
+        if($this->hasResponse){
+            Log::write("ResponseData has been set!", Log::WARN);
+        }
         $this->hasResponse = true;
     }
 
