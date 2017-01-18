@@ -77,9 +77,8 @@ class SwooleHttp extends ZSwooleHttp
             }
         }
         $result = ob_get_contents();
-        ob_end_clean();
-
         if(!empty($result)) {
+            ob_end_clean();
             $response->end($result);
         }
     }

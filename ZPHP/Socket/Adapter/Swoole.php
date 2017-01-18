@@ -20,7 +20,7 @@ class Swoole implements IServer
     const TYPE_TCP = 'tcp';
     const TYPE_UDP = 'udp';
     const TYPE_HTTP = 'http';
-    const TYPE_WEBSOCKET = 'ws';
+    const TYPE_WEBSOCKET = 'websocket';
 
     public function __construct(array $config)
     {
