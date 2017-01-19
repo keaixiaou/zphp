@@ -290,9 +290,9 @@ class ZPHP
             echo ( "Service already started!\n");
         }
 
-        if ($run && Config::getField('project', 'debug_mode', 0)) {
-            Debug::end();
-        }
+//        if ($run && Config::getField('project', 'debug_mode', 0)) {
+//            Debug::end();
+//        }
     }
 
     protected static function stop(){
@@ -300,9 +300,7 @@ class ZPHP
             echo ("Service has shut down!\n");
         }else{
             $res = self::getOs()->kill(self::$server_pid, SIGTERM);
-            if($res ) {
-                self::$server_pid = 0;
-            }
+            self::$server_pid = 0;
         }
         if(is_file(self::$server_file)){
             unlink(self::$server_file);
