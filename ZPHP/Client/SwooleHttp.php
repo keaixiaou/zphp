@@ -124,6 +124,19 @@ class SwooleHttp extends ZSwooleHttp
     }
 
 
+    public function onWorkerError($server, $workerId, $workerPid, $errorCode)
+    {
+        Log::clear();
+        $pidList = [];
+        $workNum = Config::getField('socket', 'worker_num');
+        if($workerId >= $workNum){
+            $pidList['task'.($workerId-$workNum)] = ['task'=>[$workerPid => 0]];
+        }else{
+            $pidList['work'.$workerId] = ['work'=>[$workerPid => 0]];
+        }
+        $this->putPidList($pidList);
+    }
+
     public function onTask($server, $taskId, $fromId, $data)
     {
         if(empty($data['class']) || empty($data['method']) || empty($data['param'])){
