@@ -9,7 +9,7 @@
 
 namespace ZPHP\Coroutine\Base;
 
-use ZPHP\Controller\Controller;
+use ZPHP\Controller\IController;
 use ZPHP\Core\Log;
 
 class CoroutineTask{
@@ -152,7 +152,7 @@ class CoroutineTask{
     }
 
 
-    public function setController(Controller &$controller){
+    public function setController(IController &$controller){
         $this->controller = $controller;
     }
 

@@ -39,9 +39,6 @@ class SwooleHttp extends ZSwooleHttp
      * @var Request $requestDeal;
      */
     protected $requestDeal;
-    /**
-     * @var Coroutine
-     */
 
     protected $taskObjectArray;
     public function onRequest($request, $response)

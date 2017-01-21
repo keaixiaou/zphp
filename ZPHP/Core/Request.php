@@ -8,6 +8,8 @@
 
 namespace ZPHP\Core;
 use ZPHP\Controller\Controller;
+use ZPHP\Controller\IController;
+use ZPHP\Controller\WSController;
 use ZPHP\Coroutine\Base\CoroutineTask;
 
 class Request{
@@ -71,10 +73,10 @@ class Request{
 
     /**
      * 请求最后的处理函数,协程调度器work协程任务
-     * @param Controller $controller
+     * @param IController $controller
      * @return mixed|string
      */
-    protected function executeGeneratorScheduler(Controller $controller){
+    protected function executeGeneratorScheduler(IController $controller){
         $action = 'coroutineStart';
         $returnRes = 'NULL';
         try{
@@ -88,9 +90,7 @@ class Request{
                 $returnRes = $generator;
             }
         }catch(\Exception $e){
-            $this->response->status(500);
-            $msg = DEBUG===true?$e->getMessage():'服务器升空了!';
-            echo Swoole::info($msg);
+            throw new \Exception($e->getMessage());
         }
         return $returnRes;
     }
@@ -151,7 +151,6 @@ class Request{
         $controller->response = $this->response;
         return $this->executeGeneratorScheduler($controller);
     }
-
 
 
 
