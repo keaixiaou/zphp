@@ -267,9 +267,4 @@ class Controller extends IController{
         unset($this->response);
     }
 
-
-    function __destruct()
-    {
-        // TODO: Implement __destruct() method.
-    }
 }

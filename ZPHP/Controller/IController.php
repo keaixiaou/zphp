@@ -92,4 +92,10 @@ class IController{
         unset($this->coroutineMethod);
     }
 
+
+    function __destruct()
+    {
+        // TODO: Implement __destruct() method.
+    }
+
 }
