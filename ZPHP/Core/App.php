@@ -13,10 +13,6 @@ use ZPHP\Common\Dir;
 use ZPHP\ZPHP;
 
 abstract class App{
-
-//    static protected $modelList = [];
-//    static protected $serviceList = [];
-//    static protected $controllerList = [];
     static protected $compenontType = ['controller','service','model'];
     /**
      * @var DI $_id;
@@ -95,13 +91,8 @@ abstract class App{
         if(empty($arguments)){
             throw new \Exception("组件名不能为空");
         }
-//        $listName = $name.'List';
         $key = self::getComponentName($arguments[0]);
         return self::get($key, $name);
-//        if(empty(self::$$listName[$key])){
-//            self::$$listName[$key] = self::get($key, $name);
-//        }
-//        return self::$$listName[$key];
     }
 
 
