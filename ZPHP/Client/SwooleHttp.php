@@ -8,7 +8,6 @@
 
 namespace ZPHP\Client;
 
-use ZPHP\Controller\Controller;
 use ZPHP\Core\App;
 use ZPHP\Core\Db;
 use ZPHP\Core\Dispatcher;

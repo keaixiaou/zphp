@@ -26,6 +26,12 @@ class Request{
         $this->coroutineTask = $coroutineTask;
     }
 
+    function __clone()
+    {
+        // TODO: Implement __clone() method.
+        $this->coroutineTask = clone $this->coroutineTask;
+    }
+
     /**
      * 初始化
      * @param $request
