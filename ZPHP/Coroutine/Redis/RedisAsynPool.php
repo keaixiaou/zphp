@@ -69,7 +69,6 @@ class RedisAsynPool extends AsynPool
                         $this->pushToPool($client);
                     }
                 }catch(\Exception $e){
-                    Log::write($e->getMessage());
                     $data['result']['exception'] = $e->getMessage();
                 }
                 //给worker发消息
@@ -121,7 +120,6 @@ class RedisAsynPool extends AsynPool
                     }
                     call_user_func([$this, 'initRedis'], $client, 'password', $nowConnectNo, $data);
                 } catch (\Exception $e) {
-                    Log::write($e->getMessage());
                     if(!empty($data)){
                         $data['result']['exception'] = $e->getMessage();
                         call_user_func([$this, 'distribute'], $data);
@@ -154,7 +152,6 @@ class RedisAsynPool extends AsynPool
                     }
                     call_user_func([$this, 'initRedis'], $client, $this->operator[$now]['next'], $nowConnectNo, $data);
                 }catch(\Exception $e){
-                    Log::write($e->getMessage());
                     if(!empty($data)) {
                         $data['result']['exception'] = $e->getMessage();
                         call_user_func([$this, 'distribute'], $data);

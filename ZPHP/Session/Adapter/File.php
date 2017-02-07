@@ -51,20 +51,22 @@ class File
 
     public function read($sid)
     {
+        $session = false;
         $this->filename = $this->getFileName($sid);
         if (is_file($this->filename)) {
             $content = file_get_contents($this->filename);
             if (strlen($content) < 10) {
                 unlink($this->filename);
-                return false;
+            }else {
+                $time = floatval(substr($content, 0, 10));
+                if ($time < time()) {
+                    unlink($this->filename);
+                } else {
+                    $session = substr($content, 10);
+                }
             }
-            $time = floatval(substr($content, 0, 10));
-            if ($time < time()) {
-                unlink($this->filename);
-                return false;
-            }
-            return substr($content, 10);
         }
+        return $session;
     }
 
     public function write($sid, $data)

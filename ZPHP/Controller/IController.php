@@ -48,7 +48,7 @@ class IController{
     /**
      * 异常处理
      */
-    public function onExceptionHandle(\Exception $e){
+    public function onExceptionHandle($message){
 
     }
 

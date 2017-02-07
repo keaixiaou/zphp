@@ -22,6 +22,7 @@ use ZPHP\ZPHP;
 class Controller extends IController{
     public $request;
     public $response;
+    protected $header = ['Connection'=>'keep-alive'];
     protected $template;
     protected $tplVar = [];
     protected $tplFile = '';
@@ -58,34 +59,7 @@ class Controller extends IController{
     }
 
 
-    /**
-     * 处理请求
-     * @return \Generator
-     */
-    public function coroutineStart(){
-        yield $this->doBeforeExecute();
-        $initRes = true;
-        if(method_exists($this, 'init')){
-            $initRes = yield $this->init();
-        }
-        if($this->checkResponse() && $initRes){
-            $result = yield call_user_func_array($this->coroutineMethod, $this->coroutineParam);
-        }
-        yield $this->doBeforeDestroy();
-        if($this->checkResponse()){
-            if(!is_string($result) && $this->checkApi()){
-                $this->jsonReturn($result);
-            }else{
-                $this->strReturn($result);
-            }
 
-        }
-//        Log::write('response:'.$this->responseData);
-        $this->response->header('Connection','keep-alive');
-
-        $this->response->end($this->responseData);
-        $this->destroy();
-    }
 
     /**
      * 获取自身服务状态
@@ -157,9 +131,120 @@ class Controller extends IController{
     }
 
 
+    /**
+     * 传入变量到模板
+     * @param $name
+     * @param $value
+     */
+    protected function assign($name, $value){
+        $this->tplVar[$name] = $value;
+    }
 
+
+    /**
+     * 设置模板
+     * @param $template
+     * @throws \Exception
+     */
     protected function setTemplate($template){
         $this->view->setTemplate($template);
+    }
+
+
+    /**
+     * 获取当前请求对应html的内容
+     * @param string $tplFile
+     * @return mixed
+     * @throws \Exception
+     */
+    public function fetch($tplFile=''){
+        $this->assign('session', $this->input->session());
+        return $this->view->fetch($this->tplVar, $tplFile);
+    }
+
+
+    /**
+     * 跳转方法
+     * @param $url
+     */
+    protected function redirect($url){
+        $this->response->header('Location', $url);
+        $this->strReturn('', 302);
+    }
+
+
+    /**
+     * 载入模板文件
+     * @param string $tplFile
+     */
+    public function display($tplFile=''){
+        $content = $this->fetch($tplFile);
+        $this->strReturn($content);
+    }
+
+
+    /**
+     * 处理请求
+     * @return \Generator
+     */
+    public function coroutineStart(){
+        yield $this->doBeforeExecute();
+        $initRes = true;
+        if(method_exists($this, 'init')){
+            $initRes = yield $this->init();
+        }
+        try{
+            if($this->checkResponse() && $initRes){
+                $result = yield call_user_func_array($this->coroutineMethod, $this->coroutineParam);
+            }
+        }catch(\Exception $e){
+            $this->onUserExceptionHandle($e->getMessage());
+        }
+
+        yield $this->finishRequest($result);
+    }
+
+
+    /**
+     * 结束请求
+     * @param null $result
+     * @return \Generator
+     */
+    protected function finishRequest($result=null){
+
+        yield $this->doBeforeDestroy();
+        if($this->checkResponse()){
+            if(!is_string($result) && $this->checkApi()){
+                $this->jsonReturn($result);
+            }else{
+                $this->strReturn($result);
+            }
+
+        }
+        if(!empty($this->header)){
+            foreach($this->header as $key => $value){
+                $this->response->header($key, $value);
+            }
+        }
+        $this->response->end($this->responseData);
+        $this->destroy();
+    }
+
+    /**
+     * 异常处理
+     */
+    public function onUserExceptionHandle($message){
+        $this->strReturn($message);
+    }
+
+    /**
+     * 系统异常错误处理
+     * @param $message
+     */
+    public function onSystemException($message){
+        $message = DEBUG===true?$message:'系统出现了异常';
+        $this->strReturn(Swoole::info($message), 500);
+        yield $this->finishRequest();
     }
 
 
@@ -197,68 +282,6 @@ class Controller extends IController{
 
     }
 
-
-    /**
-     * 传入变量到模板
-     * @param $name
-     * @param $value
-     */
-    protected function assign($name, $value){
-        $this->tplVar[$name] = $value;
-    }
-
-
-    /**
-     * 获取当前请求对应html的内容
-     * @param string $tplFile
-     * @return mixed
-     * @throws \Exception
-     */
-    public function fetch($tplFile=''){
-        $this->assign('session', $this->input->session());
-        return $this->view->fetch($this->tplVar, $tplFile);
-    }
-
-
-    /**
-     * 跳转方法
-     * @param $url
-     */
-    protected function redirect($url){
-        $this->response->header('Location', $url);
-        $this->strReturn('', 302);
-    }
-
-
-    /**
-     * 载入模板文件
-     * @param string $tplFile
-     */
-    public function display($tplFile=''){
-        $content = $this->fetch($tplFile);
-        $this->strReturn($content);
-    }
-
-
-    /**
-     * 异常处理
-     */
-    public function onExceptionHandle(\Exception $e){
-        $msg = DEBUG===true?$e->getMessage():'服务器暂时故障了';
-        $this->response->status(500);
-        $this->response->end(Swoole::info($msg));
-        $this->destroy();
-    }
-    /**
-     * 系统异常错误处理
-     * @param $message
-     */
-    public function onSystemException($message){
-        $message = DEBUG===true?$message:'系统出现了异常';
-        $this->response->status(500);
-        $this->response->end(Swoole::info($message));
-        $this->destroy();
-    }
 
     public function destroy()
     {

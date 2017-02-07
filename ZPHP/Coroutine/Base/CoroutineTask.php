@@ -45,9 +45,9 @@ class CoroutineTask{
 //            Log::write("this'i : ".$this->i);
             $this->i++;
             try {
-                if(!empty($this->exception)){
-                    throw new \Exception($this->exception);
-                }
+//                if(!empty($this->exception)){
+//                    throw new \Exception($this->exception);
+//                }
                 if (!$routine) {
                     return;
                 }
@@ -99,12 +99,11 @@ class CoroutineTask{
                     return ;
                 }
             } catch (\Exception $e) {
-//                Log::write('exception:' . print_r($e, true));
                 while(!$this->stack->isEmpty()) {
                     $routine = $this->stack->pop();
-//                    Log::write('routine:' . print_r($routine, true));
                 }
-                call_user_func_array([$this->controller, 'onExceptionHandle'], ['e'=>$e]);
+                $this->onExceptionHandle($e->getMessage());
+
                 break;
             }
         }
@@ -124,8 +123,7 @@ class CoroutineTask{
          */
 //        Log::write('callback:'.__METHOD__.print_r($data, true));
         if(!empty($data['exception'])){
-            call_user_func_array([$this->controller, 'onSystemException'],
-                ['message'=>$data['exception']]);
+            $this->onExceptionHandle($data['exception']);
         }else {
             $gen = $this->stack->pop();
             $this->callbackData = $data;
@@ -136,6 +134,14 @@ class CoroutineTask{
 
     }
 
+    protected function onExceptionHandle($message){
+        $action = 'onSystemException';
+        $generator = call_user_func_array([$this->controller, $action], ['e'=>$message]);
+        if ($generator instanceof \Generator) {
+            $this->setRoutine($generator);
+            $this->work($this->getRoutine());
+        }
+    }
 
     /**
      * [isFinished 判断该task是否完成]

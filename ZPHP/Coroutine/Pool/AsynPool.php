@@ -69,6 +69,9 @@ abstract class AsynPool implements IAsynPool
         $callback = $this->callBacks[$data['token']];
         unset($this->callBacks[$data['token']]);
         if ($callback != null) {
+            if(!empty($data['result']['exception'])){
+                Log::write('Exception:'.$data['result']['exception'].";Execute:".print_r($data, true));
+            }
             call_user_func_array($callback, ['data'=>$data['result']]);
         }
     }

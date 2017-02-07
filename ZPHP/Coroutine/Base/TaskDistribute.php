@@ -21,8 +21,7 @@ class TaskDistribute {
      * @throws \Exception
      */
     static public function init(){
-        $taskCoroutineConfig = Config::get('task_coroutine');
-        $taskTypeArray = isset($taskCoroutineConfig)?$taskCoroutineConfig:['mongo','memcached'];
+        $taskTypeArray = Config::get('task_coroutine',['mongo','memcached']);
         self::$allTaskNum = 0;
         self::$taskList = [];
         $socketConfig = Config::get('socket');
@@ -42,7 +41,7 @@ class TaskDistribute {
                 $i ++;
             }
         }
-        self::$allTaskNum += intval($socketConfig['task_worker_num']);
+        self::$allTaskNum += !empty($socketConfig['task_worker_num'])?intval($socketConfig['task_worker_num']):0;
     }
 
     /**

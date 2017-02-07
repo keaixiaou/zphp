@@ -43,7 +43,6 @@ class MongoAsynPool extends AsynPool{
                     $data['result'] = $res['result'];
                 }
                 $this->pushToPool($client);
-//                Log::write('work:'.$this->workerId.'pool:'.print_r($this->pool, true));
                 call_user_func([$this, 'distribute'], $data);
 
             });
@@ -81,7 +80,6 @@ class MongoAsynPool extends AsynPool{
         if(!$this->taskList->isEmpty()) {
             $taskId = $this->taskList->dequeue();
             $client = new TaskParam($taskId, $this->config);
-//            Log::write('client:'.print_r($client, true));
             $this->pushToPool($client);
         }
 

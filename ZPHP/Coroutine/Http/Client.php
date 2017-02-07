@@ -63,6 +63,7 @@ class Client
 
             });
         }catch(\Exception $e){
+            Log::write($e->getMessage());
             call_user_func_array($this->data['callback'], ['data'=>['exception'=>$e->getMessage()]]);
         }
     }
