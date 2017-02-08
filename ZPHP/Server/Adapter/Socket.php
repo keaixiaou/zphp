@@ -31,10 +31,6 @@ class Socket implements IServer
             $client = CFactory::getInstance('\ZPHP\Client\Swoole'.ucfirst($config['server_type']));
             $socket->setClient($client);
         }
-        //初始化Request-server -   protocel:json
-//        Request::setServer(ZProtocol::getInstance(Config::getField('socket', 'protocol')));
-//        Request::setLongServer();
-//        Request::setHttpServer(0);
         $socket->run();
     }
 }

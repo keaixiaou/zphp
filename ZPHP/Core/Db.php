@@ -12,7 +12,6 @@ namespace ZPHP\Core;
 use ZPHP\Coroutine\Memcached\MemcachedAsynPool;
 use ZPHP\Coroutine\Mongo\MongoAsynPool;
 use ZPHP\Coroutine\Redis\RedisAsynPool;
-//use ZPHP\Db\Mongo;
 use ZPHP\Memcached\Memcached;
 use ZPHP\Model\Model;
 use ZPHP\Coroutine\Mysql\MysqlAsynPool;

@@ -14,7 +14,7 @@ use ZPHP\Coroutine\Pool\AsynPool;
 
 class MysqlAsynPool extends AsynPool{
 
-    const AsynName = 'mysql';
+    protected $AsynName = 'mysql';
 
     /**
      * @var array
@@ -33,13 +33,9 @@ class MysqlAsynPool extends AsynPool{
      * @param $bind_id 绑定的连接id，用于事务
      * @param $sql
      */
-    public function query(callable $callback,  $sql = null)
+    public function command(callable $callback,  $sql = null)
     {
-        $data = [
-            'sql' => $sql
-        ];
-        $data['token'] = $this->addTokenCallback($callback);
-        call_user_func([$this, 'execute'], $data);
+        $this->checkAndExecute(['sql'=>$sql], $callback);
     }
 
     /**

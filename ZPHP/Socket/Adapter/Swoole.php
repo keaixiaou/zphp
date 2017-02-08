@@ -11,6 +11,7 @@ use ZPHP\Core\Config;
 use ZPHP\Coroutine\Base\TaskDistribute;
 use ZPHP\Socket\IServer,
     ZPHP\Socket\Callback;
+use ZPHP\ZPHP;
 
 class Swoole implements IServer
 {
@@ -28,6 +29,9 @@ class Swoole implements IServer
             throw new \Exception("no swoole extension. get: https://github.com/swoole/swoole-src");
         }
         $this->config = $config;
+        if(!empty($config['log_file'])){
+            ZPHP::setSystemLog($config['log_file']);
+        }
         TaskDistribute::init();
         $this->config['task_worker_num'] = TaskDistribute::getAllTaskNum();
         $socketType = empty($config['server_type']) ? self::TYPE_TCP : strtolower($config['server_type']);

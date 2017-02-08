@@ -17,7 +17,8 @@ abstract class Log {
     const NOTICE  = 2;
     const WARN    = 3;
     const ERROR   = 4;
-    private static $log;
+    private static $log=[];
+    private static $syslog=[];
 
     protected static $level_str = array(
         'TRACE',
@@ -29,27 +30,39 @@ abstract class Log {
 
 
     //写日志
-    static public function write($msg, $level=self::ERROR){
+    static public function write($msg, $level=self::ERROR, $system=false){
         $level_str = self::$level_str[$level];
         $timeArray = explode(' ', microtime());
         $message = date('Y-m-d H:i:s').substr($timeArray[0],1)." {$level_str}-".$msg."\n";
-        self::$log[] = $message;
-        if(DEBUG!==true && count(self::$log)<100)return;
-        self::reallyWrite();
+        if($system){
+            self::$syslog[] = $message;
+            if(DEBUG!==true && count(self::$syslog)<100)return;
+        }else {
+            self::$log[] = $message;
+            if(DEBUG!==true && count(self::$log)<100)return;
+        }
+        self::reallyWrite($system);
     }
 
     /**
      * 实际写日志
      */
-    static protected function reallyWrite(){
-        $str = implode("", self::$log);
-        $file_path = ZPHP::getLogPath().DS.'app';
-        if(!is_dir($file_path)){
-            mkdir($file_path, 0755, true);
+    static protected function reallyWrite($type=false){
+        if($type===false){
+            $str = implode("", self::$log);
+            $filePath = ZPHP::getLogPath().DS.'app';
+            if(!is_dir($filePath)){
+                mkdir($filePath, 0755, true);
+            }
+            $fileName = $filePath.'/'.date('Y-m-d').'.log';
+            error_log($str, 3, $fileName);
+            self::$log = [];
+        }else{
+            $str = implode("", self::$syslog);
+            $fileName = ZPHP::getSystemLog();
+            error_log($str, 3, $fileName);
+            self::$syslog = [];
         }
-        $file_name = $file_path.'/'.date('Y-m-d').'.log';
-        error_log($str, 3, $file_name);
-        self::$log = [];
     }
 
     /**
@@ -58,6 +71,9 @@ abstract class Log {
     static public function clear(){
         if(!empty(self::$log)){
             self::reallyWrite();
+        }
+        if(!empty(self::$log)){
+            self::reallyWrite(true);
         }
     }
 }

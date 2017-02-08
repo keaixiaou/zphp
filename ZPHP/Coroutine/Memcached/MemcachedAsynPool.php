@@ -15,7 +15,7 @@ use ZPHP\Coroutine\Base\TaskParam;
 use ZPHP\Coroutine\Pool\AsynPool;
 
 class MemcachedAsynPool extends AsynPool{
-    protected $taskName = 'memcached';
+    protected $AsynName = 'memcached';
     function __construct()
     {
         parent::__construct();
@@ -24,13 +24,8 @@ class MemcachedAsynPool extends AsynPool{
 
 
     function command($callback, $object){
-        $data = [
-            'execute' => $object
-        ];
-        $data['token'] = $this->addTokenCallback($callback);
-        call_user_func([$this, 'execute'], $data);
+        $this->checkAndExecute(['execute' => $object], $callback);
     }
-
 
     function execute($data){
         if($this->pool->isEmpty()){

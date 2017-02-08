@@ -20,7 +20,6 @@ class CoroutineTask{
      */
     protected $routine;
     protected $controller;
-    protected $exception = null;
     protected $i;
 
     public function __construct()
@@ -45,9 +44,6 @@ class CoroutineTask{
 //            Log::write("this'i : ".$this->i);
             $this->i++;
             try {
-//                if(!empty($this->exception)){
-//                    throw new \Exception($this->exception);
-//                }
                 if (!$routine) {
                     return;
                 }
@@ -99,9 +95,6 @@ class CoroutineTask{
                     return ;
                 }
             } catch (\Exception $e) {
-                while(!$this->stack->isEmpty()) {
-                    $routine = $this->stack->pop();
-                }
                 $this->onExceptionHandle($e->getMessage());
 
                 break;
@@ -130,13 +123,19 @@ class CoroutineTask{
             $gen->send($this->callbackData);
             $this->work($gen);
         }
-
-
     }
 
+    /**
+     * 系统级错误
+     * @param $message
+     */
     protected function onExceptionHandle($message){
+        while(!$this->stack->isEmpty()) {
+            $routine = $this->stack->pop();
+        }
         $action = 'onSystemException';
-        $generator = call_user_func_array([$this->controller, $action], ['e'=>$message]);
+        Log::write('系统级错误:'.$message, Log::ERROR, true);
+        $generator = call_user_func_array([$this->controller, $action], [$message]);
         if ($generator instanceof \Generator) {
             $this->setRoutine($generator);
             $this->work($this->getRoutine());

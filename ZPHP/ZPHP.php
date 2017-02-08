@@ -30,6 +30,7 @@ class ZPHP
     private static $rootPath;
     private static $tmpPath;
     private static $logPath;
+    private static $syslogPath;
     /**
      * 配置目录
      * @var string
@@ -72,6 +73,15 @@ class ZPHP
         self::$rootPath = $rootPath;
         self::$tmpPath = $rootPath.DS.'tmp';
         self::$logPath = self::$tmpPath.DS.'log';
+    }
+
+
+    public static function setSystemLog($logpath){
+        self::$syslogPath = $logpath;
+    }
+
+    public static function getSystemLog(){
+        return self::$syslogPath;
     }
 
     public static function getConfigPath()

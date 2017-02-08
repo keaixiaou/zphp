@@ -16,14 +16,14 @@ class MongoCoroutine implements ICoroutineBase{
      * @var MongoAsynPool
      */
     public $mongoAsynPool;
-    public $object;
+    public $command;
     public function __construct($mongoAsynPool)
     {
         $this->mongoAsynPool = $mongoAsynPool;
     }
 
     public function query($data){
-        $this->object = $data;
+        $this->command = $data;
         $data = yield $this;
         return $data;
     }
@@ -31,7 +31,7 @@ class MongoCoroutine implements ICoroutineBase{
     public function send(callable $callback)
     {
         // TODO: Implement send() method.
-        $this->mongoAsynPool->query($callback, $this->object);
+        $this->mongoAsynPool->command($callback, $this->command);
     }
 
 }

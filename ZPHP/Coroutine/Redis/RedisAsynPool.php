@@ -15,7 +15,7 @@ use ZPHP\Coroutine\Pool\AsynPool;
 
 class RedisAsynPool extends AsynPool
 {
-    const AsynName = 'redis';
+    protected $AsynName = 'redis';
 
     protected  $operator = [
         'password'  =>  ['op'=>'auth','next'=>'select'],
@@ -44,8 +44,7 @@ class RedisAsynPool extends AsynPool
      */
     public function command($callback, $data)
     {
-        $data['token'] = $this->addTokenCallback($callback);
-        call_user_func([$this, 'execute'], $data);
+        $this->checkAndExecute($data, $callback);
     }
 
 

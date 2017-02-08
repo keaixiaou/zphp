@@ -41,7 +41,7 @@ class MySqlCoroutine implements ICoroutineBase{
      */
     public function send(callable $callback)
     {
-        $this->_mysqlAsynPool->query($callback, $this->sql);
+        $this->_mysqlAsynPool->command($callback, $this->sql);
     }
 
     public function getResult()

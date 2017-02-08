@@ -84,7 +84,7 @@ class Controller extends IController{
      */
     protected function image($content, $type){
         if($this->checkResponse()) {
-            $this->response->header('Content-Type', 'image/' . $type);
+            $this->header['Content-Type'] =  'image/' . $type;
             $this->response->status(200);
             ob_start();
             $ImageFun = 'image'.$type;
@@ -103,7 +103,7 @@ class Controller extends IController{
      */
     protected function strReturn($data, $code=200){
         if($this->checkResponse()){
-            $this->response->header('Content-Type', 'text/html');
+            $this->header['Content-Type'] = 'text/html';
             $result = strval($data);
             $this->response->status($code);
             $this->responseData = $result;
@@ -124,7 +124,7 @@ class Controller extends IController{
                 $result = $this->strNull($result);
             }
             $this->response->status(200);
-            $this->response->header('Content-Type', 'application/json');
+            $this->header['Content-Type'] =  'application/json';
             $this->responseData = $result;
             $this->setResponse();
         }

@@ -169,7 +169,7 @@ class Mongo{
             'method' => 'insert',
             'param' => [$this->collection, $data],
         ];
-        $data = yield $mongoCoroutine->query($query);
+        $data = yield $mongoCoroutine->command($query);
         return $data;
     }
 

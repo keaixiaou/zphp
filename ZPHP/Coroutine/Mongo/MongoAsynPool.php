@@ -14,7 +14,7 @@ use ZPHP\Coroutine\Base\TaskParam;
 use ZPHP\Coroutine\Pool\AsynPool;
 
 class MongoAsynPool extends AsynPool{
-    protected $taskName = 'mongo';
+    protected $AsynName = 'mongo';
     function __construct()
     {
         parent::__construct();
@@ -57,12 +57,8 @@ class MongoAsynPool extends AsynPool{
 
 
 
-    function query($callback, $object){
-        $data = [
-            'execute' => $object
-        ];
-        $data['token'] = $this->addTokenCallback($callback);
-        call_user_func([$this, 'execute'], $data);
+    public function command($callback, $command){
+        $this->checkAndExecute(['execute'=>$command], $callback);
     }
 
 
