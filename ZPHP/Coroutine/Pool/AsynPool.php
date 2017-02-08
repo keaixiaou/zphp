@@ -165,6 +165,7 @@ abstract class AsynPool implements IAsynPool
                 $i++;
             }
         }
+        //
         if(!empty($this->config['max_onetime_task'])){
             $this->MAX_TOKEN = $this->config['max_onetime_task'];
         }
