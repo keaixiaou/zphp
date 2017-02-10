@@ -48,15 +48,14 @@ class MemcachedAsynPool extends AsynPool{
                     $data['result'] = $res['result'];
                 }
                 $this->pushToPool($client);
-                call_user_func([$this, 'distribute'], $data);
-
+                $this->distribute($data);
             });
             if ($exeRes===false) {
                 throw new \Exception("Memcached 执行失败");
             }
         } catch (\Exception $e){
             $data['result']['exception'] = $e->getMessage();
-            call_user_func([$this, 'distribute'], $data);
+            $this->distribute($data);
         }
     }
 

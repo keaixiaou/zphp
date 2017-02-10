@@ -78,12 +78,12 @@ class MysqlAsynPool extends AsynPool{
                 }
             }catch(\Exception $e){
                 $data['result']['exception'] = $e->getMessage();
-                call_user_func([$this, 'distribute'], $data);
+                $this->distribute($data);
             }
         });
         if(empty($res)){
             $data['result']['exception'] = "执行sql[$sql]失败";
-            call_user_func([$this, 'distribute'], $data);
+            $this->distribute($data);
         }
     }
 
@@ -119,7 +119,7 @@ class MysqlAsynPool extends AsynPool{
             }catch(\Exception $e){
                 if(!empty($data)) {
                     $data['result']['exception'] = $e->getMessage();
-                    call_user_func([$this, 'distribute'], $data);
+                    $this->distribute($data);
                 }
             }
         });

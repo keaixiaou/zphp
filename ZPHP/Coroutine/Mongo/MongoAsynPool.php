@@ -43,7 +43,7 @@ class MongoAsynPool extends AsynPool{
                     $data['result'] = $res['result'];
                 }
                 $this->pushToPool($client);
-                call_user_func([$this, 'distribute'], $data);
+                $this->distribute($data);
 
             });
             if ($exeRes===false) {
@@ -51,7 +51,7 @@ class MongoAsynPool extends AsynPool{
             }
         } catch (\Exception $e){
             $data['result']['exception'] = $e->getMessage();
-            call_user_func([$this, 'distribute'], $data);
+            $this->distribute($data);
         }
     }
 

@@ -69,6 +69,9 @@ class Db {
         return self::$instance;
     }
 
+    public static function getServer(){
+        return self::$server;
+    }
 
     /**
      * @return workId
@@ -87,7 +90,7 @@ class Db {
     static public function init($server, $workerId){
         self::getInstance();
         self::$server = $server;
-        self::initMysqlPool($workerId, Config::getField('database','master'));
+        self::initMysqlPool($workerId, Config::get('mysql'));
         self::initRedisPool($workerId, Config::get('redis'));
         self::initMongoPool($workerId, self::$server, Config::get('mongo'));
         self::initSessionRedisPool($workerId, Config::get('session'));

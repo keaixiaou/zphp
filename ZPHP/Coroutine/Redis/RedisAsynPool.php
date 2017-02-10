@@ -71,7 +71,7 @@ class RedisAsynPool extends AsynPool
                     $data['result']['exception'] = $e->getMessage();
                 }
                 //给worker发消息
-                call_user_func([$this, 'distribute'], $data);
+                $this->distribute($data);
             };
             try{
                 $execute = $data['execute'];
@@ -86,7 +86,7 @@ class RedisAsynPool extends AsynPool
                 }
             }catch(\Exception $e){
                 $data['result']['exception'] = $e->getMessage();
-                call_user_func([$this, 'distribute'], $data);
+                $this->distribute($data);
             }
         }
     }
@@ -117,11 +117,11 @@ class RedisAsynPool extends AsynPool
                         $this->max_count--;
                         throw new \Exception('[redis连接失败]' . $client->errMsg);
                     }
-                    call_user_func([$this, 'initRedis'], $client, 'password', $nowConnectNo, $data);
+                    $this->initRedis($client, 'password', $nowConnectNo, $data);
                 } catch (\Exception $e) {
                     if(!empty($data)){
                         $data['result']['exception'] = $e->getMessage();
-                        call_user_func([$this, 'distribute'], $data);
+                        $this->distribute($data);
                     }
 
                 }
@@ -149,11 +149,11 @@ class RedisAsynPool extends AsynPool
                         unset($client);
                         throw new \Exception('[redis连接失败]'.$errMsg);
                     }
-                    call_user_func([$this, 'initRedis'], $client, $this->operator[$now]['next'], $nowConnectNo, $data);
+                    $this->initRedis( $client, $this->operator[$now]['next'], $nowConnectNo, $data);
                 }catch(\Exception $e){
                     if(!empty($data)) {
                         $data['result']['exception'] = $e->getMessage();
-                        call_user_func([$this, 'distribute'], $data);
+                        $this->distribute($data);
                     }
                 }
             });
