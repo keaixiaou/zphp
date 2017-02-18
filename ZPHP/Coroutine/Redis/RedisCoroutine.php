@@ -8,49 +8,17 @@
 
 namespace ZPHP\Coroutine\Redis;
 
-
-
+use ZPHP\Coroutine\Base\CoroutineBase;
 use ZPHP\Coroutine\Base\CoroutineResult;
-use ZPHP\Coroutine\Base\ICoroutineBase;
 
-class RedisCoroutine implements ICoroutineBase
-{
-    /**
-     * @var RedisAsynPool
-     */
-    public $redisAsynPool;
+class RedisCoroutine extends CoroutineBase{
+
     /**
      * @var data => ['key'=>'','value'=>'','expire'=>''];
      */
-    public $data;
-    public $result;
-
-    public function __construct($redisAsynPool)
+    public function __construct(RedisAsynPool $redisAsynPool)
     {
-        $this->result = CoroutineResult::getInstance();
-        $this->redisAsynPool = $redisAsynPool;
+        $this->ioVector = $redisAsynPool;
     }
-
-
-    public function command($data){
-        $this->data = $data;
-        $genData = yield $this;
-        return $genData;
-    }
-
-
-    public function send(callable $callback)
-    {
-        $this->redisAsynPool->command($callback, $this->data);
-    }
-
-    public function getResult()
-    {
-        return $this->result;
-    }
-}
-
-class RedisNull
-{
 
 }

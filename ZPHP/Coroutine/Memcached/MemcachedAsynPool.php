@@ -10,11 +10,12 @@ namespace ZPHP\Coroutine\Memcached;
 
 use ZPHP\Core\Factory;
 use ZPHP\Core\Log;
+use ZPHP\Coroutine\Base\IOvector;
 use ZPHP\Coroutine\Base\TaskDistribute;
 use ZPHP\Coroutine\Base\TaskParam;
 use ZPHP\Coroutine\Pool\AsynPool;
 
-class MemcachedAsynPool extends AsynPool{
+class MemcachedAsynPool extends AsynPool implements IOvector{
     protected $AsynName = 'memcached';
     function __construct()
     {
@@ -22,8 +23,11 @@ class MemcachedAsynPool extends AsynPool{
         $this->taskList = new \SplQueue();
     }
 
-
-    function command($callback, $object){
+    /**
+     * @param callable $callback
+     * @param $object
+     */
+    function command(callable $callback, $object){
         $this->checkAndExecute(['execute' => $object], $callback);
     }
 

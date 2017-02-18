@@ -11,9 +11,10 @@ namespace ZPHP\Coroutine\Redis;
 
 use ZPHP\Core\Config;
 use ZPHP\Core\Log;
+use ZPHP\Coroutine\Base\IOvector;
 use ZPHP\Coroutine\Pool\AsynPool;
 
-class RedisAsynPool extends AsynPool
+class RedisAsynPool extends AsynPool implements IOvector
 {
     protected $AsynName = 'redis';
 
@@ -42,7 +43,7 @@ class RedisAsynPool extends AsynPool
      * @param $name
      * @param $arguments
      */
-    public function command($callback, $data)
+    public function command(callable $callback, $data)
     {
         $this->checkAndExecute($data, $callback);
     }

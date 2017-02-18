@@ -10,42 +10,31 @@
 namespace ZPHP\Coroutine\Mysql;
 
 use ZPHP\Core\Log;
-use ZPHP\Coroutine\Base\CoroutineResult;
-use ZPHP\Coroutine\Base\ICoroutineBase;
+use ZPHP\Coroutine\Base\CoroutineBase;
 
-class MySqlCoroutine implements ICoroutineBase{
-    /**
-     * @var MysqlAsynPool
-     */
-    public $_mysqlAsynPool;
+class MySqlCoroutine extends CoroutineBase{
     public $bind_id;
-    public $sql;
-    public $result;
-
-    public function __construct($mysqlAsynPool)
-    {
-        $this->result = CoroutineResult::getInstance();
-        $this->_mysqlAsynPool = $mysqlAsynPool;
-    }
-
-    public function query($sql){
-        $this->sql = $sql;
-        $data = yield $this;
-        return $data;
-    }
-
-
-    /**
-     * @param $callback
-     * @throws \Exception
+    /*
+     * $this->data = $sql;
      */
-    public function send(callable $callback)
+
+
+    public function __construct(MysqlAsynPool $mysqlAsynPool)
     {
-        $this->_mysqlAsynPool->command($callback, $this->sql);
+        $this->ioVector = $mysqlAsynPool;
     }
 
-    public function getResult()
-    {
-        return $this->result;
-    }
+//    public function query($sql){
+//        $this->data = $sql;
+//        $this->send(function($result){
+//            if(empty($this->coroutineCallBack)){
+//                throw new \Exception($result['exception']);
+//            }else {
+//                call_user_func($this->coroutineCallBack, $result);
+//            }
+//        });
+//        return $this;
+//    }
+
+
 }

@@ -35,7 +35,7 @@ class Db {
      */
     public $mongoPool;
     /**
-     * @var MemcacheAsynPool
+     * @var MemcachedAsynPool
      */
     public $memcachedPool;
     /**

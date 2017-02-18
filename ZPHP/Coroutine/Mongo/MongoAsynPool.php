@@ -9,11 +9,12 @@
 namespace ZPHP\Coroutine\Mongo;
 
 use ZPHP\Core\Log;
+use ZPHP\Coroutine\Base\IOvector;
 use ZPHP\Coroutine\Base\TaskDistribute;
 use ZPHP\Coroutine\Base\TaskParam;
 use ZPHP\Coroutine\Pool\AsynPool;
 
-class MongoAsynPool extends AsynPool{
+class MongoAsynPool extends AsynPool implements IOvector{
     protected $AsynName = 'mongo';
     function __construct()
     {
@@ -56,8 +57,11 @@ class MongoAsynPool extends AsynPool{
     }
 
 
-
-    public function command($callback, $command){
+    /**
+     * @param callable $callback
+     * @param $command
+     */
+    public function command(callable $callback, $command){
         $this->checkAndExecute(['execute'=>$command], $callback);
     }
 

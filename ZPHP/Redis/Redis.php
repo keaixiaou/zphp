@@ -14,10 +14,8 @@ use ZPHP\Coroutine\Redis\RedisCoroutine;
 
 class Redis{
     protected $pool;
-    protected $_redisCoroutine;
     function __construct($redisPool){
         $this->pool = $redisPool;
-        $this->_redisCoroutine = new RedisCoroutine($this->pool);
     }
 
     //redis操作
@@ -51,8 +49,8 @@ class Redis{
     public function __call($method,$param){
         $commandData = $param;
         array_unshift($commandData, $method);
-        $data = yield $this->_redisCoroutine->command(['execute'=>$commandData]);
-        return $data;
+        $redisCoroutine = new RedisCoroutine($this->pool);
+        return $redisCoroutine->command(['execute'=>$commandData]);
     }
 
 

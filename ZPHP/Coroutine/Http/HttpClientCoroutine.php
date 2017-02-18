@@ -9,42 +9,22 @@
 
 namespace ZPHP\Coroutine\Http;
 
+use ZPHP\Coroutine\Base\CoroutineBase;
 
-use ZPHP\Coroutine\Base\ICoroutineBase;
-
-class HttpClientCoroutine implements ICoroutineBase{
-    /**
-     * @var Client
-     */
-    public $client;
-    public $url;
-    public $postData;
-    protected $result;
-
+class HttpClientCoroutine extends CoroutineBase{
     public function __construct(){
-        $this->client = new Client();
-    }
-
-
-    public function request($url, $postData=[]){
-        $this->url = $url;
-        $this->postData = $postData;
-        $genData = yield $this;
-        return $genData;
+        $this->ioVector = new Client();
     }
 
 
     /**
-     * @param callable $callback
+     * @param $url
+     * @param array $postData
+     * @return $this
      */
-    function send(callable $callback){
-        $this->client->request($this->url, $this->postData, $callback);
-    }
-
-
-
-    function getResult(){
-        return $this->result;
+    public function request($url, $postData=[]){
+        $data = ['url'=>$url, 'postdata'=>$postData];
+        return parent::command($data);
     }
 
 }

@@ -8,24 +8,24 @@
 
 namespace ZPHP\Memcached;
 
+use ZPHP\Coroutine\Memcached\MemcachedAsynPool;
 use ZPHP\Coroutine\Memcached\MemcachedCoroutine;
 
 class Memcached{
     protected $pool;
-    protected $_memcachedCoroutine;
-    function __construct($redisPool){
-        $this->pool = $redisPool;
-        $this->_memcachedCoroutine = new MemcachedCoroutine($this->pool);
+    function __construct(MemcachedAsynPool $memcachedAsynPool){
+        $this->pool = $memcachedAsynPool;
     }
 
     function cache($key, $value='', $time_expire=3600){
+        $memcachedCoroutine = new MemcachedCoroutine($this->pool);
         if($value === ''){
-            $data = yield $this->_memcachedCoroutine->command(['method'=>'get', 'param'=>[$key]]);
+            $data = $memcachedCoroutine->command(['method'=>'get', 'param'=>[$key]]);
         }else{
             if(!is_null($value)) {
-                $data = yield $this->_memcachedCoroutine->command(['method' => 'set', 'param' => [$key, $value, $time_expire]]);
+                $data = $memcachedCoroutine->command(['method' => 'set', 'param' => [$key, $value, $time_expire]]);
             }else{
-                $data = yield $this->_memcachedCoroutine->command(['method' => 'delete', 'param' => [$key]]);
+                $data = $memcachedCoroutine->command(['method' => 'delete', 'param' => [$key]]);
             }
         }
 

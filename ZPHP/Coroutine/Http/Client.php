@@ -1,6 +1,7 @@
 <?php
 namespace ZPHP\Coroutine\Http;
 use ZPHP\Core\Log;
+use ZPHP\Coroutine\Base\IOvector;
 
 /**
  * Created by PhpStorm.
@@ -8,22 +9,23 @@ use ZPHP\Core\Log;
  * Date: 16-9-2
  * Time: 下午2:54
  */
-class Client
-{
+class Client implements IOvector{
 
     protected $swooleHttpClient;
     protected $data;
 
-
-    protected function initHttpClient($url, $postData, $callback){
+    /**
+     * @param $data = ['url'=>'','postdata'=>[]]
+     * @param $callback
+     */
+    protected function initHttpClient($callback, $data){
+        $this->data = $data;
         $this->data['callback'] = $callback;
-        $this->data['url'] = $url;
-        $this->data['postdata'] = $postData;
     }
 
 
-    public function request($url, $postData, $callback){
-        $this->initHttpClient($url, $postData, $callback);
+    public function command(callable $callback, $data){
+        $this->initHttpClient($callback, $data);
         $this->getHttpClient();
     }
 

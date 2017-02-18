@@ -10,9 +10,10 @@ namespace ZPHP\Coroutine\Mysql;
 
 use ZPHP\Core\Config;
 use ZPHP\Core\Log;
+use ZPHP\Coroutine\Base\IOvector;
 use ZPHP\Coroutine\Pool\AsynPool;
 
-class MysqlAsynPool extends AsynPool{
+class MysqlAsynPool extends AsynPool implements IOvector{
 
     protected $AsynName = 'mysql';
 
@@ -55,6 +56,7 @@ class MysqlAsynPool extends AsynPool{
         $sql = $data['sql'];
         $res = $client->query($sql, function ($client, $result) use ($data) {
             try {
+                $client->isActive = true;
                 if ($result === false) {
                     if ($client->errno == 2006 || $client->errno == 2013) {//断线重连
                         $this->reconnect($data, $client);
@@ -97,7 +99,7 @@ class MysqlAsynPool extends AsynPool{
         if ($tmpClient == null) {
             $client = new \swoole_mysql();
             $client->on('Close', function($client){
-                call_user_func([$this, 'clearPool']);
+                $this->clearPool();
             });
         }else{
             $client = $tmpClient;

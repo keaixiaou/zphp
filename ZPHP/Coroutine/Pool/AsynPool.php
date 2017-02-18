@@ -65,6 +65,9 @@ abstract class AsynPool implements IAsynPool
         if($this->taskNum >= $this->MAX_TOKEN){
             throw new \Exception("任务已满!");
         }
+        if(empty($this->config['asyn_max_count'])){
+            throw new \Exception("连接池数量必须大于0!");
+        }
         $this->taskNum++;
     }
 

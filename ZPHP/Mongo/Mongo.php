@@ -148,14 +148,11 @@ class Mongo{
     }
 
     public function get(){
-        $mongoCoroutine = new MongoCoroutine($this->mongoAsynPool);
         $query = [
             'method' => 'get',
             'param' => [$this->collection, $this->filter, $this->options],
         ];
-        $data = yield $mongoCoroutine->query($query);
-        $this->reset();
-        return $data;
+        return $this->query($query);
     }
 
     /**
@@ -164,13 +161,11 @@ class Mongo{
      * @return mixed
      */
     public function add($data){
-        $mongoCoroutine = new MongoCoroutine($this->mongoAsynPool);
         $query = [
             'method' => 'insert',
             'param' => [$this->collection, $data],
         ];
-        $data = yield $mongoCoroutine->command($query);
-        return $data;
+        return $this->query($query);
     }
 
 
@@ -181,25 +176,21 @@ class Mongo{
      */
     public function save($data, $upsert=false){
         $updata = ['$set' => $data];
-        $mongoCoroutine = new MongoCoroutine($this->mongoAsynPool);
         $query = [
             'method' => 'update',
             'param' => [$this->collection, $this->filter, $updata, $upsert],
         ];
-        $data = yield $mongoCoroutine->query($query);
-        return $data;
+        return $this->query($query);
     }
 
 
     public function setInc($field, $num=1){
         $updata = ['$inc' => [ $field => $num ]];
-        $mongoCoroutine = new MongoCoroutine($this->mongoAsynPool);
         $query = [
             'method' => 'update',
             'param' => [$this->collection, $this->filter, $updata],
         ];
-        $data = yield $mongoCoroutine->query($query);
-        return $data;
+        return $this->query($query);
     }
 
     /**
@@ -207,13 +198,11 @@ class Mongo{
      * @param int $limit 0:表示删除全部,1:只删除一条
      */
     public function delete($limit=0){
-        $mongoCoroutine = new MongoCoroutine($this->mongoAsynPool);
         $query = [
             'method' => 'delete',
             'param' => [$this->collection, $this->filter, $limit],
         ];
-        $data = yield $mongoCoroutine->query($query);
-        return $data;
+        return $this->query($query);
     }
 
 
@@ -223,13 +212,11 @@ class Mongo{
      * @return mixed
      */
     public function aggregate($pipeline){
-        $mongoCoroutine = new MongoCoroutine($this->mongoAsynPool);
         $query = [
             'method' => 'aggregate',
             'param' => [$this->collection, $pipeline],
         ];
-        $data = yield $mongoCoroutine->query($query);
-        return $data;
+        return $this->query($query);
     }
 
 
@@ -241,13 +228,11 @@ class Mongo{
      * @return mixed
      */
     public function group($key, $initial, $reduce){
-        $mongoCoroutine = new MongoCoroutine($this->mongoAsynPool);
         $query = [
             'method' => 'group',
             'param' => [$this->collection, $key, $initial, $reduce, $this->filter],
         ];
-        $data = yield $mongoCoroutine->query($query);
-        return $data;
+        return $this->query($query);
     }
 
 
@@ -260,14 +245,26 @@ class Mongo{
         if($field!=='*'){
             $this->filter[$field] = ['$exists'=>1];
         }
-        $mongoCoroutine = new MongoCoroutine($this->mongoAsynPool);
         $query = [
             'method' => 'count',
             'param' => [$this->collection, $this->filter],
         ];
-        $data = yield $mongoCoroutine->query($query);
+        return $this->query($query);
+    }
+
+
+    /**
+     * 实际执行最后操作
+     * @param $query
+     * @return $this
+     */
+    protected function query($query){
+        $mongoCoroutine = new MongoCoroutine($this->mongoAsynPool);
+        $data = $mongoCoroutine->command($query);
+        $this->reset();
         return $data;
     }
+
 
     protected function reset(){
         $this->filter = [];

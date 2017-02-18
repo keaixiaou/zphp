@@ -60,7 +60,7 @@ class CoroutineTask{
                 //异步IO的父类
                 if(is_subclass_of($value, 'ZPHP\Coroutine\Base\ICoroutineBase')){
                     $this->stack->push($routine);
-                    $value->send([$this, 'callback']);
+                    $value->sendCallback([$this, 'callback']);
                     return;
                 }
 

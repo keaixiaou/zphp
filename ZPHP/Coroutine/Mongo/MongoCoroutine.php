@@ -8,30 +8,19 @@
 
 namespace ZPHP\Coroutine\Mongo;
 
-use ZPHP\Coroutine\Base\ICoroutineBase;
+use ZPHP\Coroutine\Base\CoroutineBase;
 
-class MongoCoroutine implements ICoroutineBase{
+class MongoCoroutine extends CoroutineBase{
 
     /**
-     * @var MongoAsynPool
+     * @var $data = [
+     * 'method' => 'count',
+        'param' => [$this->collection, $this->filter],
+     * ]
      */
-    public $mongoAsynPool;
-    public $command;
-    public function __construct($mongoAsynPool)
+
+    public function __construct(MongoAsynPool $mongoAsynPool)
     {
-        $this->mongoAsynPool = $mongoAsynPool;
+        $this->ioVector = $mongoAsynPool;
     }
-
-    public function query($data){
-        $this->command = $data;
-        $data = yield $this;
-        return $data;
-    }
-
-    public function send(callable $callback)
-    {
-        // TODO: Implement send() method.
-        $this->mongoAsynPool->command($callback, $this->command);
-    }
-
 }

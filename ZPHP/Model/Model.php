@@ -56,8 +56,7 @@ class Model {
         }
         Db::setSql($_sql);
         $mysqlCoroutine = new MySqlCoroutine($this->mysqlPool);
-        $data = yield $mysqlCoroutine->query($_sql);
-        return $data;
+        return $mysqlCoroutine->command($_sql);
     }
 
     /**
@@ -248,6 +247,32 @@ class Model {
             $updateField[] = '`' .$key. '` = ' .$this->parseValue($value);
         }
         $sql =  "UPDATE {$this->table} SET ".implode(',', $updateField)." {$this->where}";
+        $data = yield $this->query($sql);
+        return $data['result']===false?false:$data['affected_rows'];
+    }
+
+    /**
+     * 自增
+     * @param $field
+     * @param string $add
+     * @return bool
+     * @throws \Exception
+     */
+    public function setInc($field, $add='1'){
+        $sql =  "UPDATE {$this->table} SET `$field` = `$field` + $add {$this->where}";
+        $data = yield $this->query($sql);
+        return $data['result']===false?false:$data['affected_rows'];
+    }
+
+    /**
+     * 自增
+     * @param $field
+     * @param string $add
+     * @return bool
+     * @throws \Exception
+     */
+    public function setDec($field, $dec='1'){
+        $sql =  "UPDATE {$this->table} SET `$field` = `$field` - $dec {$this->where}";
         $data = yield $this->query($sql);
         return $data['result']===false?false:$data['affected_rows'];
     }
