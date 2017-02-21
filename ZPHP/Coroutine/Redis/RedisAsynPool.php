@@ -23,8 +23,6 @@ class RedisAsynPool extends AsynPool implements IOvector
         'select'    =>  ['op'=>'select','next'=>''],
     ];
 
-    protected $cmd = ['set', 'get', 'lpop', 'lpush', 'rpush','setex','decr', 'incr',
-    'hset','hget'];
     /**
      * 连接
      * @var array
@@ -77,9 +75,7 @@ class RedisAsynPool extends AsynPool implements IOvector
             try{
                 $execute = $data['execute'];
                 $command = array_shift($execute);
-                if(!in_array($command, $this->cmd)){
-                    throw new \Exception("[".$command."]此操作暂时不支持");
-                }
+
                 $execute[] = $callback;
                 $res = call_user_func_array([$client, $command], $execute);
                 if(empty($res)){

@@ -13,9 +13,11 @@ use ZPHP\Core\Log;
 use ZPHP\Coroutine\Redis\RedisCoroutine;
 
 class Redis{
-    protected $pool;
+    private $_cmd = ['set', 'get', 'lpop', 'rpop', 'lpush', 'rpush','setex','decr',
+        'incr','hset','hget'];
+    private $_pool;
     function __construct($redisPool){
-        $this->pool = $redisPool;
+        $this->_pool = $redisPool;
     }
 
     //redis操作
@@ -47,9 +49,13 @@ class Redis{
      * @return bool
      */
     public function __call($method,$param){
+        if(phpversion()<'7.1' && !in_array($method, $this->_cmd)){
+            throw new \Exception("[".$method."]此操作暂时不支持");
+        }
+
         $commandData = $param;
         array_unshift($commandData, $method);
-        $redisCoroutine = new RedisCoroutine($this->pool);
+        $redisCoroutine = new RedisCoroutine($this->_pool);
         return $redisCoroutine->command(['execute'=>$commandData]);
     }
 
@@ -65,6 +71,10 @@ class Redis{
 
     public function lpop($key){
         return $this->__call('lpop', [$key]);
+    }
+
+    public function rpop($key){
+        return $this->__call('rpop', [$key]);
     }
 
     public function incr($key){
@@ -83,5 +93,16 @@ class Redis{
         return $this->__call('hget', [$key,  $field]);
     }
 
+    public function set($key, $value){
+        return $this->__call('set', [$key,  $value]);
+    }
 
+    public function get($key){
+        return $this->__call('get', [$key]);
+    }
+
+
+    public function setex($key, $expire, $value){
+        return $this->__call('setex', [$key, $expire, $value]);
+    }
 }

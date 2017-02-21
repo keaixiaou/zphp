@@ -45,18 +45,25 @@ class MysqlAsynPool extends AsynPool implements IOvector{
      */
     public function execute($data)
     {
-        if ($this->pool->isEmpty()) {//代表目前没有可用的连接
+        $needCreateClient = true;
+        //代表目前没有可用的连接
+        if(!$this->pool->isEmpty()){
+            $client = $this->pool->dequeue();
+            if($client->isActive===true){
+                $needCreateClient = false;
+            }else{
+                unset($client);
+            }
+        }
+        if($needCreateClient){
             $this->prepareOne($data);
             $this->commands->enqueue($data);
             return;
-        } else {
-            $client = $this->pool->dequeue();
         }
 
         $sql = $data['sql'];
         $res = $client->query($sql, function ($client, $result) use ($data) {
             try {
-                $client->isActive = true;
                 if ($result === false) {
                     if ($client->errno == 2006 || $client->errno == 2013) {//断线重连
                         $this->reconnect($data, $client);
@@ -99,7 +106,9 @@ class MysqlAsynPool extends AsynPool implements IOvector{
         if ($tmpClient == null) {
             $client = new \swoole_mysql();
             $client->on('Close', function($client){
-                $this->clearPool();
+                $client->isActive = false;
+                $this->max_count --;
+//                $this->clearPool();
             });
         }else{
             $client = $tmpClient;
@@ -114,6 +123,7 @@ class MysqlAsynPool extends AsynPool implements IOvector{
                     $exceptionMsg = "[mysql连接失败]".$client->connect_error;
                     throw new \Exception($exceptionMsg);
                 } else {
+                    $client->isActive = true;
                     $client->isAffair = false;
                     $client->client_id = $tmpClient ? $tmpClient->client_id : $nowConnectNo;
                     $this->pushToPool($client);
