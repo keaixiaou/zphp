@@ -71,7 +71,7 @@ class IController{
      */
     protected function setResponse(){
         if($this->hasResponse){
-            Log::write("ResponseData has been set!", Log::WARN);
+            Log::write("ResponseData has been set!", Log::WARN, true);
         }
         $this->hasResponse = true;
     }

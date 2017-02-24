@@ -12,43 +12,53 @@ use ZPHP\Core\Config;
 use ZPHP\Core\Log;
 
 class TaskDistribute {
-    static protected $taskList;
-    static protected $allTaskNum=0;
-
+    protected static $taskList;
+    protected static $allTaskNum=0;
+    private static $_taskName = 'task';
     /**
      * task进程管理的初始化
      * @param array $taskTypeArray
      * @throws \Exception
      */
-    static public function init(){
+    public static function init(){
         $taskTypeArray = Config::get('task_coroutine',['mongo','memcached']);
         self::$allTaskNum = 0;
         self::$taskList = [];
         $socketConfig = Config::get('socket');
         $workNum = intval($socketConfig['worker_num']);
+        $singleTaskWorkerNum = $socketConfig['single_task_worker_num']?
+            intval($socketConfig['single_task_worker_num']):0;
         $taskId = 0;
-        foreach($taskTypeArray as $task){
-            $asynCount = intval(Config::getField($task, 'asyn_max_count'));
-            self::$allTaskNum += $workNum* $asynCount;
-            $i = 0;
-            while($i<$workNum){
+        $i = 0;
+        while($i<$workNum){
+            //用于mongo和memcached的task
+            foreach($taskTypeArray as $task){
+                $asynCount = intval(Config::getField($task, 'asyn_max_count'));
+                self::$allTaskNum += $asynCount;
                 $j = 0;
                 while($j< $asynCount){
                     self::$taskList[$task][$i][] = $taskId;
                     $taskId ++;
                     $j++;
                 }
-                $i ++;
             }
+            //普通task
+            $single = 0;
+            self::$allTaskNum += $singleTaskWorkerNum;
+            while($single<$singleTaskWorkerNum){
+                self::$taskList[self::$_taskName][$i][] = $taskId;
+                $taskId ++;
+                $single++;
+            }
+            $i ++;
         }
-        self::$allTaskNum += !empty($socketConfig['task_worker_num'])?intval($socketConfig['task_worker_num']):0;
     }
 
     /**
      * 返回总的task进程数量
      * @return int
      */
-    static public function getAllTaskNum(){
+    public static function getAllTaskNum(){
         return self::$allTaskNum;
     }
 
@@ -57,7 +67,11 @@ class TaskDistribute {
      * @param $name
      * @return mixed
      */
-    static public function getSingleTaskNum($name){
+    public static function getSingleTaskNum($name){
         return !empty(self::$taskList[$name])?self::$taskList[$name]:[];
+    }
+
+    public static function getTaskList(){
+        return self::$taskList;
     }
 }

@@ -72,7 +72,7 @@ abstract class Log {
         if(!empty(self::$log)){
             self::reallyWrite();
         }
-        if(!empty(self::$log)){
+        if(!empty(self::$syslog)){
             self::reallyWrite(true);
         }
     }

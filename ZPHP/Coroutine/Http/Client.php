@@ -24,7 +24,7 @@ class Client implements IOvector{
     }
 
 
-    public function command(callable $callback, $data){
+    public function command(callable $callback=null, $data){
         $this->initHttpClient($callback, $data);
         $this->getHttpClient();
     }

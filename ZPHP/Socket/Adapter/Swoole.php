@@ -7,7 +7,6 @@
 
 
 namespace ZPHP\Socket\Adapter;
-use ZPHP\Core\Config;
 use ZPHP\Coroutine\Base\TaskDistribute;
 use ZPHP\Socket\IServer,
     ZPHP\Socket\Callback;

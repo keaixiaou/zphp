@@ -25,10 +25,9 @@ class Model {
     public $mysqlPool;
 
 
-    public $db;
-    public $table='';
-    public $select='*';
-    public $where='';
+    protected $table='';
+    protected $select='*';
+    protected $where='';
     public $lastSql='';
 
     public $join='';
@@ -39,25 +38,16 @@ class Model {
     public $order='';
     public $limit='';
     public $for_update='';
+    protected $_transId;
     // 数据库表达式
     protected $exp = array('eq'=>'=','neq'=>'<>','gt'=>'>','egt'=>'>=','lt'=>'<','elt'=>'<=','notlike'=>'NOT LIKE','like'=>'LIKE','in'=>'IN','notin'=>'NOT IN','not in'=>'NOT IN','between'=>'BETWEEN','not between'=>'NOT BETWEEN','notbetween'=>'NOT BETWEEN');
 
 
-    function __construct($mysqlPool){
+    public function __construct($tableName, $mysqlPool){
+        $this->table = $tableName;
         $this->mysqlPool = $mysqlPool;
     }
 
-
-    //执行查询部分
-    public function query($sql){
-        $_sql = trim($sql);
-        if (empty($_sql)) {
-            throw new \Exception('sql 不能为空');
-        }
-        Db::setSql($_sql);
-        $mysqlCoroutine = new MySqlCoroutine($this->mysqlPool);
-        return $mysqlCoroutine->command($_sql);
-    }
 
     /**
      * value分析
@@ -67,7 +57,7 @@ class Model {
      */
     protected function parseValue($value) {
         if(is_string($value)) {
-            $value =  strpos($value,':') === 0 && in_array($value,array_keys($this->bind))? addslashes($value) : '\''.addslashes($value).'\'';
+            $value =  strpos($value,':') === 0? addslashes($value) : '\''.addslashes($value).'\'';
         }elseif(isset($value[0]) && is_string($value[0]) && strtolower($value[0]) == 'exp'){
             $value =  addslashes($value[1]);
         }elseif(is_array($value)) {
@@ -200,7 +190,7 @@ class Model {
      */
     public function get(){
         $data =  yield $this->query($this->makesql());
-        return !empty($data['result'])?$data['result']:[];
+        return $data['result']===false?false:!empty($data['result'])?$data['result']:[];
     }
 
 
@@ -211,7 +201,7 @@ class Model {
     public function find(){
         $this->limit(1);
         $data = yield  $this->get();
-        return !empty($data[0])?$data[0]:(object)[];
+        return $data===false?false:!empty($data[0])?$data[0]:(object)[];
     }
 
     /**
@@ -242,13 +232,13 @@ class Model {
      * @throws \Exception
      */
     public function save($data){
-        $updateField = '';
+        $updateField = [];
         foreach($data as $key => $value){
             $updateField[] = '`' .$key. '` = ' .$this->parseValue($value);
         }
         $sql =  "UPDATE {$this->table} SET ".implode(',', $updateField)." {$this->where}";
-        $data = yield $this->query($sql);
-        return $data['result']===false?false:$data['affected_rows'];
+        $res = yield $this->query($sql);
+        return $res['result']===false?false:$res['affected_rows'];
     }
 
     /**
@@ -303,6 +293,85 @@ class Model {
         return $this;
     }
 
+    /**开始事务
+     * @return MySqlCoroutine
+     */
+    public function startTrans(){
+        $transId = uniqid();
+        $data = yield $this->command(['trans_id'=>$transId, 'sql'=>'begin']);
+        return $data['result']===false?false:$data['result'];
+    }
+
+
+    /**
+     * 设置事务编号
+     * @param $transId
+     * @return $this
+     */
+    public function setTransId($transId){
+        $this->_transId = $transId;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     * @throws \Exception
+     */
+    public function commit(){
+        return $this->endTrans('commit');
+    }
+
+    /**
+     * @return bool
+     * @throws \Exception
+     */
+    public function rollback(){
+        return $this->endTrans('rollback');
+    }
+
+    /**
+     * 结束事务
+     * @param $sql
+     * @return bool
+     * @throws \Exception
+     */
+    protected function endTrans($sql){
+        if(empty($this->_transId)){
+            throw new \Exception("You must setTransId before execute sql[$sql]!");
+        }
+        $data = yield $this->command(['trans_id'=>$this->_transId,'sql'=>$sql]);
+        return $data['result']===false?false:$data['result'];
+    }
+
+    /**
+     * 执行查询部分
+     * @param $sql
+     * @return $this
+     * @throws \Exception
+     */
+    public function query($sql){
+        $_sql = trim($sql);
+        if (empty($_sql)) {
+            throw new \Exception('sql 不能为空');
+        }
+        $data = ['sql'=>$_sql];
+        if(!empty($this->_transId)){
+            $data['trans_id'] = $this->_transId;
+        }
+        return $this->command($data);
+    }
+
+    /**
+     * @param $data
+     * @return $this
+     */
+    protected function command($data){
+        $this->reset();
+        Db::setSql($data['sql']);
+        $mysqlCoroutine = new MySqlCoroutine($this->mysqlPool);
+        return $mysqlCoroutine->command($data);
+    }
+
     //生成sql
     protected function makesql(){
         $sql = "select {$this->select} from {$this->table}";
@@ -318,8 +387,6 @@ class Model {
                 $this->limit,
                 $this->for_update,
             ));
-        $this->reset();
-//        Log::write('sql:'.$sql);
         return $sql;
     }
 
@@ -336,5 +403,6 @@ class Model {
         $this->order = '';
         $this->limit = '';
         $this->for_update = '';
+        $this->_transId = '';
     }
 }

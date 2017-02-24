@@ -16,7 +16,7 @@ use ZPHP\Coroutine\Base\TaskParam;
 use ZPHP\Coroutine\Pool\AsynPool;
 
 class MemcachedAsynPool extends AsynPool implements IOvector{
-    protected $AsynName = 'memcached';
+    protected $_asynName = 'memcached';
     function __construct()
     {
         parent::__construct();
@@ -27,14 +27,13 @@ class MemcachedAsynPool extends AsynPool implements IOvector{
      * @param callable $callback
      * @param $object
      */
-    function command(callable $callback, $object){
+    function command(callable $callback=null, $object){
         $this->checkAndExecute(['execute' => $object], $callback);
     }
 
     function execute($data){
         if($this->pool->isEmpty()){
-            $this->commands->enqueue($data);
-            $this->prepareOne(null);
+            $this->prepareOne($data);
             return;
         }else{
             $client = $this->pool->dequeue();
@@ -64,25 +63,9 @@ class MemcachedAsynPool extends AsynPool implements IOvector{
     }
 
 
-    function pushToPool($client){
-        $this->pool->push($client);
-        if(!$this->commands->isEmpty()){
-            $command = $this->commands->dequeue();
-            $this->execute($command);
-        }
-    }
 
-    function prepareOne($data){
-        if ($this->max_count >= $this->config['asyn_max_count']) {
-            return;
-        }
-
-        $this->max_count ++;
-        $this->reconnect();
-    }
-
-
-    function reconnect(){
+    public function reconnect($data){
+        $this->commands->enqueue($data);
         if(!$this->taskList->isEmpty()) {
             $taskId = $this->taskList->dequeue();
             $client = new TaskParam($taskId, $this->config);

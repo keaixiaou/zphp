@@ -15,8 +15,8 @@ use ZPHP\Coroutine\Base\TaskDistribute;
 
 abstract class AsynPool implements IAsynPool
 {
-    protected $MAX_TOKEN = DEBUG===true?100:650000;
-    protected $AsynName;
+    protected $_maxToken = DEBUG===true?100:650000;
+    protected $_asynName;
     protected $commands;
     protected $pool;
     protected $callBacks;
@@ -50,19 +50,19 @@ abstract class AsynPool implements IAsynPool
     }
 
 
-    protected function checkAndExecute($data, callable $callback){
+    protected function checkAndExecute($data, callable $callback=null){
         try {
             $this->checkTaskList();
-            $data['token'] = $this->addTokenCallback($callback);
-            $this->execute($data);
         }catch(\Exception $e){
             $data['result']['exception'] = $e->getMessage();
-            $this->distribute($data, $callback);
+            $this->callbackToCoroutine($callback, $data);
         }
+        $data['token'] = $this->addTokenCallback($callback);
+        $this->execute($data);
     }
 
     public function checkTaskList(){
-        if($this->taskNum >= $this->MAX_TOKEN){
+        if($this->taskNum >= $this->_maxToken){
             throw new \Exception("任务已满!");
         }
         if(empty($this->config['asyn_max_count'])){
@@ -77,32 +77,73 @@ abstract class AsynPool implements IAsynPool
         $this->callBacks[$token] = $callback;
         $this->token++;
 
-        if ($this->token >= $this->MAX_TOKEN) {
+        if ($this->token >= $this->_maxToken) {
             $this->token = 0;
         }
         return $token;
     }
 
     /**
-     * 分发消息
+     * 数据回调到协程主任务
      * @param $data
      */
-    public function distribute($data, $callback=null)
+    public function distribute($data, callable $callback=null)
     {
         if($callback===null){
             $callback = $this->callBacks[$data['token']];
             unset($this->callBacks[$data['token']]);
             $this->taskNum--;
         }
-        if (!empty($callback)) {
-            if(!empty($data['result']['exception'])){
-                $data['AsynName'] = $this->AsynName;
-                Log::write('Coroutine Exception:'.$data['result']['exception'].";Execute:".print_r($data, true), Log::ERROR, true);
+        if(!empty($data['result']['exception'])){
+            Log::write('Coroutine Exception:'.$data['result']['exception'], Log::ERROR, true);
+            if(DEBUG!==true){
+                $data['result']['exception'] = false;
             }
-            call_user_func_array($callback, ['data'=>$data['result']]);
+        }
+
+        if (!empty($callback)) {
+            $this->callbackToCoroutine($callback, $data);
         }
     }
 
+    /**
+     * @param callable $callback
+     * @param $data
+     */
+    public function callbackToCoroutine(callable $callback, $data){
+        if(!empty($data['result']['exception'])){
+            $data['AsynName'] = $this->_asynName;
+            Log::write('Coroutine Exception:'.$data['result']['exception'].";Execute:".print_r($data, true), Log::ERROR, true);
+        }
+        call_user_func_array($callback, [$data['result']]);
+    }
+
+
+    /**
+     * @param $client
+     */
+    public function pushToPool($client)
+    {
+        $this->prepareLock = false;
+        $this->pool->enqueue($client);
+        if (!$this->commands->isEmpty()) {
+            $command = $this->commands->dequeue();
+            $this->execute($command);
+        }
+    }
+
+    /**
+     * @param $data
+     */
+    public function prepareOne($data){
+        if ($this->max_count >= $this->config['asyn_max_count']) {
+            $this->commands->enqueue($data);
+            return;
+        }
+
+        $this->max_count ++;
+        $this->reconnect($data);
+    }
 
     /**
      * 清空连接池
@@ -139,9 +180,9 @@ abstract class AsynPool implements IAsynPool
      * @param $config
      * @param $server
      */
-    public function initTaskWorker($workerId, $config, $server){
+    public function initTaskWorker($workerId, $server, $config){
         $this->server = $server;
-        $taskList = TaskDistribute::getSingleTaskNum($this->AsynName);
+        $taskList = TaskDistribute::getSingleTaskNum($this->_asynName);
         if(!empty($taskList)){
             $myWorkTaskList = $taskList[$workerId];
             foreach ($myWorkTaskList as $taskId) {
@@ -170,23 +211,11 @@ abstract class AsynPool implements IAsynPool
         }
         //
         if(!empty($this->config['max_onetime_task'])){
-            $this->MAX_TOKEN = $this->config['max_onetime_task'];
+            $this->_maxToken = $this->config['max_onetime_task'];
         }
-        $this->callBacks = new \SplFixedArray($this->MAX_TOKEN);
+        $this->callBacks = new \SplFixedArray($this->_maxToken);
     }
 
-    /**
-     * @param $client
-     */
-    public function pushToPool($client)
-    {
-        $this->prepareLock = false;
-        $this->pool->push($client);
-        if (!$this->commands->isEmpty()) {
-            $command = $this->commands->dequeue();
-            $this->execute($command);
-        }
-    }
 
     /**
      * 释放连接池

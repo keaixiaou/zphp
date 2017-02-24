@@ -2,25 +2,23 @@
 /**
  * Created by PhpStorm.
  * User: zhaoye
- * Date: 2016/12/23
- * Time: 下午11:37
+ * Date: 2017/2/23
+ * Time: 下午1:52
  */
+namespace ZPHP\Coroutine\Task;
 
-namespace ZPHP\Coroutine\Mongo;
-
-use ZPHP\Core\Log;
 use ZPHP\Coroutine\Base\IOvector;
-use ZPHP\Coroutine\Base\TaskDistribute;
 use ZPHP\Coroutine\Base\TaskParam;
 use ZPHP\Coroutine\Pool\AsynPool;
 
-class MongoAsynPool extends AsynPool implements IOvector{
-    protected $_asynName = 'mongo';
+class TaskAsynPool extends AsynPool implements IOvector{
+    protected $_asynName = 'task';
     function __construct()
     {
         parent::__construct();
         $this->taskList = new \SplQueue();
     }
+
 
     function execute($data)
     {
@@ -30,11 +28,8 @@ class MongoAsynPool extends AsynPool implements IOvector{
         }else{
             $client = $this->pool->dequeue();
         }
-        $execute = [];
-        $execute['class'] = '\ZPHP\Coroutine\Mongo\MongoTask';
+        $execute = $data['execute'];
         $execute['class_param'] = ['taskId'=>$client->taskId, 'config'=>$client->config];
-        $execute['method'] = $data['execute']['method'];
-        $execute['param'] = $data['execute']['param'];
         try {
             $exeRes = $this->server->task($execute, $client->taskId, function (\swoole_server $serv, $task_id, $res) use ($client, $data) {
                 if(!empty($res['exception'])){
@@ -47,7 +42,7 @@ class MongoAsynPool extends AsynPool implements IOvector{
 
             });
             if ($exeRes===false) {
-                throw new \Exception("Mongo 执行失败");
+                throw new \Exception("Task 执行失败");
             }
         } catch (\Exception $e){
             $data['result']['exception'] = $e->getMessage();

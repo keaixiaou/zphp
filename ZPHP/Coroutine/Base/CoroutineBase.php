@@ -17,7 +17,7 @@ abstract class CoroutineBase implements ICoroutineBase{
     protected $data;
 
     /**
-     * @param $data
+     * @param $data = ['sql'=>$sql,'trans_id'=>$trans_id]
      * @return $this
      */
     public function command($data){
