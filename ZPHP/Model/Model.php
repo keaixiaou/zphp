@@ -243,7 +243,7 @@ class Model {
      * @throws \Exception
      */
     public function save($data){
-        $updateField = '';
+        $updateField = [];
         foreach($data as $key => $value){
             $updateField[] = '`' .$key. '` = ' .$this->parseValue($value);
         }

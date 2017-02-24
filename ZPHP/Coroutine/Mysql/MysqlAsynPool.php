@@ -121,7 +121,6 @@ class MysqlAsynPool extends AsynPool{
                     $this->pushToPool($client);
                 }
             }catch(\Exception $e){
-                Log::write('$max_count:'.$this->max_count);
                 Log::write($e->getMessage());
                 if(!empty($data)) {
                     $data['result']['exception'] = $e->getMessage();
