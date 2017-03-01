@@ -85,18 +85,14 @@ class Request{
     protected function executeGeneratorScheduler(IController $controller){
         $action = 'coroutineStart';
         $returnRes = 'NULL';
-        try{
-            $generator = call_user_func([$controller, $action]);
-            if ($generator instanceof \Generator) {
-                $task = clone $this->coroutineTask;
-                $task->setController($controller);
-                $task->setRoutine($generator);
-                $task->work($task->getRoutine());
-            }else{
-                $returnRes = $generator;
-            }
-        }catch(\Exception $e){
-            throw new \Exception($e->getMessage());
+        $generator = call_user_func([$controller, $action]);
+        if ($generator instanceof \Generator) {
+            $task = clone $this->coroutineTask;
+            $task->setController($controller);
+            $task->setRoutine($generator);
+            $task->work($task->getRoutine());
+        }else{
+            $returnRes = $generator;
         }
         return $returnRes;
     }
@@ -106,15 +102,14 @@ class Request{
     public function defaultDistribute($mvc)
     {
         $controllerClass = $mvc['module'].'\\'.$mvc['controller'];
-        if(!empty(Config::getField('project','reload')) && extension_loaded('runkit')){
-            App::clear($controllerClass, 'controller');
-        }
+//        if(!empty(Config::getField('project','reload')) && extension_loaded('runkit')){
+//            App::clear($controllerClass, 'controller');
+//        }
         try {
-            $FController = App::controller($controllerClass);
+            $controller = clone App::controller($controllerClass);
         }catch(\Exception $e) {
             throw new \Exception('404|'.$e->getMessage());
         }
-        $controller = clone $FController;
         $action = $mvc['action'];
         if(!method_exists($controller, $action)){
             throw new \Exception(404);
@@ -158,6 +153,11 @@ class Request{
         return $this->executeGeneratorScheduler($controller);
     }
 
+
+    function __destruct()
+    {
+        // TODO: Implement __destruct() method.
+    }
 
 
 }

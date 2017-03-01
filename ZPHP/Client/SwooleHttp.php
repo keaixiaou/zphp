@@ -13,7 +13,6 @@ use ZPHP\Core\Db;
 use ZPHP\Core\Dispatcher;
 use ZPHP\Core\Factory;
 use ZPHP\Core\Config;
-use ZPHP\Core\Log;
 use ZPHP\Core\Request;
 use ZPHP\Core\Route;
 use ZPHP\Core\Swoole;
@@ -42,7 +41,6 @@ class SwooleHttp extends ZSwooleHttp
     protected $taskObjectArray;
     public function onRequest($request, $response)
     {
-        ob_start();
         try {
             if(strpos($request->server['path_info'],'.')!==false){
                 throw new \Exception(403);
@@ -50,6 +48,7 @@ class SwooleHttp extends ZSwooleHttp
             $requestDeal = clone $this->requestDeal;
             $requestDeal->init($request, $response);
             $httpResult = $this->dispatcher->distribute($requestDeal);
+            unset($requestDeal);
             if($httpResult!=='NULL') {
                 if(!is_string($httpResult)){
                     if(strval(Config::getField('project','type'))=='api'){
@@ -65,17 +64,13 @@ class SwooleHttp extends ZSwooleHttp
             $code = intval($message[0]);
             if($code==0){
                 $response->status(500);
-                echo Swoole::info($e->getMessage());
+                $httpResult = Swoole::info($e->getMessage());
             }else {
                 $response->status($code);
                 $otherMessage = !empty($message[1])?' '.$message[1]:'';
-                echo Swoole::info(Response::$HTTP_HEADERS[$code].$otherMessage);
+                $httpResult = Swoole::info(Response::$HTTP_HEADERS[$code].$otherMessage);
             }
-        }
-        $result = ob_get_contents();
-        if(!empty($result)) {
-            ob_end_clean();
-            $response->end($result);
+            $response->end($httpResult);
         }
     }
 

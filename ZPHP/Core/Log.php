@@ -36,10 +36,10 @@ abstract class Log {
         $message = date('Y-m-d H:i:s').substr($timeArray[0],1)." {$level_str}-".$msg."\n";
         if($system){
             self::$syslog[] = $message;
-            if(DEBUG!==true && count(self::$syslog)<100)return;
+            if(DEBUG!==true && count(self::$syslog)<1000)return;
         }else {
             self::$log[] = $message;
-            if(DEBUG!==true && count(self::$log)<100)return;
+            if(DEBUG!==true && count(self::$log)<1000)return;
         }
         self::reallyWrite($system);
     }
