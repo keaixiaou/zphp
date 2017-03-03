@@ -24,7 +24,7 @@ class Swoole {
      * @param $content
      * @return string
      */
-    static function info($msg, $content='')
+    public static function info($msg, $content='')
     {
         if (DEBUG !==true )
         {
@@ -71,38 +71,32 @@ HTMLS;
 //        }else {
 //            $info = "$msg: $content\n";
 //        }
-        if (DEBUG!==true)
-        {
-            return $info;
-        }
+        if (DEBUG===true) {
 
-        $trace = debug_backtrace();
-        $info .= str_repeat('-', 100) . "\n";
-        foreach ($trace as $k => $t)
-        {
-            if (empty($t['line']))
-            {
-                $t['line'] = 0;
+            $trace = debug_backtrace();
+            $info .= str_repeat('-', 100) . "\n";
+            foreach ($trace as $k => $t) {
+                if (empty($t['line'])) {
+                    $t['line'] = 0;
+                }
+                if (empty($t['class'])) {
+                    $t['class'] = '';
+                }
+                if (empty($t['type'])) {
+                    $t['type'] = '';
+                }
+                if (empty($t['file'])) {
+                    $t['file'] = 'unknow';
+                }
+                $info .= "#$k line:{$t['line']} call:{$t['class']}{$t['type']}{$t['function']}\tfile:{$t['file']}\n";
             }
-            if (empty($t['class']))
-            {
-                $t['class'] = '';
-            }
-            if (empty($t['type']))
-            {
-                $t['type'] = '';
-            }
-            if (empty($t['file']))
-            {
-                $t['file'] = 'unknow';
-            }
-            $info .= "#$k line:{$t['line']} call:{$t['class']}{$t['type']}{$t['function']}\tfile:{$t['file']}\n";
+            $info .= str_repeat('-', 100) . "\n";
         }
-        $info .= str_repeat('-', 100) . "\n";
 //        if (self::$echo_html)
 //        {
             $info .= '</pre></div></body></html>';
 //        }
+
         return $info;
     }
 }

@@ -23,7 +23,6 @@ abstract class AsynPool implements IAsynPool
     protected $workerId;
     protected $server;
     protected $swoole_server;
-    protected $token = 0;
     protected $max_count=0;
     protected $taskNum=0;
     //存储taskwork进程编号
@@ -53,12 +52,12 @@ abstract class AsynPool implements IAsynPool
     protected function checkAndExecute($data, callable $callback=null){
         try {
             $this->checkTaskList();
+            $data['token'] = $this->addTokenCallback($callback);
+            $this->execute($data);
         }catch(\Exception $e){
             $data['result']['exception'] = $e->getMessage();
             $this->callbackToCoroutine($callback, $data);
         }
-        $data['token'] = $this->addTokenCallback($callback);
-        $this->execute($data);
     }
 
     public function checkTaskList(){
@@ -73,13 +72,8 @@ abstract class AsynPool implements IAsynPool
 
     public function addTokenCallback($callback)
     {
-        $token = $this->token;
+        $token = uniqid();
         $this->callBacks[$token] = $callback;
-        $this->token++;
-
-        if ($this->token >= $this->_maxToken) {
-            $this->token = 0;
-        }
         return $token;
     }
 
@@ -213,7 +207,7 @@ abstract class AsynPool implements IAsynPool
         if(!empty($this->config['max_onetime_task'])){
             $this->_maxToken = $this->config['max_onetime_task'];
         }
-        $this->callBacks = new \SplFixedArray($this->_maxToken);
+        $this->callBacks = [];
     }
 
 
