@@ -18,7 +18,6 @@ class Dispatcher{
     public function distribute(Request $requestDeal)
     {
         $mvc = $requestDeal->parse();
-        $httpResult = null;
         if(!empty($mvc['callback'])){
             $httpResult = $requestDeal->callbackDistribute($mvc['callback'], $mvc['param']);
         }else{

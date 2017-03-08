@@ -58,7 +58,7 @@ class CoroutineTask{
                 }
 
                 //异步IO的父类
-                if(is_subclass_of($value, 'ZPHP\Coroutine\Base\ICoroutineBase')){
+                if(is_object($value) && is_subclass_of($value, 'ZPHP\Coroutine\Base\ICoroutineBase')){
                     $this->stack->push($routine);
                     $value->sendCallback([$this, 'callback']);
                     return;
@@ -78,9 +78,9 @@ class CoroutineTask{
                 }else {
                     $this->callbackData = $value;
                     $routine->send($this->callbackData);
+                    $this->callbackData = null;
                     continue;
                 }
-
                 if (!$this->stack->isEmpty()) {
 //                    Log::write('$this->stack->pop();'.print_r($this->stack, true));
                     $routine = $this->stack->pop();
@@ -89,7 +89,8 @@ class CoroutineTask{
                     continue;
                 }
                 if ($this->routine->valid()) {
-                    $this->routine->next();
+                    $routine = $this->routine;
+                    $routine->next();
                     continue;
                 }else{
                     return ;
@@ -114,7 +115,6 @@ class CoroutineTask{
         /*
             继续work的函数实现 ，栈结构得到保存
          */
-//        Log::write('callback:'.__METHOD__.print_r($data, true));
         if(!empty($data['exception'])){
             $this->onExceptionHandle($data['exception']);
         }else {

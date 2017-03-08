@@ -13,6 +13,7 @@ use ZPHP\Core\Db;
 use ZPHP\Core\Dispatcher;
 use ZPHP\Core\Factory;
 use ZPHP\Core\Config;
+use ZPHP\Core\Log;
 use ZPHP\Core\Request;
 use ZPHP\Core\Route;
 use ZPHP\Core\Swoole;
@@ -48,7 +49,6 @@ class SwooleHttp extends ZSwooleHttp
             $requestDeal = clone $this->requestDeal;
             $requestDeal->init($request, $response);
             $httpResult = $this->dispatcher->distribute($requestDeal);
-            unset($requestDeal);
             if($httpResult!=='NULL') {
                 if(!is_string($httpResult)){
                     if(strval(Config::getField('project','type'))=='api'){
@@ -57,6 +57,7 @@ class SwooleHttp extends ZSwooleHttp
                         $httpResult = strval($httpResult);
                     }
                 }
+                $response->status(200);
                 $response->end($httpResult);
             }
         } catch (\Exception $e) {
@@ -117,7 +118,8 @@ class SwooleHttp extends ZSwooleHttp
 
     public function onWorkerError($server, $workerId, $workerPid, $errorCode)
     {
-        parent::onWorkerStop($server, $workerId);
+        //errorCode可以用来警报 或者其他的定制化
+        parent::onWorkerError($server, $workerId, $workerPid, $errorCode);
     }
 
     public function onTask($server, $taskId, $fromId, $data)

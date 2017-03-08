@@ -105,18 +105,24 @@ abstract class Swoole implements ICallback
         Log::clear();
         $pidList = [];
         $workNum = ZConfig::getField('socket', 'worker_num');
-        if($server->taskworker){
+        if(!empty($server->taskworker)){
             $pidList['task'.($workerId-$workNum)] = ['task'=>[$server->worker_pid => 0]];
         }else{
             $pidList['work'.$workerId] = ['work'=>[$server->worker_pid => 0]];
-//            $file = $pidPath . DS. ZConfig::get('project_name') . '_work'.$workerId.'.pid';
         }
         $this->putPidList($pidList);
     }
 
     public function onWorkerError($server, $workerId, $workerPid, $errorCode)
     {
-
+        $pidList = [];
+        $workNum = ZConfig::getField('socket', 'worker_num');
+        if($workerId>=$workNum){
+            $pidList['task'.($workerId - $workNum)] = ['task'=>[$workerPid=>0]];
+        }else{
+            $pidList['work'.$workerId] = ['work'=>[$workerPid=>0]];
+        }
+        $this->putPidList($pidList);
     }
 
 
