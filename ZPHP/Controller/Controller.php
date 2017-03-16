@@ -103,7 +103,7 @@ class Controller extends IController{
      */
     protected function strReturn($data, $code=200){
         if($this->checkResponse()){
-            $this->header['Content-Type'] = 'text/html';
+            $this->header['Content-Type'] = 'text/html; charset=utf-8';
             $result = strval($data);
             $this->response->status($code);
             $this->responseData = $result;

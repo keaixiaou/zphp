@@ -26,7 +26,7 @@ class TaskDistribute {
         self::$taskList = [];
         $socketConfig = Config::get('socket');
         $workNum = intval($socketConfig['worker_num']);
-        $singleTaskWorkerNum = $socketConfig['single_task_worker_num']?
+        $singleTaskWorkerNum = !empty($socketConfig['single_task_worker_num'])?
             intval($socketConfig['single_task_worker_num']):0;
         $taskId = 0;
         $i = 0;
