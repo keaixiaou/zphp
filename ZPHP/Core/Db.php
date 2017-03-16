@@ -113,8 +113,10 @@ class Db {
      * @param $config
      */
     public static function initSwooleModule($config){
-        foreach($config as $key => $value){
-            self::$_swooleModule[$key] = swoole_load_module($value);
+        if(!empty($config)) {
+            foreach ($config as $key => $value) {
+                self::$_swooleModule[$key] = \swoole_load_module($value);
+            }
         }
     }
 
