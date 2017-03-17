@@ -122,7 +122,10 @@ abstract class AsynPool implements IAsynPool
         $this->pool->enqueue($client);
         if (!$this->commands->isEmpty()) {
             $command = $this->commands->dequeue();
-            $this->execute($command);
+            if(!empty($command)){
+                $this->execute($command);
+            }
+
         }
     }
 
