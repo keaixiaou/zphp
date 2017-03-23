@@ -197,6 +197,7 @@ class ZPHP
      */
     public static function run($rootPath, $run=true, $configPath=null)
     {
+        define("ZPHP_VERSION", 2.1);
         global $argv;
         if(empty($argv[1])||!in_array($argv[1],['stop','start','reload','restart','status'])){
             echo "=====================================================\n";
@@ -262,7 +263,7 @@ class ZPHP
         }else if ($argv =='restart'){
             self::stop();
             echo "Service stop success!\nService is starting...\n";
-            sleep(2);
+            usleep(10000);
             self::start($run);
         }else if ($argv=='reload'){
             self::reload();
