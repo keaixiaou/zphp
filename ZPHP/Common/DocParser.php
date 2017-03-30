@@ -152,15 +152,18 @@ class DocParser {
                 $allDorArray[$v['filename']] = $v;
             }
         }
-        $temFile = $docPath.DS.'template'.DS.'detail.html';
-        $markdown = $docPath.DS.'template'.DS.'markdown.html';
+        $temPath = $docPath.DS.'template';
+        $temFile = $temPath.DS.'detail.html';
+        $markdown = $temPath.DS.'markdown.html';
+        $htmlPath = $docPath.DS.'html';
+        $markdownPath = $docPath.DS.'markdown';
         foreach($allDorArray as $ky => $val){
-            $this->exportDocHtml($temFile, $val, $docPath.DS.$val['html_url']);
-            $this->exportDocHtml($markdown, $val, $docPath.DS.'markdown'.DS.$val['markdown']);
+            $this->exportDocHtml($temFile, $val, $htmlPath.DS.$val['html_url']);
+            $this->exportDocHtml($markdown, $val, $markdownPath.DS.$val['markdown']);
         }
 
-        $indexTemFile = $docPath.DS.'template'.DS.'index.html';
-        $fileName = $docPath.DS.'index.html';
+        $indexTemFile = $temPath.DS.'index.html';
+        $fileName = $htmlPath.DS.'index.html';
         $this->exportDocHtml($indexTemFile,['classList'=>$classList] , $fileName);
     }
 

@@ -356,7 +356,7 @@ class ZPHP
         $docParse = new DocParser();
         $docParse->makeDocHtml($filePath, $filter, $docPath);
         echo  "文档生成成功!\n";
-        echo "Html文档在".$docPath.",配置nginx 目录即可访问\n";
+        echo "Html文档在".$docPath.DS."html,配置nginx 目录即可访问\n";
         echo "MarkDown文档在".$docPath.DS."markdown\n";
 
     }
