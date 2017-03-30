@@ -7,6 +7,7 @@
 namespace ZPHP;
 use ZPHP\Client\SwoolePid;
 use ZPHP\Common\Dir;
+use ZPHP\Common\DocParser;
 use ZPHP\Core\Factory;
 use ZPHP\Core\Swoole;
 use ZPHP\Monitor\Monitor;
@@ -199,7 +200,8 @@ class ZPHP
     {
         define("ZPHP_VERSION", 2.1);
         global $argv;
-        if(empty($argv[1])||!in_array($argv[1],['stop','start','reload','restart','status'])){
+        if(empty($argv[1])||!in_array($argv[1],
+                ['stop','start','reload','restart','status','doc'])){
             echo "=====================================================\n";
             echo "Usage: php {$argv[0]} start|stop|reload|restart|status\n";
             echo "=====================================================\n";
@@ -210,7 +212,7 @@ class ZPHP
             self::setRootPath($rootPath);
             self::setConfigPath('');
 
-            \spl_autoload_register(__CLASS__ . '::autoLoader');
+            \spl_autoload_register(__CLASS__.'::autoLoader');
             $config_path = self::getConfigPath();
             Config::load($config_path);
             //设置项目lib目录
@@ -263,12 +265,13 @@ class ZPHP
         }else if ($argv =='restart'){
             self::stop();
             echo "Service stop success!\nService is starting...\n";
-            usleep(10000);
             self::start($run);
         }else if ($argv=='reload'){
             self::reload();
         }else if ($argv=='status'){
             self::status();
+        }else if ($argv=="doc"){
+            self::doc();
         }
 
 
@@ -276,7 +279,7 @@ class ZPHP
 
 
     protected static function serviceStart(){
-        if(!is_file(self::$server_file))file_put_contents(self::$server_file,'');
+        if(!file_exists(self::$server_file))file_put_contents(self::$server_file,'');
         Factory::getInstance(\ZPHP\Monitor\Monitor::class, [self::$monitorname, self::$server_file]);
         $vcacheConfig = Config::getField('project', 'view');
         if(!empty($vcacheConfig['tag'])) {
@@ -300,10 +303,6 @@ class ZPHP
         }else{
             echo ( "Service already started!\n");
         }
-
-//        if ($run && Config::getField('project', 'debug_mode', 0)) {
-//            Debug::end();
-//        }
     }
 
     protected static function stop(){
@@ -311,9 +310,22 @@ class ZPHP
             echo ("Service has shut down!\n");
         }else{
             $res = self::getOs()->kill(self::$server_pid, SIGTERM);
+            if(PHP_OS=='Linux'){
+                $pidFile = '/proc/'.self::$server_pid.'/status';
+                while(true) {
+                    $res = file_exists($pidFile);
+                    if (!$res) {
+                        break;
+                    }
+                    usleep(100000);
+                }
+            }else{
+                usleep(200000);
+                usleep(200000);
+            }
             self::$server_pid = 0;
         }
-        if(is_file(self::$server_file)){
+        if(file_exists(self::$server_file)){
             unlink(self::$server_file);
         }
 
@@ -337,6 +349,17 @@ class ZPHP
     }
 
 
+    protected static function doc(){
+        $filePath = self::getAppPath().DS ."controller";
+        $filter = '\\controller';
+        $docPath = self::getRootPath().DS.Config::get('doc_path','doc');
+        $docParse = new DocParser();
+        $docParse->makeDocHtml($filePath, $filter, $docPath);
+        echo  "文档生成成功!\n";
+        echo "Html文档在".$docPath.",配置nginx 目录即可访问\n";
+        echo "MarkDown文档在".$docPath.DS."markdown\n";
+
+    }
 
 
 
