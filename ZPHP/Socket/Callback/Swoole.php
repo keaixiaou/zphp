@@ -4,6 +4,7 @@
 namespace ZPHP\Socket\Callback;
 
 use ZPHP\Client\SwoolePid;
+use ZPHP\Coroutine\Base\TaskDistribute;
 use ZPHP\Socket\ICallback;
 use ZPHP\Core\Config as ZConfig;
 use ZPHP\Core\Log;
@@ -38,13 +39,13 @@ abstract class Swoole implements ICallback
     public function onStart()
     {
         $server = func_get_args()[0];
-        swoole_set_process_name(ZConfig::get('project_name') . ' server running ' .
+        swoole_set_process_name(ZConfig::get('project_name') . ' running ' .
             ZConfig::getField('socket', 'server_type', 'tcp') .
             '://' . ZConfig::getField('socket', 'host') .
             ':' . ZConfig::getField('socket', 'port')
-            . " time:".date('Y-m-d H:i:s')."  master:" . $server->master_pid);
-
-        $this->putPidList(['master'=>['master' => $server->master_pid]]);
+            . " time:".date('Y-m-d H:i:s'));
+        $pidList = SwoolePid::makePidList('master', $server->master_pid);
+        $this->putPidList($pidList);
 
     }
 
@@ -66,8 +67,9 @@ abstract class Swoole implements ICallback
     public function onManagerStart($server)
     {
         swoole_set_process_name(ZConfig::get('project_name') .
-            ' server manager:' . $server->manager_pid);
-        $this->putPidList(['manager'=>['manager' => $server->manager_pid]]);
+            ' manager:' . $server->manager_pid);
+        $pidList = SwoolePid::makePidList('manager', $server->manager_pid);
+        $this->putPidList($pidList);
     }
 
 
@@ -83,13 +85,16 @@ abstract class Swoole implements ICallback
     public function onWorkerStart($server, $workerId)
     {
         $workNum = ZConfig::getField('socket', 'worker_num');
-        $pidList = [];
         if($server->taskworker){
-            swoole_set_process_name(ZConfig::get('project_name') . " server tasker  num: ".($server->worker_id - $workNum)." pid " . $server->worker_pid);
-            $pidList['task'.($server->worker_id - $workNum)] = ['task'=>[$server->worker_pid=>1]];
+            $taskId = $server->worker_id - $workNum;
+            $taskAsyName = TaskDistribute::getAsyNameFromTaskId($taskId);
+            swoole_set_process_name(ZConfig::get('project_name')
+                . " task num: {$taskId}"." {$taskAsyName}");
+            $pidList = SwoolePid::makePidList('task', $server->worker_pid, 1, $taskAsyName);
         }else{
-            swoole_set_process_name(ZConfig::get('project_name') . " server worker  num: {$server->worker_id} pid " . $server->worker_pid);
-            $pidList['work'.$server->worker_id] = ['work'=>[$server->worker_pid=>1]];
+            swoole_set_process_name(ZConfig::get('project_name')
+                . " work num: {$server->worker_id}");
+            $pidList = SwoolePid::makePidList('work', $server->worker_pid);
         }
 
         $this->putPidList($pidList);
@@ -103,25 +108,16 @@ abstract class Swoole implements ICallback
     public function onWorkerStop($server, $workerId)
     {
         Log::clear();
-        $pidList = [];
-        $workNum = ZConfig::getField('socket', 'worker_num');
-        if(!empty($server->taskworker)){
-            $pidList['task'.($workerId-$workNum)] = ['task'=>[$server->worker_pid => 0]];
-        }else{
-            $pidList['work'.$workerId] = ['work'=>[$server->worker_pid => 0]];
-        }
+        $type = !empty($server->taskworker)?'task':'work';
+        $pidList = SwoolePid::makePidList($type, $server->worker_pid, 0);
         $this->putPidList($pidList);
     }
 
     public function onWorkerError($server, $workerId, $workerPid, $errorCode)
     {
-        $pidList = [];
         $workNum = ZConfig::getField('socket', 'worker_num');
-        if($workerId>=$workNum){
-            $pidList['task'.($workerId - $workNum)] = ['task'=>[$workerPid=>0]];
-        }else{
-            $pidList['work'.$workerId] = ['work'=>[$workerPid=>0]];
-        }
+        $type = $workerId>=$workNum?'task':'work';
+        $pidList = SwoolePid::makePidList($type, $workerPid, 0);
         $this->putPidList($pidList);
     }
 
@@ -163,6 +159,7 @@ abstract class Swoole implements ICallback
     {
 
     }
+
 
 
     protected function putPidList($pidList){

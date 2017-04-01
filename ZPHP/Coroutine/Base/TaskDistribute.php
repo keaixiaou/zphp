@@ -74,4 +74,18 @@ class TaskDistribute {
     public static function getTaskList(){
         return self::$taskList;
     }
+
+    public static function getAsyNameFromTaskId($taskId){
+        $taskAsyName = '';
+        foreach(self::$taskList as $asyName => $asypList){
+            foreach($asypList as $workid => $tpidList){
+                foreach($tpidList as $k => $v){
+                    if($v==$taskId){
+                        return $asyName;
+                    }
+                }
+            }
+        }
+        return $taskAsyName;
+    }
 }

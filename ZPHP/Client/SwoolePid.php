@@ -23,7 +23,7 @@ abstract class SwoolePid{
      * @param $name
      * @param $setting
      */
-    static public function init($path, $name, $setting){
+    public static function init($path, $name, $setting){
         self::$pidth = $path;
         self::$pidFileName = self::$pidth.$name;
     }
@@ -37,7 +37,7 @@ abstract class SwoolePid{
      * @param $file
      * @return array|mixed
      */
-    static public function getPidList($file){
+    public static function getPidList($file){
         if(is_file($file)){
             $fileData = file_get_contents($file);
             $pidList = json_decode($fileData, true);
@@ -51,16 +51,14 @@ abstract class SwoolePid{
      * @param $pidList
      * @param $file
      */
-    static public function putPidList( $pidList){
+    public static function putPidList( $pidList){
 
         if(!file_exists(self::$pidFileName))return;
         $fp = fopen(self::$pidFileName,"r+");
         while($fp){
             if(flock($fp, LOCK_EX)){
                 $myPidList = self::getPidList(self::$pidFileName);
-                foreach($pidList as $key => $value){
-                    $myPidList = self::mergeList($myPidList, $value);
-                }
+                $myPidList = self::mergeList($myPidList, $pidList);
                 self::writePidFile($myPidList);
                 flock($fp, LOCK_UN);
                 break;
@@ -72,16 +70,37 @@ abstract class SwoolePid{
 
     }
 
+    /**
+     * @param $type
+     * @param $pid
+     * @param int $status
+     * @param string $taskType
+     * @return array  = ['work'=>[['pid'=>1,'status'=>0]]];
+     */
+    public static function makePidList($type, $pid, $status=1, $taskType=''){
+        return [$type =>
+            [['pid' => $pid, 'status' => $status, 'type'=>$taskType]]
+        ];
+    }
 
+
+    public static function getMasterPid($file){
+        $pidList = self::getPidList($file);
+        $master = !empty($pidList)?key($pidList['master']):0;
+        return !empty($master)?$master:0;
+    }
+
+    /**
+     * @param $allPidList
+     * @param $pidlist = ['work'=>[['pid'=>1,'status'=>0]]];
+     * @return mixed
+     */
     static protected function mergeList($allPidList, $pidlist){
-        foreach($pidlist as $k => $pidstatus){
-            if(is_array($pidstatus) && !empty($allPidList[$k])){
-                foreach($pidstatus as $p => $s){
-                    $allPidList[$k][$p] = $s;
+        foreach($pidlist as $type => $pidList){
+            if(is_array($pidList)){
+                foreach($pidList as $key => $pidInfo){
+                    $allPidList[$type][$pidInfo['pid']] = $pidInfo;
                 }
-//                Log::write('tmpList:'.print_r($allPidList, true));
-            }else{
-                $allPidList[$k] = $pidstatus;
             }
         }
         return $allPidList;

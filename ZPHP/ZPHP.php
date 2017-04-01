@@ -247,8 +247,7 @@ class ZPHP
             }
 
             self::$server_file = Config::getField('project', 'pid_path').DS.Config::get('project_name').'.pid';
-            $pidList = SwoolePid::getPidList(self::$server_file);
-            self::$server_pid = !empty($pidList['master'])?$pidList['master']:0;
+            self::$server_pid = SwoolePid::getMasterPid(self::$server_file);
             self::doCommand($argv[1],$run);
         }
 

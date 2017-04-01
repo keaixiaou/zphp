@@ -37,20 +37,20 @@ class Monitor {
         $pidDetail = SwoolePid::getPidList($this->filename);
         $pidList = [];
         foreach($pidDetail as $key => $value){
-            if(is_array($value)){
-                foreach($value as $k => $v){
-                    if($v==1) {
-                        $pidList[$k] = ['type'=>$key];
-                    }
+            foreach($value as $k => $v){
+                if($v['status']==1) {
+                    $pidList[$k] = [
+                        'type' => $key,
+                        'name'=>!empty($v['type'])?$key.'-'.$v['type']:$key
+                    ];
                 }
-            }else{
-                $pidList[$value] = ['type'=>$key];
             }
         }
         $pidDetail = [];
         foreach($output as $key => $value){
             if(!empty($pidList[$value[1]])){
                 $value[] = $pidList[$value[1]]['type'];
+                $value[] = $pidList[$value[1]]['name'];
                 $pidDetail[] = $value;
             }
         }
@@ -72,10 +72,10 @@ class Monitor {
             echo ucfirst($key)." Process Num:".$value.$explode;
         }
 
-        echo "-------------PROCESS STATUS--------------".$explode;
-        echo "Type    Pid   %CPU  %MEM   MEM     Start ".$explode;
+        echo "----------------PROCESS STATUS------------------".$explode;
+        echo "Type           Pid   %CPU  %MEM   MEM     Start ".$explode;
         foreach($pidDetail as $key => $value){
-            echo str_pad($value[11],8).str_pad($value[1],6).str_pad($value[2],6).
+            echo str_pad($value[12],15).str_pad($value[1],6).str_pad($value[2],6).
                 str_pad($value[3],7).str_pad(round($value[5]/1024,2)."M",8).$value[8].$explode;
         }
 
