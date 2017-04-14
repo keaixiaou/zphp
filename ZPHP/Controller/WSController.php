@@ -9,12 +9,28 @@
 namespace ZPHP\Controller;
 
 use ZPHP\Core\Config;
+use ZPHP\Core\Factory;
 
 class WSController extends IController{
     protected $socketData;
     protected $fd;
     protected $server;
 
+    public function __construct()
+    {
+        $this->response = Factory::getInstance(\ZPHP\Network\Websocket\WebResponse::class);
+    }
+
+    public function __clone()
+    {
+        // TODO: Implement __clone() method.
+        $cloneArray = ['response'];
+        foreach($cloneArray as $item){
+            if(!empty($this->$item)){
+                $this->$item = clone $this->$item;
+            }
+        }
+    }
 
     public function setSocket($server, $fd, $socketData){
         $this->server = $server;
@@ -42,7 +58,7 @@ class WSController extends IController{
             }
 
         }
-        $this->server->push($this->fd, $this->responseData);
+        $this->response->finish($this->server, $this->fd);
         $this->destroy();
     }
 
@@ -52,15 +68,13 @@ class WSController extends IController{
             if (!empty(Config::get('response_filter'))) {
                 $result = $this->strNull($result);
             }
-            $this->responseData = $result;
-            $this->setResponse();
+            $this->response->setReponseContent($result);
         }
     }
 
     public function strReturn($data){
         if($this->checkResponse()) {
-            $this->responseData = strval($data);
-            $this->setResponse();
+            $this->response->setReponseContent(strval($data));
         }
     }
 

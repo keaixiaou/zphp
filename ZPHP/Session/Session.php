@@ -15,7 +15,7 @@ use ZPHP\Core\Rand;
 
 class Session
 {
-    private static $_sessionKey = 'SESSID';
+    public static $_sessionKey = 'SESSID';
 
 
     public static function init(){
@@ -28,20 +28,17 @@ class Session
      * @return array|mixed
      * @throws \Exception
      */
-    public static function get($request, $response){
+    public static function get($sid){
         $session = [];
         $config = ZConfig::get('session');
-        if(!empty($request->cookie[self::$_sessionKey])){
-            $sid = $config['name'].$request->cookie[self::$_sessionKey];
+        if(!empty($sid)){
+            $sid = $config['name'].$sid;
             $sessionType = $config['adapter'];
             $handler = Factory::getInstance($sessionType, $config);
             $data = yield $handler->read($sid);
             if(!empty($data)) {
                 $session = unserialize($data);
             }
-        }else{
-            $res = $response->cookie(self::$_sessionKey, Rand::string(8),
-                time()+$config['cache_expire']);
         }
         return $session;
     }
@@ -53,14 +50,8 @@ class Session
      * @return mixed
      * @throws \Exception
      */
-    public static function set($session, $request, $response){
-        $sid = NULL;
-        if(!empty($request->cookie[self::$_sessionKey]))$sid = $request->cookie[self::$_sessionKey];
+    public static function set($session, $sid){
         $config = ZConfig::get('session');
-        if(empty($sid)){
-            $sid = Rand::string(8);
-            $response->cookie(self::$_sessionKey, $sid, time()+$config['cache_expire']);
-        }
         $sessionType = $config['adapter'];
         $handler = Factory::getInstance($sessionType, $config);
         $sid = $config['name'].$sid;

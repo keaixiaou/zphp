@@ -123,8 +123,8 @@ class Request{
         $controller->module = $mvc['module'];
         $controller->controller = $mvc['controller'];
         $controller->method= $action;
-        $controller->request = $this->request;
-        $controller->response = $this->response;
+        $controller->swRequest = $this->request;
+        $controller->swResponse = $this->response;
         return $this->executeGeneratorScheduler($controller);
     }
 
@@ -148,8 +148,8 @@ class Request{
         }
         $controller->coroutineMethod = $callback;
         $controller->coroutineParam = $paramArray;
-        $controller->request = $this->request;
-        $controller->response = $this->response;
+        $controller->swRequest = $this->request;
+        $controller->swResponse = $this->response;
         return $this->executeGeneratorScheduler($controller);
     }
 

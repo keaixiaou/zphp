@@ -10,47 +10,53 @@ namespace ZPHP\Controller;
 
 use ZPHP\Core\Config;
 use ZPHP\Core\Factory;
-use ZPHP\Core\Httpinput;
 use ZPHP\Core\Log;
-use ZPHP\Core\Request;
 use ZPHP\Core\Swoole;
 use ZPHP\Monitor\Monitor;
+use ZPHP\Network\Http\Httpinput;
+use ZPHP\Network\Http\Request;
+use ZPHP\Network\Http\Response;
 use ZPHP\Session\Session;
 use ZPHP\View\View;
 use ZPHP\ZPHP;
 
 class Controller extends IController{
-    public $request;
-    public $response;
-    protected $header = ['Connection'=>'keep-alive'];
+
+    public $swRequest;
+    public $swResponse;
+
+    /**
+     * @var Request
+     */
+    protected $request;
+
+    /**
+     * @var View $view;
+     */
+    protected $view;
+
+
     protected $template;
     protected $tplVar = [];
     protected $tplFile = '';
     protected $tmodule ;
     protected $tcontroller;
     protected $tmethod;
-    /**
-     * @var View
-     */
-    protected $view;
-    /**
-     * @var Httpinput $input;
-     */
-    public $input;
 
 
     function __construct()
     {
         $vConfig = Config::getField('project', 'view');
         $this->view = Factory::getInstance(\ZPHP\View\View::class, $vConfig);
-        $this->input = Factory::getInstance(\ZPHP\Core\Httpinput::class);
+        $this->request = Factory::getInstance(\ZPHP\Network\Http\Request::class);
+        $this->response = Factory::getInstance(\ZPHP\Network\Http\Response::class);
     }
 
 
     function __clone()
     {
         // TODO: Implement __clone() method.
-        $cloneArray = ['view', 'input'];
+        $cloneArray = ['view', 'request','response'];
         foreach($cloneArray as $item){
             if(!empty($this->$item)){
                 $this->$item = clone $this->$item;
@@ -77,37 +83,41 @@ class Controller extends IController{
         return $result;
     }
 
+
+    protected function setResponseContent($content){
+        $this->response->setReponseContent($content);
+    }
+
+    protected function setStatusCode($code){
+        $this->response->setHttpCode($code);
+    }
+
     /**
-     * 返回图片
-     * @param $content
-     * @param $type
+     * @param $key
+     * @param $value
      */
-    protected function image($content, $type){
-        if($this->checkResponse()) {
-            $this->header['Content-Type'] =  'image/' . $type;
-            $this->response->status(200);
-            ob_start();
-            $ImageFun = 'image'.$type;
-            $ImageFun($content);
-            $result = ob_get_contents();
-            imagedestroy($content);
-            $this->responseData = $result;
-            $this->setResponse();
-        }
+    protected function setHeader($key, $value){
+        $this->response->setHeader($key, $value);
     }
 
 
+    protected function setSession($key, $value){
+        $this->response->setSession($key, $value);
+    }
+
+    protected function setCookie($key, $value){
+        $this->response->setCookie($key, $value);
+    }
     /**
      * html return
      * @param $data
      */
     protected function strReturn($data, $code=200){
         if($this->checkResponse()){
-            $this->header['Content-Type'] = 'text/html; charset=utf-8';
+            $this->setHeader('Content-Type', 'text/html; charset=utf-8');
             $result = strval($data);
-            $this->response->status($code);
-            $this->responseData = $result;
-            $this->setResponse();
+            $this->setStatusCode($code);
+            $this->setResponseContent($result);
         }
     }
 
@@ -123,10 +133,27 @@ class Controller extends IController{
             if (!empty(Config::get('response_filter'))) {
                 $result = $this->strNull($result);
             }
-            $this->response->status(200);
-            $this->header['Content-Type'] =  'application/json';
-            $this->responseData = $result;
-            $this->setResponse();
+            $this->setStatusCode(200);
+            $this->setHeader('Content-Type',   'application/json');
+            $this->setResponseContent($result);
+        }
+    }
+
+    /**
+     * 返回图片
+     * @param $content
+     * @param $type
+     */
+    protected function image($content, $type){
+        if($this->checkResponse()) {
+            $this->setHeader('Content-Type', 'image/' . $type);
+            $this->setStatusCode(200);
+            ob_start();
+            $ImageFun = 'image'.$type;
+            $ImageFun($content);
+            $result = ob_get_contents();
+            imagedestroy($content);
+            $this->setResponseContent($result);
         }
     }
 
@@ -158,7 +185,7 @@ class Controller extends IController{
      * @throws \Exception
      */
     public function fetch($tplFile=''){
-        $this->assign('session', $this->input->session());
+        $this->assign('session', $this->response->session);
         return $this->view->fetch($this->tplVar, $tplFile);
     }
 
@@ -168,7 +195,7 @@ class Controller extends IController{
      * @param $url
      */
     protected function redirect($url){
-        $this->response->header('Location', $url);
+        $this->setHeader('Location', $url);
         $this->strReturn('', 302);
     }
 
@@ -202,17 +229,15 @@ class Controller extends IController{
             $this->onUserExceptionHandle($e->getMessage());
         }
 
-        yield $this->finishRequest($result);
+        yield $this->endResponse($result);
     }
 
 
     /**
      * 结束请求
-     * @param null $result
-     * @return \Generator
+     * @param $result
      */
-    protected function finishRequest($result=null){
-        yield $this->doBeforeDestroy();
+    protected function endResponse($result){
         if($this->checkResponse()){
             if(!is_string($result) && $this->checkApi()){
                 $this->jsonReturn($result);
@@ -221,14 +246,9 @@ class Controller extends IController{
             }
 
         }
-        if(!empty($this->header)){
-            foreach($this->header as $key => $value){
-                $this->response->header($key, $value);
-            }
-        }
-        $this->response->end($this->responseData);
-        $this->destroy();
+        yield $this->response->finish($this->swResponse);
     }
+
 
     /**
      * 异常处理
@@ -244,7 +264,7 @@ class Controller extends IController{
     public function onSystemException($message){
         $message = DEBUG===true?$message:'系统出现了异常';
         $this->strReturn(Swoole::info($message), 500);
-        yield $this->finishRequest();
+        yield $this->endResponse();
     }
 
 
@@ -253,12 +273,26 @@ class Controller extends IController{
      */
     public function doBeforeExecute()
     {
-        if(!empty($this->input)) {
-            yield $this->input->init($this->request, $this->response);
+        if(!empty($this->request)) {
+            yield $this->request->init($this->swRequest);
+            $this->copyCookie($this->request, $this->response);
+            $this->copySession($this->request, $this->response);
         }
         if(!empty($this->view)) {
-            $this->view->init(['module' => $this->module, 'controller' => $this->controller, 'method' => $this->method]);
+            $this->view->init([
+                'module' => $this->module,
+                'controller' => $this->controller,
+                'method' => $this->method
+            ]);
         }
+    }
+
+    protected function copyCookie($request, $response){
+        $response->cookie = $request->cookie;
+    }
+
+    protected function copySession($request, $response){
+        $response->session = $request->session;
     }
 
     /**
@@ -266,16 +300,14 @@ class Controller extends IController{
      * @throws \Exception
      */
     protected function doBeforeDestroy(){
-        if(!empty($this->input)){
-            if(!empty(Config::getField('session', 'enable'))){
-                yield Session::set($this->input->session(), $this->request, $this->response);
-            }
-            if(!empty(Config::getField('cookie', 'enable'))){
-                $cacheExpire = Config::getField('cookie', 'cache_expire', 3600);
-                if(!empty($this->input->cookie)) {
-                    foreach ($this->input->cookie() as $key => $value) {
-                        $this->response->cookie($key, $value, time() + $cacheExpire);
-                    }
+        if(!empty(Config::getField('session', 'enable'))){
+            yield Session::set($this->request->session(), $this->request, $this->response);
+        }
+        if(!empty(Config::getField('cookie', 'enable'))){
+            $cacheExpire = Config::getField('cookie', 'cache_expire', 3600);
+            if(!empty($this->input->cookie)) {
+                foreach ($this->input->cookie() as $key => $value) {
+                    $this->response->cookie($key, $value, time() + $cacheExpire);
                 }
             }
         }
@@ -287,7 +319,8 @@ class Controller extends IController{
     {
         parent::destroy(); // TODO: Change the autogenerated stub
         unset($this->request);
-        unset($this->response);
+        unset($this->swRequest);
+        unset($this->swResponse);
     }
 
 }

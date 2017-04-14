@@ -6,16 +6,18 @@
  * Time: 上午11:03
  */
 
-namespace ZPHP\Core;
+namespace ZPHP\Network\Http;
 use ZPHP\Common\Utils;
+use ZPHP\Core\Config;
+use ZPHP\Core\Rand;
 use ZPHP\Session\Session;
 
 /**
  * 关于http的输入,如get,post,session,cookie参数
  * Class Httpinput
- * @package ZPHP\Core
+ * @package ZPHP\Network\Http
  */
-class Httpinput{
+class Request{
 
     public $post;
     public $header;
@@ -31,14 +33,19 @@ class Httpinput{
 
     }
 
-    public function init($request, $response){
+    public function init($request){
+        //cookie
+        if(!empty($request->cookie))$this->cookie = $request->cookie;
         //获取session
         if(!empty(Config::getField('session','enable'))) {
-            $this->session = yield Session::get($request, $response);
+            $sid = !empty($this->cookie[Session::$_sessionKey])?
+                $this->cookie[Session::$_sessionKey]:Rand::string(8);
+            $this->cookie[Session::$_sessionKey] = $sid;
+            $this->session = yield Session::get($sid);
         }
         $this->header = $request->header;
         //传入请求参数
-        if(!empty($request->cookie))$this->cookie = $request->cookie;
+
         $this->post = !empty($request->post)?$request->post:[];
         $this->get = !empty($request->get)?$request->get:[];
         $methodType = $request->server['request_method'];
