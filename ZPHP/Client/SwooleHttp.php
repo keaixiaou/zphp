@@ -9,7 +9,9 @@
 namespace ZPHP\Client;
 
 use ZPHP\Core\App;
+use ZPHP\Core\Container;
 use ZPHP\Core\Db;
+use ZPHP\Core\DI;
 use ZPHP\Core\Dispatcher;
 use ZPHP\Core\Factory;
 use ZPHP\Core\Config;
@@ -89,16 +91,17 @@ class SwooleHttp extends ZSwooleHttp
         if(!empty($common)){
             require ROOTPATH.$common;
         }
+
         if (!$server->taskworker) {
+            App::init(DI::getInstance());
             //worker进程启动协程调度器
             //work一启动加载连接池的链接、组件容器、路由
             Db::init($server, $workerId);
-            App::init(Factory::getInstance(\ZPHP\Core\DI::class));
             Route::init();
             Session::init();
-            $this->coroutineTask = Factory::getInstance(\ZPHP\Coroutine\Base\CoroutineTask::class);
-            $this->dispatcher = Factory::getInstance(\ZPHP\Core\Dispatcher::class);
-            $this->requestDeal = Factory::getInstance(\ZPHP\Core\Request::class, $this->coroutineTask);
+            $this->coroutineTask = Container::Coroutine('Base/CoroutineTask');
+            $this->dispatcher = Container::Core('Dispatcher');
+            $this->requestDeal = Container::Core('Request', $this->coroutineTask);
         }
     }
 
@@ -124,20 +127,22 @@ class SwooleHttp extends ZSwooleHttp
 
     public function onTask($server, $taskId, $fromId, $data)
     {
-        if(empty($data['class']) || empty($data['method']) || empty($data['param'])){
-            return null;
-        }
-        if(empty($this->taskObjectArray[$data['class']])){
-            $classParam = !empty($data['class_param'])?$data['class_param']:null;
-            $this->taskObjectArray[$data['class']] = Factory::getInstance($data['class'],$classParam);
-            $taskObject = $this->taskObjectArray[$data['class']];
-            if(method_exists($taskObject, 'init')){
-                call_user_func([$taskObject, 'init']);
-            }
-        }else{
-            $taskObject = $this->taskObjectArray[$data['class']];
-        }
         try{
+            if(empty($data['class']) || empty($data['method']) || empty($data['param'])){
+                throw new \Exception("param can't be empty!");
+            }
+
+            if(empty($this->taskObjectArray[$data['class']])){
+                $classParam = !empty($data['class_param'])?$data['class_param']:null;
+                $data['class'] = str_replace('/','\\', $data['class']);
+                $this->taskObjectArray[$data['class']] = Factory::getInstance($data['class'],$classParam);
+                $taskObject = $this->taskObjectArray[$data['class']];
+                if(method_exists($taskObject, 'init')){
+                    call_user_func([$taskObject, 'init']);
+                }
+            }else{
+                $taskObject = $this->taskObjectArray[$data['class']];
+            }
             $res = call_user_func_array([$taskObject, $data['method']], $data['param']);
             return ['result'=>$res];
         }catch(\Exception $e){

@@ -18,8 +18,10 @@ class Factory
         if (isset(self::$instances[$keyName])) {
             return self::$instances[$keyName];
         }
+
         if (!\class_exists($className)) {
-            return null;
+            throw new \Exception($className.' not exsist!');
+//            return null;
         }
         if (empty($params)) {
             self::$instances[$keyName] = new $className();

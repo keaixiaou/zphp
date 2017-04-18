@@ -9,6 +9,7 @@
 namespace ZPHP\Controller;
 
 use ZPHP\Core\Config;
+use ZPHP\Core\Container;
 use ZPHP\Core\Factory;
 use ZPHP\Core\Log;
 use ZPHP\Core\Swoole;
@@ -47,9 +48,9 @@ class Controller extends IController{
     function __construct()
     {
         $vConfig = Config::getField('project', 'view');
-        $this->view = Factory::getInstance(\ZPHP\View\View::class, $vConfig);
-        $this->request = Factory::getInstance(\ZPHP\Network\Http\Request::class);
-        $this->response = Factory::getInstance(\ZPHP\Network\Http\Response::class);
+        $this->view = Container::View('View', $vConfig);
+        $this->request = Container::Network('Http/Request');
+        $this->response = Container::Network('Http/Response');
     }
 
 
@@ -76,7 +77,8 @@ class Controller extends IController{
         /**
          *  @var Monitor $monitor;
          */
-        $monitor = Factory::getInstance(\ZPHP\Monitor\Monitor::class);
+//        $monitor = Factory::getInstance(\ZPHP\Monitor\Monitor::class);
+        $monitor = Container::Monitor('Monitor');
         $monitor->outPutWebStatus();
         $result = ob_get_contents();
         ob_end_clean();
@@ -185,7 +187,8 @@ class Controller extends IController{
      * @throws \Exception
      */
     public function fetch($tplFile=''){
-        $this->assign('session', $this->response->session);
+        if(Config::getField('session', 'enable'))
+            $this->assign('session', $this->response->session);
         return $this->view->fetch($this->tplVar, $tplFile);
     }
 
@@ -237,14 +240,13 @@ class Controller extends IController{
      * 结束请求
      * @param $result
      */
-    protected function endResponse($result){
+    protected function endResponse($result=null){
         if($this->checkResponse()){
             if(!is_string($result) && $this->checkApi()){
                 $this->jsonReturn($result);
             }else{
                 $this->strReturn($result);
             }
-
         }
         yield $this->response->finish($this->swResponse);
     }

@@ -46,12 +46,12 @@ class Db {
     public $sessionRedisPool;
 
     /**
-     * @var TaskAsynPool
+     * @var TaskAsynPool $taskPool
      */
     public $taskPool;
 
     private static $server;
-    private static $instance;
+    private static $instance=null;
     private static $db;
     private static $_tables;
     private static $_redis;
@@ -65,14 +65,13 @@ class Db {
     private static $_swooleModule;
 
     private function __construct(){
-        self::$instance = & $this;
     }
 
     /**
      * @return Db
      */
     public static function getInstance(){
-        if(!isset(self::$instance)){
+        if(empty(self::$instance)){
             self::$instance = new Db();
         }
         return self::$instance;

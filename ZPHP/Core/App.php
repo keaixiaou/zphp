@@ -13,7 +13,7 @@ use ZPHP\Common\Dir;
 use ZPHP\ZPHP;
 
 abstract class App{
-    static protected $compenontType = ['controller','service','model'];
+    static protected $compenontType = ['controller','service','model','middleware'];
     /**
      * @var DI $_id;
      */
@@ -92,15 +92,11 @@ abstract class App{
             throw new \Exception("组件名不能为空");
         }
         $key = self::getComponentName($arguments[0]);
-        return self::get($key, $name);
+        $argu = !empty($arguments[1])?$arguments[1]:[];
+        return self::get($key, $name, $argu);
     }
 
 
-    /**
-     * 获取组件名
-     * @param $name
-     * @return string
-     */
     static protected function getComponentName($name){
 //        if(strpos($name, '\\')){
 //            $keyArray = explode('\\', $name);
@@ -119,26 +115,15 @@ abstract class App{
      * @param $name
      * @param $type
      */
-    static public function get($name, $type){
-        $class = self::$_di->get($name, $type);
+    static public function get($name, $type, $argu=[]){
+        $class = self::$_di->get($name, $type, $argu);
         if(empty($class)){
             if(DEBUG){
                 throw new \Exception($type.':'.$name.' not found!');
             }
-
         }
         return $class;
     }
 
 
-    /**
-     * 清楚容器里的组件
-     * @param $name
-     * @param $type
-     */
-    static public function clear($name, $type){
-//        $key = self::getComponentName($name);
-//        $listName = $type.'List';
-//        unset(self::$$listName[$key]);
-    }
 }

@@ -8,6 +8,7 @@ namespace ZPHP;
 use ZPHP\Client\SwoolePid;
 use ZPHP\Common\Dir;
 use ZPHP\Common\DocParser;
+use ZPHP\Core\Container;
 use ZPHP\Core\Factory;
 use ZPHP\Core\Swoole;
 use ZPHP\Monitor\Monitor;
@@ -19,6 +20,7 @@ use ZPHP\Template\ViewCache;
 use ZPHP\View,
     ZPHP\Core\Config,
     ZPHP\Core\Log,
+    ZPHP\Core\DI,
     ZPHP\Common\Debug,
     ZPHP\Common\Formater;
 
@@ -212,24 +214,23 @@ class ZPHP
             self::setRootPath($rootPath);
             self::setConfigPath('');
 
+
             \spl_autoload_register(__CLASS__.'::autoLoader');
             $config_path = self::getConfigPath();
             Config::load($config_path);
-            //设置项目lib目录
-            self::$libPath = Config::get('lib_path', self::$zPath . DS . 'lib');
-            if ($run && Config::getField('project', 'debug_mode', 0)) {
-                Debug::start();
-            }
             //设置app目录
             $appPath = Config::get('app_path', self::$appPath);
             self::setAppPath($rootPath.DS.$appPath);
+
+            //设置项目lib目录
+//            self::$libPath = Config::get('lib_path', self::$zPath . DS . 'lib');
+//            if ($run && Config::getField('project', 'debug_mode', 0)) {
+//                Debug::start();
+//            }
+
             $eh = Config::getField('project', 'exception_handler', __CLASS__ . '::exceptionHandler');
             \set_exception_handler($eh);
             //致命错误
-//            \register_shutdown_function(Config::getField('project', 'fatal_handler', __CLASS__ . '::fatalHandler'));
-            if (Config::getField('project', 'error_handler')) {
-                \set_error_handler(Config::getField('project', 'error_handler'));
-            }
 
             $timeZone = Config::get('time_zone', 'Asia/Shanghai');
             \date_default_timezone_set($timeZone);
@@ -248,6 +249,7 @@ class ZPHP
 
             self::$server_file = Config::getField('project', 'pid_path').DS.Config::get('project_name').'.pid';
             self::$server_pid = SwoolePid::getMasterPid(self::$server_file);
+            Container::init(DI::getInstance());
             self::doCommand($argv[1],$run);
         }
 
@@ -279,7 +281,8 @@ class ZPHP
 
     protected static function serviceStart(){
         if(!file_exists(self::$server_file))file_put_contents(self::$server_file,'');
-        Factory::getInstance(\ZPHP\Monitor\Monitor::class, [self::$monitorname, self::$server_file]);
+        Container::Monitor('Monitor', [self::$monitorname, self::$server_file]);
+//        Factory::getInstance(\ZPHP\Monitor\Monitor::class, );
         $vcacheConfig = Config::getField('project', 'view');
         if(!empty($vcacheConfig['tag'])) {
             ViewCache::init();
@@ -292,7 +295,7 @@ class ZPHP
             self::serviceStart();
             $serverMode = Config::get('server_mode', 'Http');
             //寻找server的socket适配器
-            $service = Server\Factory::getInstance($serverMode);
+            $service = Container::Server('Adapter/'.$serverMode);
             if ($run) {
                 echo ( "Service startting success!\n");
                 $service->run();
@@ -343,7 +346,8 @@ class ZPHP
         if(empty(self::$server_pid)){
             exit(self::$appName." Has been Shut Down!\n");
         }
-        $monitor = Factory::getInstance(\ZPHP\Monitor\Monitor::class, [self::$monitorname, self::$server_file]);
+        $monitor = Container::Monitor('Monitor', [self::$monitorname, self::$server_file]);
+//        $monitor = Factory::getInstance(\ZPHP\Monitor\Monitor::class, );
         $monitor->outPutNowStatus();
     }
 

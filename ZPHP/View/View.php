@@ -128,8 +128,8 @@ class View{
         if(!is_file($vFile)){
             throw new \Exception("模板不存在.");
         }
-        include "{$vFile}";
-        $outPut = ob_get_contents();
+        require $vFile;
+        $outPut = ob_get_clean();
         return $outPut;
     }
 
