@@ -147,49 +147,25 @@ class ZPHP
         }
     }
 
-    final public static function exceptionHandler(\Exception $exception)
+    final public static function exceptionHandler()
     {
-        $trace = $exception->getTrace();
-        $info = str_repeat('-', 100) . "\n";
-        $info .= "# line:{$exception->getLine()} call:{$exception->getCode()} error message:{$exception->getMessage()}\tfile:{$exception->getFile()}\n";
-        foreach ($trace as $k => $t)
+        $error = error_get_last();
+        if (!isset($error['type'])) return;
+        switch ($error['type'])
         {
-            if (empty($t['line']))
-            {
-                $t['line'] = 0;
-            }
-            if (empty($t['class']))
-            {
-                $t['class'] = '';
-            }
-            if (empty($t['type']))
-            {
-                $t['type'] = '';
-            }
-            if (empty($t['file']))
-            {
-                $t['file'] = 'unknow';
-            }
-            $info .= "#$k line:{$t['line']} call:{$t['class']}{$t['type']}{$t['function']}\tfile:{$t['file']}\n";
+            case E_ERROR :
+            case E_PARSE :
+            case E_USER_ERROR:
+            case E_CORE_ERROR :
+            case E_COMPILE_ERROR :
+                break;
+            default:
+                return;
         }
-        $info .= str_repeat('-', 100) . "\n";
-        echo $info;
-        return;
+        $errorMsg = "{$error['message']} ({$error['file']}:{$error['line']})";
+        exit($errorMsg);
     }
 
-    final public static function fatalHandler()
-    {
-        $error = \error_get_last();
-        if(empty($error)) {
-            return;
-        }
-        if(!in_array($error['type'], array(E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR))) {
-            return;
-        }
-        echo Formater::fatal($error);
-        return;
-//        return Response::display(Formater::fatal($error));
-    }
 
     /**
      * @param $rootPath
@@ -214,7 +190,6 @@ class ZPHP
             self::setRootPath($rootPath);
             self::setConfigPath('');
 
-
             \spl_autoload_register(__CLASS__.'::autoLoader');
             $config_path = self::getConfigPath();
             Config::load($config_path);
@@ -222,15 +197,8 @@ class ZPHP
             $appPath = Config::get('app_path', self::$appPath);
             self::setAppPath($rootPath.DS.$appPath);
 
-            //设置项目lib目录
-//            self::$libPath = Config::get('lib_path', self::$zPath . DS . 'lib');
-//            if ($run && Config::getField('project', 'debug_mode', 0)) {
-//                Debug::start();
-//            }
-
-            $eh = Config::getField('project', 'exception_handler', __CLASS__ . '::exceptionHandler');
-            \set_exception_handler($eh);
             //致命错误
+            register_shutdown_function(__CLASS__ . '::exceptionHandler');
 
             $timeZone = Config::get('time_zone', 'Asia/Shanghai');
             \date_default_timezone_set($timeZone);
