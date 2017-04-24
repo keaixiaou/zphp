@@ -1,6 +1,7 @@
 # ZPHP
 
-框架依赖
+The framework depend of zhttp and zapi
 
-##协议
+## protocol
+
 MIT license
