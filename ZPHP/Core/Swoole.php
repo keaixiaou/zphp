@@ -31,8 +31,8 @@ class Swoole {
             $content = '';
         }
 
-//        if(self::$echo_html) {
-            $info = <<<HTMLS
+        $info =
+            <<<HTMLS
             <html>
             <head>
             <title>application error</title>
@@ -68,9 +68,6 @@ class Swoole {
                     <h1>$msg</h1>
                     <p>$content</p><pre>
 HTMLS;
-//        }else {
-//            $info = "$msg: $content\n";
-//        }
         if (DEBUG===true) {
 
             $trace = debug_backtrace();
@@ -92,10 +89,7 @@ HTMLS;
             }
             $info .= str_repeat('-', 100) . "\n";
         }
-//        if (self::$echo_html)
-//        {
-            $info .= '</pre></div></body></html>';
-//        }
+        $info .= '</pre></div></body></html>';
 
         return $info;
     }

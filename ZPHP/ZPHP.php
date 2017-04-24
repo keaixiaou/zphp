@@ -20,9 +20,7 @@ use ZPHP\Template\ViewCache;
 use ZPHP\View,
     ZPHP\Core\Config,
     ZPHP\Core\Log,
-    ZPHP\Core\DI,
-    ZPHP\Common\Debug,
-    ZPHP\Common\Formater;
+    ZPHP\Core\DI;
 
 class ZPHP
 {
@@ -147,24 +145,6 @@ class ZPHP
         }
     }
 
-    final public static function exceptionHandler()
-    {
-        $error = error_get_last();
-        if (!isset($error['type'])) return;
-        switch ($error['type'])
-        {
-            case E_ERROR :
-            case E_PARSE :
-            case E_USER_ERROR:
-            case E_CORE_ERROR :
-            case E_COMPILE_ERROR :
-                break;
-            default:
-                return;
-        }
-        $errorMsg = "{$error['message']} ({$error['file']}:{$error['line']})";
-        exit($errorMsg);
-    }
 
 
     /**
@@ -198,7 +178,6 @@ class ZPHP
             self::setAppPath($rootPath.DS.$appPath);
 
             //致命错误
-            register_shutdown_function(__CLASS__ . '::exceptionHandler');
 
             $timeZone = Config::get('time_zone', 'Asia/Shanghai');
             \date_default_timezone_set($timeZone);
