@@ -70,6 +70,15 @@ class Model {
         return $value;
     }
 
+    /**
+     * set field which need select
+     * @param string $fields
+     * @return $this
+     */
+    public function field($fields='*'){
+        $this->select = $fields;
+        return $this;
+    }
 
     /**
      * 获取数量
