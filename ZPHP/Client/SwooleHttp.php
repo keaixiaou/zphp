@@ -128,10 +128,12 @@ class SwooleHttp extends ZSwooleHttp
     public function onTask($server, $taskId, $fromId, $data)
     {
         try{
-            if(empty($data['class']) || empty($data['method']) || empty($data['param'])){
-                throw new \Exception("param can't be empty!");
+            $checkParam = ['class', 'method'];
+            foreach($checkParam as $p){
+                if(empty($data[$p])){
+                    throw new \Exception($p." can't be empty!");
+                }
             }
-
             if(empty($this->taskObjectArray[$data['class']])){
                 $classParam = !empty($data['class_param'])?$data['class_param']:null;
                 $data['class'] = str_replace('/','\\', $data['class']);
