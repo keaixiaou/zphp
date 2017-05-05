@@ -19,7 +19,7 @@ class Task{
 
     /**
      * 不需要结果的task
-     * @param $data = ['class'=>'','method'=>'','param'=>'']
+     * @param $data = ['class'=>'','method'=>'','param'=>[]]
      * @return bool
      */
     public function call($data){
@@ -29,7 +29,7 @@ class Task{
     }
 
     /**需要task处理结果
-     * $data = ['class'=>'','method'=>'','param'=>'']
+     * $data = ['class'=>'','method'=>'','param'=>[]]
      * @return $this
      */
     public function callCoroutine($data){
@@ -39,7 +39,6 @@ class Task{
 
     protected function changeData($data){
         $taskData = $data;
-        $taskData['param'] = [$data['param']];
         return $taskData;
     }
 }
