@@ -10,6 +10,7 @@
 namespace ZPHP\Coroutine\Base;
 
 use ZPHP\Controller\IController;
+use ZPHP\Core\Config;
 use ZPHP\Core\Log;
 
 class CoroutineTask{
@@ -21,6 +22,7 @@ class CoroutineTask{
     protected $routine;
     protected $controller;
     protected $i;
+    protected $timeTickId = 0;
 
     public function __construct()
     {
@@ -93,6 +95,7 @@ class CoroutineTask{
                     $routine->next();
                     continue;
                 }else{
+                    $this->finishTask();
                     return ;
                 }
             } catch (\Exception $e) {
@@ -118,10 +121,33 @@ class CoroutineTask{
         if(!empty($data['exception'])){
             $this->onExceptionHandle($data['exception']);
         }else {
-            $gen = $this->stack->pop();
-            $this->callbackData = $data;
-            $gen->send($this->callbackData);
-            $this->work($gen);
+            if(!$this->stack->isEmpty()) {
+                $gen = $this->stack->pop();
+                $this->callbackData = $data;
+                $gen->send($this->callbackData);
+                $this->work($gen);
+            }
+        }
+    }
+
+
+    /**
+     * 注入controller
+     * @param IController $controller
+     */
+    public function setController(IController &$controller){
+        $this->controller = $controller;
+        $timeOut = Config::getField('project', 'timeout', 3000);
+        $this->timeTickId = \swoole_timer_after($timeOut, function (){
+            $this->onExceptionHandle("服务器超时!");
+        });
+    }
+
+
+    protected function finishTask(){
+        if(!empty($this->timeTickId)){
+            \swoole_timer_clear($this->timeTickId);
+            $this->timeTickId = 0;
         }
     }
 
@@ -130,6 +156,7 @@ class CoroutineTask{
      * @param $message
      */
     protected function onExceptionHandle($message){
+        $this->finishTask();
         while(!$this->stack->isEmpty()) {
             $routine = $this->stack->pop();
         }
@@ -156,10 +183,6 @@ class CoroutineTask{
         return $this->routine;
     }
 
-
-    public function setController(IController &$controller){
-        $this->controller = $controller;
-    }
 
     public function setRoutine(\Generator $routine)
     {
