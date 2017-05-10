@@ -38,6 +38,7 @@ class Client implements IOvector{
     {
 
         try {
+
             $parseUrl = parse_url($this->data['url']);
             if (empty($parseUrl['host'])) {
                 throw new \Exception("输入地址有误");
@@ -49,7 +50,7 @@ class Client implements IOvector{
             } else {
                 $this->data['port'] = empty($parseUrl['port']) ? 80 : $parseUrl['port'];
             }
-            $this->data['path'] = $parseUrl['path'];
+            $this->data['path'] = !empty($parseUrl['path'])?$parseUrl['path']:'/';
 
             $data = $this->data;
             swoole_async_dns_lookup($this->data['host'], function ($host, $ip) use (&$data) {

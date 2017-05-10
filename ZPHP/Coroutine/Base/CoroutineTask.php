@@ -11,22 +11,24 @@ namespace ZPHP\Coroutine\Base;
 
 use ZPHP\Controller\IController;
 use ZPHP\Core\Config;
+use ZPHP\Core\Container;
+use ZPHP\Core\Factory;
 use ZPHP\Core\Log;
 
 class CoroutineTask{
-    protected $callbackData;
-    protected $stack;
     /**
      * @var \Generator $routine;
      */
-    protected $routine;
     protected $controller;
     protected $i;
     protected $timeTickId = 0;
-
+    /**
+     * @var Scheduler $scheduler
+     */
+    protected $scheduler;
     public function __construct()
     {
-        $this->stack = new \SplStack();
+        $this->scheduler = Factory::getInstance(Scheduler::class);
         $this->i = 1;
     }
 
@@ -34,7 +36,7 @@ class CoroutineTask{
      * 克隆时深拷贝需要对stack克隆
      */
     public function __clone(){
-        $this->stack = clone $this->stack;
+        $this->scheduler = clone $this->scheduler;
     }
 
     /**
@@ -43,68 +45,39 @@ class CoroutineTask{
      */
     public function work(\Generator $routine){
         while (true) {
+            if(empty($this->timeTickId))
+                return;
 //            Log::write("this'i : ".$this->i);
             $this->i++;
-            try {
-                if (!$routine) {
-                    return;
-                }
-                $value = $routine->current();
-//                Log::write('value:'.__METHOD__.print_r($value, true));
-                //嵌套的协程
-                if ($value instanceof \Generator) {
-//                    Log::write('嵌套');
-                    $this->stack->push($routine);
-                    $routine = $value;
-                    continue;
-                }
-
-                //异步IO的父类
-                if(is_object($value) && is_subclass_of($value, 'ZPHP\Coroutine\Base\ICoroutineBase')){
-                    $this->stack->push($routine);
-                    $value->sendCallback([$this, 'callback']);
-                    return;
-                }
-
-
-                if(is_null($value)) {
-                    try {
-                        $return = $routine->getReturn();
-                    } catch (\Exception $e) {
-                        $return = 'NULL';
-                    }
-                    if ($return !== 'NULL') {
-                        $this->callbackData = $return;
-                    }
-//                    Log::write('return:'.json_encode($return));
-                }else {
-                    $this->callbackData = $value;
-                    $routine->send($this->callbackData);
-                    $this->callbackData = null;
-                    continue;
-                }
-                if (!$this->stack->isEmpty()) {
-//                    Log::write('$this->stack->pop();'.print_r($this->stack, true));
-                    $routine = $this->stack->pop();
-                    $routine->send($this->callbackData);
-                    $this->callbackData = null;
-                    continue;
-                }
-                if ($this->routine->valid()) {
-                    $routine = $this->routine;
-                    $routine->next();
-                    continue;
-                }else{
-                    $this->finishTask();
-                    return ;
-                }
-            } catch (\Exception $e) {
-                $this->onExceptionHandle($e->getMessage());
-
-                break;
+            $sign = $this->scheduler->schedule();
+//            Log::write('sign:'.print_r($sign, true));
+            if($sign===Signa::SNULL || $sign ===Signa::SCONTINUE)
+                continue;
+            else if($sign===Signa::SRETURN){
+                $this->finish();
+                return;
             }
+            else if ($sign===Signa::SBREAK)
+                break;
         }
     }
+
+
+    public function workException(\Generator $routine){
+        while (true) {
+            $this->i++;
+            $sign = $this->scheduler->schedule();
+            if($sign===Signa::SNULL || $sign ===Signa::SCONTINUE)
+                continue;
+            else if($sign===Signa::SRETURN){
+                $this->finish();
+                return;
+            }
+            else if ($sign===Signa::SBREAK)
+                break;
+        }
+    }
+
     /**
      * [callback description]
      * @param  [type]   $r        [description]
@@ -113,7 +86,7 @@ class CoroutineTask{
      * @param  [type]   $res      [description]
      * @return function           [description]
      */
-    public function callback($data)
+    public function callback1($data)
     {
         /*
             继续work的函数实现 ，栈结构得到保存
@@ -144,28 +117,27 @@ class CoroutineTask{
     }
 
 
-    protected function finishTask(){
+    public function finish(){
         if(!empty($this->timeTickId)){
             \swoole_timer_clear($this->timeTickId);
             $this->timeTickId = 0;
         }
+        $this->scheduler->finish();
     }
 
     /**
      * 系统级错误
      * @param $message
      */
-    protected function onExceptionHandle($message){
-        $this->finishTask();
-        while(!$this->stack->isEmpty()) {
-            $routine = $this->stack->pop();
-        }
+    public function onExceptionHandle($message){
+        $this->finish();
         $action = 'onSystemException';
         Log::write('系统级错误:'.$message, Log::ERROR, true);
         $generator = call_user_func_array([$this->controller, $action], [$message]);
         if ($generator instanceof \Generator) {
+            $this->i = 1;
             $this->setRoutine($generator);
-            $this->work($this->getRoutine());
+            $this->workException($this->getRoutine());
         }
     }
 
@@ -180,13 +152,15 @@ class CoroutineTask{
 
     public function getRoutine()
     {
-        return $this->routine;
+        return $this->scheduler->getRoutine();
     }
 
 
     public function setRoutine(\Generator $routine)
     {
-        $this->routine = $routine;
+        $this->scheduler->setRoutine($routine);
+        $this->scheduler->setTask($this);
+//        $this->routine = $routine;
     }
 
     public function __destruct()
