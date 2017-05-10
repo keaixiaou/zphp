@@ -15,8 +15,8 @@ abstract class IController{
     public $module;
     public $controller;
     public $method;
-    public $coroutineMethod;
-    public $coroutineParam=[];
+    protected $coroutineMethod;
+    protected $coroutineParam=[];
 
 
     /**
@@ -36,6 +36,11 @@ abstract class IController{
         return $this->response->checkApi();
     }
 
+
+    public function setCoroutineMethodParam($method, $param){
+        $this->coroutineMethod = $method;
+        $this->coroutineParam = $param;
+    }
     /**
      * 异常处理
      */

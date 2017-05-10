@@ -117,14 +117,15 @@ class Request{
         /**
          * @var Controller $controller
          */
-        $controller->coroutineMethod = function()use($controller, $action){
+        $coroutineMethod = function()use($controller, $action){
             return call_user_func([$controller, $action]);
         };
+        $controller->setCoroutineMethodParam($coroutineMethod, []);
+
         $controller->module = $mvc['module'];
         $controller->controller = $mvc['controller'];
         $controller->method= $action;
-        $controller->swRequest = $this->request;
-        $controller->swResponse = $this->response;
+        $controller->setSwRequestResponse($this->request, $this->response);
         return $this->executeGeneratorScheduler($controller);
     }
 
@@ -146,10 +147,9 @@ class Request{
         if(strtolower($type)=='api'){
             $controller->setApi();
         }
-        $controller->coroutineMethod = $callback;
-        $controller->coroutineParam = $paramArray;
-        $controller->swRequest = $this->request;
-        $controller->swResponse = $this->response;
+
+        $controller->setCoroutineMethodParam($callback, $paramArray);
+        $controller->setSwRequestResponse($this->request, $this->response);
         return $this->executeGeneratorScheduler($controller);
     }
 

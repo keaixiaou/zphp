@@ -23,13 +23,13 @@ use ZPHP\ZPHP;
 
 class Controller extends IController{
 
-    public $swRequest;
-    public $swResponse;
+    private $swRequest;
+    private $swResponse;
 
     /**
      * @var Request
      */
-    protected $request;
+    public $request;
 
     /**
      * @var View $view;
@@ -66,7 +66,10 @@ class Controller extends IController{
     }
 
 
-
+    public function setSwRequestResponse($swrequest, $swresponse){
+        $this->swRequest = $swrequest;
+        $this->swResponse = $swresponse;
+    }
 
     /**
      * 获取自身服务状态
