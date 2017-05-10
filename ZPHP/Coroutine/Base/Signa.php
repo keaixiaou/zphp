@@ -10,7 +10,8 @@ namespace ZPHP\Coroutine\Base;
 
 class Signa{
     const SNULL = 0;
-    const SCONTINUE  = 1;
+    const SCONTINUE = 1;
     const SBREAK = 2;
-    const SRETURN   = 3;
+    const SRETURN = 3;
+    const SFINISH = 4;
 }

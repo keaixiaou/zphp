@@ -43,9 +43,9 @@ class CoroutineTask{
      * 协程调度器
      * @param \Generator $routine
      */
-    public function work(\Generator $routine){
+    public function work($exception=false){
         while (true) {
-            if(empty($this->timeTickId))
+            if($exception!==true && empty($this->timeTickId))
                 return;
 //            Log::write("this'i : ".$this->i);
             $this->i++;
@@ -53,56 +53,16 @@ class CoroutineTask{
 //            Log::write('sign:'.print_r($sign, true));
             if($sign===Signa::SNULL || $sign ===Signa::SCONTINUE)
                 continue;
-            else if($sign===Signa::SRETURN){
+            else if($sign===Signa::SRETURN)
+                return;
+            else if ($sign===Signa::SBREAK)
+                break;
+            else if ($sign===Signa::SFINISH){
                 $this->finish();
                 return;
             }
-            else if ($sign===Signa::SBREAK)
-                break;
         }
     }
-
-
-    public function workException(\Generator $routine){
-        while (true) {
-            $this->i++;
-            $sign = $this->scheduler->schedule();
-            if($sign===Signa::SNULL || $sign ===Signa::SCONTINUE)
-                continue;
-            else if($sign===Signa::SRETURN){
-                $this->finish();
-                return;
-            }
-            else if ($sign===Signa::SBREAK)
-                break;
-        }
-    }
-
-    /**
-     * [callback description]
-     * @param  [type]   $r        [description]
-     * @param  [type]   $key      [description]
-     * @param  [type]   $calltime [description]
-     * @param  [type]   $res      [description]
-     * @return function           [description]
-     */
-    public function callback1($data)
-    {
-        /*
-            继续work的函数实现 ，栈结构得到保存
-         */
-        if(!empty($data['exception'])){
-            $this->onExceptionHandle($data['exception']);
-        }else {
-            if(!$this->stack->isEmpty()) {
-                $gen = $this->stack->pop();
-                $this->callbackData = $data;
-                $gen->send($this->callbackData);
-                $this->work($gen);
-            }
-        }
-    }
-
 
     /**
      * 注入controller
@@ -135,9 +95,8 @@ class CoroutineTask{
         Log::write('系统级错误:'.$message, Log::ERROR, true);
         $generator = call_user_func_array([$this->controller, $action], [$message]);
         if ($generator instanceof \Generator) {
-            $this->i = 1;
             $this->setRoutine($generator);
-            $this->workException($this->getRoutine());
+            $this->work(true);
         }
     }
 
@@ -158,6 +117,7 @@ class CoroutineTask{
 
     public function setRoutine(\Generator $routine)
     {
+        $this->i = 1;
         $this->scheduler->setRoutine($routine);
         $this->scheduler->setTask($this);
 //        $this->routine = $routine;

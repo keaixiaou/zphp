@@ -92,7 +92,7 @@ class Scheduler{
 //            Log::write('AsyIo');
             $this->stack->push($routine);
             $value->sendCallback([$this, "callback"]);
-            $sign = Signa::SBREAK;
+            $sign = Signa::SRETURN;
         }
         return $sign;
     }
@@ -140,7 +140,7 @@ class Scheduler{
             $sign = Signa::SCONTINUE;
         }else{
             $this->coroutineTask->finish();
-            $sign = Signa::SRETURN;
+            $sign = Signa::SFINISH;
         }
         return $sign;
     }
@@ -166,7 +166,7 @@ class Scheduler{
                 $this->callbackData = $data;
                 $gen->send($this->callbackData);
                 $this->coroutineTask->setRoutine($gen);
-                $this->coroutineTask->work($gen);
+                $this->coroutineTask->work();
             }
         }
     }

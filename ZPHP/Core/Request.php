@@ -90,7 +90,7 @@ class Request{
             $task = clone $this->coroutineTask;
             $task->setController($controller);
             $task->setRoutine($generator);
-            $task->work($task->getRoutine());
+            $task->work();
         }else{
             $returnRes = $generator;
         }
