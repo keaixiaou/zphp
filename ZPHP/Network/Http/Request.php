@@ -47,6 +47,9 @@ class Request{
         //传入请求参数
 
         $this->post = !empty($request->post)?$request->post:[];
+        parse_str($request->rawContent(), $content);
+        $this->post = array_merge($content, $this->post);
+
         $this->get = !empty($request->get)?$request->get:[];
         $methodType = $request->server['request_method'];
         $this->request = $methodType=='GET'?array_merge($this->get, $this->post):array_merge($this->post, $this->get);
