@@ -46,7 +46,12 @@ class DI{
      */
     static public function get($key, $type='model', $params=[]){
         if(empty(self::$closureList[$type][$key])){
-            $objectName = $type."\\".$key;
+            if(strpos($key,'{type}') !== false){
+                $objectName = str_replace('{type}', $type , $key);
+            }
+            else{
+                $objectName = $type."\\".$key;
+            }
             self::set($key, $type, $objectName, $params);
         }
         return call_user_func(self::$closureList[$type][$key]);

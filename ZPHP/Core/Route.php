@@ -103,15 +103,25 @@ class Route {
             if($explodeNum==1){
                 $mvcConfig = Config::getField('project','mvc');
                 $uriResult = [
+                    'app' => $mvcConfig['app'],
                     'module' => $mvcConfig['module'],
                     'controller' => $mvc[0],
                     'action' => $mvc[1],
                 ];
-            }else{
+            }elseif($explodeNum == 2)  {
+                $mvcConfig = Config::getField('project','mvc');
                 $uriResult = [
+                    'app' => $mvcConfig['app'],
                     'module' => $mvc[0],
                     'controller' => $mvc[1],
                     'action' => $mvc[2],
+                ];
+            }else{
+                $uriResult = [
+                    'app' => $mvc[0],
+                    'module' => $mvc[1],
+                    'controller' => $mvc[2],
+                    'action' => $mvc[3],
                 ];
             }
         }
@@ -127,7 +137,12 @@ class Route {
     static public function defaultParse($uri){
         $mvc = Config::getField('project','mvc');
         $url_array = explode('/', trim($uri,'/'));
-        if(!empty($url_array[2])){
+        if(!empty($url_array[3])){
+            $mvc['app'] = $url_array[0];
+            $mvc['module'] = $url_array[1];
+            $mvc['controller'] = $url_array[2];
+            $mvc['action'] = $url_array[3];
+        }else if(!empty($url_array[2])){
             $mvc['module'] = $url_array[0];
             $mvc['controller'] = $url_array[1];
             $mvc['action'] = $url_array[2];
@@ -149,6 +164,7 @@ class Route {
      */
     static function dealUcfirst($mvc){
         return [
+            'app'=>ucwords($mvc['app']),
             'module'=>ucwords($mvc['module']),
             'controller'=>ucwords($mvc['controller']),
             'action'=>$mvc['action'],
