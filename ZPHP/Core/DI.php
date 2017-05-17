@@ -45,11 +45,14 @@ class DI{
      * @return mixed
      */
     static public function get($key, $type='model', $params=[]){
+        $key = ucwords($key,'\\');
         if(empty(self::$closureList[$type][$key])){
             if(strpos($key,'{type}') !== false){
                 $objectName = str_replace('{type}', $type , $key);
-            }
-            else{
+            }elseif(strpos($key , '#') !== false) {
+                list($App, $Path) = explode('#', $key );
+                $objectName = $App.'\\'.$type."\\".ucwords($Path);
+            }else{
                 $objectName = $type."\\".$key;
             }
             self::set($key, $type, $objectName, $params);
