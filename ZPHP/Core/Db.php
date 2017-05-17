@@ -134,10 +134,12 @@ class Db {
      */
     public static function initMysqlPool($workId, $config){
         if(!empty($config)) {
-            if (empty(self::$instance->mysqlPool)) {
-                self::$workId = $workId;
-                self::$instance->mysqlPool = new MysqlAsynPool();
-                self::$instance->mysqlPool->initWorker($workId, $config);
+            foreach ($config as $dbKey =>$DBconfig){
+                if (empty(self::$instance->mysqlPool[$dbKey])) {
+                    self::$workId = $workId;
+                    self::$instance->mysqlPool[$dbKey] = new MysqlAsynPool();
+                    self::$instance->mysqlPool[$dbKey]->initWorker($workId, $DBconfig);
+                }
             }
         }
     }
@@ -216,7 +218,13 @@ class Db {
      */
     public static function table($tableName=''){
         if(!isset(self::$_tables[$tableName])){
-            self::$_tables[$tableName] = new Model($tableName, self::$instance->mysqlPool);
+            if(strpos($tableName , '#') !== false){
+                list($DbKey, $_tableName) = explode('#', $tableName);
+            }else{
+                $DbKey = 'default';
+                $_tableName = $tableName;
+            }
+            self::$_tables[$tableName] = new Model($_tableName, self::$instance->mysqlPool[$DbKey]);
         }
         return self::$_tables[$tableName];
     }
@@ -276,9 +284,13 @@ class Db {
      * 释放mysql连接池
      */
     public static function freeMysqlPool(){
-        if(isset(self::$instance->mysqlPool)) {
-            self::$instance->mysqlPool->free();
-            unset(self::$instance->mysqlPool);
+        if(is_array(self::$instance->mysqlPool)){
+            foreach (self::$instance->mysqlPool as $DbKey => $DBconfig){
+                if(isset(self::$instance->mysqlPool[$DbKey])) {
+                    self::$instance->mysqlPool[$DbKey]->free();
+                    unset(self::$instance->mysqlPool[$DbKey]);
+                }
+            }
         }
     }
 
