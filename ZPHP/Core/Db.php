@@ -220,6 +220,7 @@ class Db {
         if(!isset(self::$_tables[$tableName])){
             if(strpos($tableName , '#') !== false){
                 list($DbKey, $_tableName) = explode('#', $tableName);
+                if(empty($DbKey)) $DbKey = 'default';
             }else{
                 $DbKey = 'default';
                 $_tableName = $tableName;
