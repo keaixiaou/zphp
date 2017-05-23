@@ -14,7 +14,7 @@ use ZPHP\Coroutine\Redis\RedisCoroutine;
 
 class Redis{
     private $_cmd = ['set', 'get', 'lpop', 'rpop', 'lpush', 'rpush','setex','decr',
-        'incr','hset','hget'];
+        'incr','hset','hget','hmget'];
     private $_pool;
     function __construct($redisPool){
         $this->_pool = $redisPool;
@@ -93,8 +93,14 @@ class Redis{
         return $this->__call('hget', [$key,  $field]);
     }
 
+    public function hmget($key, $fields){
+        array_unshift($fields, $key);
+        return $this->__call('hmget', $fields);
+    }
     public function set($key, $value){
-        return $this->__call('set', [$key,  $value]);
+        $setRes = yield $this->__call('set', [$key,  $value]);
+        $setRes = $setRes=='OK'?true:false;
+        return $setRes;
     }
 
     public function get($key){

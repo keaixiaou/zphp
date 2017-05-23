@@ -77,6 +77,9 @@ class Client implements IOvector{
      */
     public function myCurl($swoolehttpclient){
         if(!empty($this->data['postdata'])) {
+            $swoolehttpclient->setHeaders([
+                'Host'=>$this->data['host'],
+                'Content-Type'=>'application/x-www-form-urlencoded']);
             $swoolehttpclient->post($this->data['path'], $this->data['postdata'],
                 function ($swoolehttpclient) {
                     call_user_func_array($this->data['callback'], ['data'=>$swoolehttpclient->body]);
