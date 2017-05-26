@@ -1,11 +1,11 @@
 {
-    "name": "keaixiaou/zphp",
+    "name": "Sing/zphp",
     "description": "Asynchronous non-blocking framework based on ZPHP transformation",
     "authors": [
         {
-            "name": "huaerjie",
-            "email": "286252682@qq.com",
-            "homepage":"https://github.com/keaixiaou"
+            "name": "Sing",
+            "email": "78276478@qq.com",
+            "homepage":"https://github.com/gitzhuhe"
         }
     ],
     "license": "MIT",
