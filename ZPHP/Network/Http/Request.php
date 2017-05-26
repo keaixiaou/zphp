@@ -51,6 +51,7 @@ class Request{
         $this->post = array_merge($content, $this->post);
 
         $this->get = !empty($request->get)?$request->get:[];
+        if(Config::getField('project','mergetPost')) $this->get = array_merge($this->post, $this->get);
         $methodType = $request->server['request_method'];
         $this->request = $methodType=='GET'?array_merge($this->get, $this->post):array_merge($this->post, $this->get);
         $this->files = !empty($request->files)?$request->files:[];

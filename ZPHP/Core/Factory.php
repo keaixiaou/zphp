@@ -38,7 +38,8 @@ class Factory
             $keyName .= $params['_prefix'];
         }
 
-        $controller_file = ROOTPATH.'/apps/'.str_replace('\\','/',$className).'.php';
+        $appPath = Config::get('app_path', self::$appPath);
+        $controller_file = ROOTPATH.'/'.$appPath.'/'.str_replace('\\','/',$className).'.php';
         if(!is_file($controller_file)){
             throw new \Exception("no file {$controller_file}");
         }
