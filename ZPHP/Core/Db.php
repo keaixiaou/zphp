@@ -134,11 +134,14 @@ class Db {
      */
     public static function initMysqlPool($workId, $config){
         if(!empty($config)) {
-            if (empty(self::$instance->mysqlPool)) {
-                self::$workId = $workId;
-                self::$instance->mysqlPool = new MysqlAsynPool();
-                self::$instance->mysqlPool->initWorker($workId, $config);
+            foreach($config as $key => $value){
+                if (empty(self::$instance->mysqlPool[$key])) {
+                    self::$workId = $workId;
+                    self::$instance->mysqlPool[$key] = new MysqlAsynPool();
+                    self::$instance->mysqlPool[$key]->initWorker($workId, $value);
+                }
             }
+
         }
     }
 
@@ -214,11 +217,11 @@ class Db {
      * @param string $db_key
      * @return Model
      */
-    public static function table($tableName=''){
-        if(!isset(self::$_tables[$tableName])){
-            self::$_tables[$tableName] = new Model($tableName, self::$instance->mysqlPool);
+    public static function table($tableName='', $poolName='default'){
+        if(!isset(self::$_tables[$poolName][$tableName])){
+            self::$_tables[$poolName][$tableName] = new Model($tableName, self::$instance->mysqlPool[$poolName]);
         }
-        return self::$_tables[$tableName];
+        return self::$_tables[$poolName][$tableName];
     }
 
 
