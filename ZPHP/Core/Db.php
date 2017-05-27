@@ -280,8 +280,10 @@ class Db {
      */
     public static function freeMysqlPool(){
         if(isset(self::$instance->mysqlPool)) {
-            self::$instance->mysqlPool->free();
-            unset(self::$instance->mysqlPool);
+            foreach (self::$instance->mysqlPool as $key => $pool){
+                $pool->free();
+                unset(self::$instance->mysqlPool[$key]);
+            }
         }
     }
 
