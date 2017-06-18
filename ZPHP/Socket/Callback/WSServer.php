@@ -55,8 +55,10 @@ abstract class WSServer implements ICallback
     public function onStart()
     {
         $this->log('server start, swoole version: ' . SWOOLE_VERSION);
-
-        \swoole_set_process_name(ZConfig::get('project_name', 'websocket').":master,tcp://".ZConfig::getField('socket', 'host').":".ZConfig::getField('socket', 'port'));
+        $project_name = ZConfig::getField('project', 'project_name', 'websocket');
+        $serverConf = ZConfig::get('server');
+        \swoole_set_process_name($project_name.":master,tcp://".
+            $serverConf['host'].":".$serverConf['port']);
     }
 
     public function onConnect()

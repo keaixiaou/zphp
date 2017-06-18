@@ -19,7 +19,7 @@ class Socket implements IServer
     public function run()
     {
         //
-        $config = Config::get('socket');
+        $config = Config::get('server');
         if (empty($config)) {
             throw new \Exception("socket config empty");
         }

@@ -87,9 +87,9 @@ class SwooleHttp extends ZSwooleHttp
     public function onWorkerStart($server, $workerId)
     {
         parent::onWorkerStart($server, $workerId);
-        $common = Config::get('common_file');
+        $common = Config::getByStr('project.common_file');
         if(!empty($common)){
-            require ROOTPATH.$common;
+            require $common;
         }
 
         if (!$server->taskworker) {

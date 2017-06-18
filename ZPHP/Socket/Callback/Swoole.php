@@ -21,8 +21,9 @@ abstract class Swoole implements ICallback
 
 
     public function init($server){
-        $pidPath = ZConfig::getField('project', 'pid_path').DS;
-        $pidname = ZConfig::get('project_name') . '.pid';
+        $projectConf = ZConfig::get('project');
+        $pidPath = $projectConf['pid_path'].DS;
+        $pidname = $projectConf['project_name'] . '.pid';
         SwoolePid::init($pidPath, $pidname, $server->setting);
         if(!empty($pidPath)){
             $this->pidFile = $pidPath . DS . $pidname;
@@ -38,12 +39,11 @@ abstract class Swoole implements ICallback
      */
     public function onStart()
     {
+        $serverConf = ZConfig::get('server');
         $server = func_get_args()[0];
-        swoole_set_process_name(ZConfig::get('project_name') . ' running ' .
-            ZConfig::getField('socket', 'server_type', 'tcp') .
-            '://' . ZConfig::getField('socket', 'host') .
-            ':' . ZConfig::getField('socket', 'port')
-            . " time:".date('Y-m-d H:i:s'));
+        swoole_set_process_name(ZConfig::getField('project', 'project_name') . ' running ' .
+            $serverConf['server_type'].'://' .$serverConf['host']
+            .':' . $serverConf['port']. " time:".date('Y-m-d H:i:s'));
         $pidList = SwoolePid::makePidList('master', $server->master_pid);
         $this->putPidList($pidList);
 
@@ -66,7 +66,7 @@ abstract class Swoole implements ICallback
      */
     public function onManagerStart($server)
     {
-        swoole_set_process_name(ZConfig::get('project_name') .
+        swoole_set_process_name(ZConfig::getField('project', 'project_name') .
             ' manager:' . $server->manager_pid);
         $pidList = SwoolePid::makePidList('manager', $server->manager_pid);
         $this->putPidList($pidList);
@@ -84,15 +84,15 @@ abstract class Swoole implements ICallback
 
     public function onWorkerStart($server, $workerId)
     {
-        $workNum = ZConfig::getField('socket', 'worker_num');
+        $workNum = ZConfig::getField('server', 'worker_num');
         if($server->taskworker){
             $taskId = $server->worker_id - $workNum;
             $taskAsyName = TaskDistribute::getAsyNameFromTaskId($taskId);
-            swoole_set_process_name(ZConfig::get('project_name')
+            swoole_set_process_name(ZConfig::getField('project', 'project_name')
                 . " task num: {$taskId}"." {$taskAsyName}");
             $pidList = SwoolePid::makePidList('task', $server->worker_pid, 1, $taskAsyName);
         }else{
-            swoole_set_process_name(ZConfig::get('project_name')
+            swoole_set_process_name(ZConfig::getField('project', 'project_name')
                 . " work num: {$server->worker_id}");
             $pidList = SwoolePid::makePidList('work', $server->worker_pid);
         }
@@ -115,7 +115,7 @@ abstract class Swoole implements ICallback
 
     public function onWorkerError($server, $workerId, $workerPid, $errorCode)
     {
-        $workNum = ZConfig::getField('socket', 'worker_num');
+        $workNum = ZConfig::getField('server', 'worker_num');
         $type = $workerId>=$workNum?'task':'work';
         $pidList = SwoolePid::makePidList($type, $workerPid, 0);
         $this->putPidList($pidList);

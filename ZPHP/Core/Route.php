@@ -125,7 +125,7 @@ class Route {
      * @throws \Exception
      */
     static public function defaultParse($uri){
-        $mvc = Config::getField('project','mvc');
+        $mvc = Config::getField('project','defaultmvc');
         $url_array = explode('/', trim($uri,'/'));
         if(!empty($url_array[2])){
             $mvc['module'] = $url_array[0];

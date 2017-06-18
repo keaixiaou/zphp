@@ -103,9 +103,9 @@ class Db {
         self::initMongoPool($workerId, self::$server, Config::get('mongo'));
         self::initSessionRedisPool($workerId, Config::get('session'));
         self::initMemcachedPool($workerId, self::$server, Config::get('memcached'));
-        $taskConfig = ['asyn_max_count'=>Config::getField('socket', 'single_task_worker_num')];
+        $taskConfig = ['asyn_max_count'=>Config::getField('server', 'single_task_worker_num')];
         self::initTaskPool($workerId, self::$server, $taskConfig);
-        self::initSwooleModule(Config::get('swoole_module'));
+        self::initSwooleModule(Config::getField('project', 'swoole_module'));
     }
 
     /**
@@ -141,8 +141,8 @@ class Db {
                     self::$instance->mysqlPool[$key]->initWorker($workId, $value);
                 }
             }
-
         }
+        print_r(self::$instance->mysqlPool, true);
     }
 
     /**
@@ -280,10 +280,11 @@ class Db {
      */
     public static function freeMysqlPool(){
         if(isset(self::$instance->mysqlPool)) {
-            foreach (self::$instance->mysqlPool as $key => $pool){
+            foreach(self::$instance->mysqlPool as $key => $pool){
                 $pool->free();
                 unset(self::$instance->mysqlPool[$key]);
             }
+
         }
     }
 

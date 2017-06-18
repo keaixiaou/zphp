@@ -75,13 +75,9 @@ class Response extends BaseResponse{
     }
 
     protected function responseCookie(){
-        if(!empty(Config::getField('cookie', 'enable'))){
-            $cacheExpire = Config::getField('cookie', 'cache_expire', 3600);
-            if(!empty($this->cookie)) {
-                $this->responseArrayVal('cookie', $cacheExpire);
-            }
+        if(!empty($this->cookie)) {
+            $this->responseArrayVal('cookie');
         }
-
     }
 
     public function finish($swResponse){

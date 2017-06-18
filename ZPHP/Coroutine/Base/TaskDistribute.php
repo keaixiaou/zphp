@@ -21,10 +21,10 @@ class TaskDistribute {
      * @throws \Exception
      */
     public static function init(){
-        $taskTypeArray = Config::get('task_coroutine',['mongo','memcached']);
+        $taskTypeArray = Config::getField('project', 'task_coroutine',['mongo','memcached']);
         self::$allTaskNum = 0;
         self::$taskList = [];
-        $socketConfig = Config::get('socket');
+        $socketConfig = Config::get('server');
         $workNum = intval($socketConfig['worker_num']);
         $singleTaskWorkerNum = !empty($socketConfig['single_task_worker_num'])?
             intval($socketConfig['single_task_worker_num']):0;
