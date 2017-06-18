@@ -14,7 +14,7 @@ use ZPHP\Session\Session;
 
 /**
  * 关于http的输入,如get,post,session,cookie参数
- * Class Httpinput
+ * Class Http Request
  * @package ZPHP\Network\Http
  */
 class Request{

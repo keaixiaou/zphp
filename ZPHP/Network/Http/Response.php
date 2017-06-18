@@ -15,12 +15,12 @@ use ZPHP\Session\Session;
 
 class Response extends BaseResponse{
 
-    public $header = ['Connection'=>'keep-alive'];
+    private $header = ['Connection'=>'keep-alive'];
 
-    public $cookie = [];
-    public $session = [];
-    public $code = 200;
-    protected $swResponse;
+    private $cookie = [];
+    private $session = [];
+    private $code = 200;
+    private $swResponse;
 
     protected function setTypeVal($type, $key, $value){
         if(is_null($value))
@@ -29,20 +29,41 @@ class Response extends BaseResponse{
             $this->$type[$key] = $value;
     }
 
-    public function setHeader($key, $value=null){
+    public function setHeader($header){
+        $this->header = $header;
+    }
+
+    public function setHeaderVal($key, $value=null){
         $this->setTypeVal('header', $key, $value);
     }
 
-    public function setCookie($key, $value=null){
+    public function setCookie($cookie){
+        $this->cookie = $cookie;
+    }
+
+    public function getCookie(){
+        return $this->cookie;
+    }
+
+    public function setCookieVal($key, $value=null){
         $this->setTypeVal('cookie', $key, $value);
     }
 
-    public function setSession($key, $value){
+
+    public function setSession($session){
+        $this->session = $session;
+    }
+
+    public function setSessionVal($key, $value){
         $this->setTypeVal('session', $key, $value);
     }
 
     public function setHttpCode($code){
         $this->code = $code;
+    }
+
+    public function getSession(){
+        return $this->session;
     }
 
     protected function responseArrayVal($type, $cacheTime=0){

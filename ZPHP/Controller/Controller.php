@@ -29,7 +29,11 @@ class Controller extends IController{
     /**
      * @var Request
      */
-    public $request;
+    protected $request;
+
+    protected $cookie;
+
+    protected $session;
 
     /**
      * @var View $view;
@@ -64,6 +68,30 @@ class Controller extends IController{
             }
         }
     }
+
+
+    /**
+     * 处理请求
+     * @return \Generator
+     */
+    public function coroutineStart(){
+        yield $this->doBeforeExecute();
+        $initRes = true;
+        if(method_exists($this, 'init')){
+            $initRes = yield $this->init();
+        }
+        try{
+            $result = null;
+            if($this->checkResponse() && $initRes){
+                $result = yield call_user_func_array($this->coroutineMethod, $this->coroutineParam);
+            }
+        }catch(\Exception $e){
+            $this->onUserExceptionHandle($e->getMessage());
+        }
+
+        yield $this->endResponse($result);
+    }
+
 
 
     public function setSwRequestResponse($swrequest, $swresponse){
@@ -102,17 +130,10 @@ class Controller extends IController{
      * @param $value
      */
     protected function setHeader($key, $value){
-        $this->response->setHeader($key, $value);
+        $this->response->setHeaderVal($key, $value);
     }
 
 
-    protected function setSession($key, $value){
-        $this->response->setSession($key, $value);
-    }
-
-    protected function setCookie($key, $value){
-        $this->response->setCookie($key, $value);
-    }
     /**
      * html return
      * @param $data
@@ -191,7 +212,7 @@ class Controller extends IController{
      */
     public function fetch($tplFile=''){
         if(Config::getField('session', 'enable'))
-            $this->assign('session', $this->response->session);
+            $this->assign('session', $this->session);
         return $this->view->fetch($this->tplVar, $tplFile);
     }
 
@@ -216,28 +237,6 @@ class Controller extends IController{
     }
 
 
-    /**
-     * 处理请求
-     * @return \Generator
-     */
-    public function coroutineStart(){
-        yield $this->doBeforeExecute();
-        $initRes = true;
-        if(method_exists($this, 'init')){
-            $initRes = yield $this->init();
-        }
-        try{
-            $result = null;
-            if($this->checkResponse() && $initRes){
-                $result = yield call_user_func_array($this->coroutineMethod, $this->coroutineParam);
-            }
-        }catch(\Exception $e){
-            $this->onUserExceptionHandle($e->getMessage());
-        }
-
-        yield $this->endResponse($result);
-    }
-
 
     /**
      * 结束请求
@@ -251,6 +250,8 @@ class Controller extends IController{
                 $this->strReturn($result);
             }
         }
+        $this->response->setSession($this->session);
+        $this->response->setCookie($this->cookie);
         yield $this->response->finish($this->swResponse);
     }
 
@@ -280,8 +281,8 @@ class Controller extends IController{
     {
         if(!empty($this->request)) {
             yield $this->request->init($this->swRequest);
-            $this->copyCookie($this->request, $this->response);
-            $this->copySession($this->request, $this->response);
+            $this->cookie = $this->request->cookie;
+            $this->session = $this->request->session;
         }
         if(!empty($this->view)) {
             $this->view->init([
@@ -290,33 +291,6 @@ class Controller extends IController{
                 'method' => $this->method
             ]);
         }
-    }
-
-    protected function copyCookie($request, $response){
-        $response->cookie = $request->cookie;
-    }
-
-    protected function copySession($request, $response){
-        $response->session = $request->session;
-    }
-
-    /**
-     * 请求结束前做的一些处理,如session和cookie的写入
-     * @throws \Exception
-     */
-    protected function doBeforeDestroy(){
-        if(!empty(Config::getField('session', 'enable'))){
-            yield Session::set($this->request->session(), $this->request, $this->response);
-        }
-        if(!empty(Config::getField('cookie', 'enable'))){
-            $cacheExpire = Config::getField('cookie', 'cache_expire', 3600);
-            if(!empty($this->input->cookie)) {
-                foreach ($this->input->cookie() as $key => $value) {
-                    $this->response->cookie($key, $value, time() + $cacheExpire);
-                }
-            }
-        }
-
     }
 
 
