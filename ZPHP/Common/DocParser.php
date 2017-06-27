@@ -146,6 +146,8 @@ class DocParser {
 
         $allDorArray = [];
         foreach($classList as $key => $value){
+            if(empty($value['function']))
+                continue;
             foreach($value['function'] as $k => $v){
                 $v['namespace'] = $value['namespace'];
                 $v['classname'] = $value['classname'];
