@@ -17,7 +17,7 @@ use ZPHP\Core\Log;
 use ZPHP\Core\WSRequest;
 use ZPHP\Socket\Callback\SwooleWebSocket as ZSwooleWebSocket;
 
-class SwooleWebSocket extends ZSwooleWebSocket
+class SwooleWebsocket extends ZSwooleWebSocket
 {
 
     /**
