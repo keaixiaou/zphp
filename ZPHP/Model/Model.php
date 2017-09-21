@@ -39,6 +39,8 @@ class Model {
     public $limit='';
     public $for_update='';
     protected $_transId;
+
+    protected $_fields;
     // 数据库表达式
     protected $exp = array('eq'=>'=','neq'=>'<>','gt'=>'>','egt'=>'>=','lt'=>'<','elt'=>'<=','notlike'=>'NOT LIKE','like'=>'LIKE','in'=>'IN','notin'=>'NOT IN','not in'=>'NOT IN','between'=>'BETWEEN','not between'=>'NOT BETWEEN','notbetween'=>'NOT BETWEEN');
 
@@ -46,29 +48,9 @@ class Model {
     public function __construct($tableName, $mysqlPool){
         $this->table = $tableName;
         $this->mysqlPool = $mysqlPool;
+
     }
 
-
-    /**
-     * value分析
-     * @access protected
-     * @param mixed $value
-     * @return string
-     */
-    protected function parseValue($value) {
-        if(is_string($value)) {
-            $value =  strpos($value,':') === 0? addslashes($value) : '\''.addslashes($value).'\'';
-        }elseif(isset($value[0]) && is_string($value[0]) && strtolower($value[0]) == 'exp'){
-            $value =  addslashes($value[1]);
-        }elseif(is_array($value)) {
-            $value =  array_map(array($this, 'parseValue'),$value);
-        }elseif(is_bool($value)){
-            $value =  $value ? '1' : '0';
-        }elseif(is_null($value)){
-            $value =  'null';
-        }
-        return $value;
-    }
 
     /**
      * set field which need select
@@ -119,6 +101,56 @@ class Model {
         return $this;
     }
 
+    /**
+     * value分析
+     * @access protected
+     * @param mixed $value
+     * @return string
+     */
+    protected function parseValue($value) {
+        if(is_string($value)) {
+            $value =  strpos($value,':') === 0? addslashes($value) : '\''.addslashes($value).'\'';
+        }elseif(isset($value[0]) && is_string($value[0]) && strtolower($value[0]) == 'exp'){
+            $value =  addslashes($value[1]);
+        }elseif(is_array($value)) {
+            $value =  array_map(array($this, 'parseValue'),$value);
+        }elseif(is_bool($value)){
+            $value =  $value ? '1' : '0';
+        }elseif(is_null($value)){
+            $value =  'null';
+        }
+        return $value;
+    }
+
+
+    protected function _parseType(&$data, $key){
+        $value = $data[$key];
+        if(is_array($value) ){
+            if(!empty($value[0]) && $value[0]=='exp'){
+                $value = addslashes($value[1]);
+            }
+        }else {
+            if (!empty($this->_fields[$key])) {
+                $fieldType = strtolower($this->_fields[$key]);
+                if (false !== strpos($fieldType, 'enum')) {
+                    // 支持ENUM类型优先检测
+                } elseif (false === strpos($fieldType, 'bigint') && false !== strpos($fieldType, 'int')) {
+                    $value = intval($value);
+                } elseif (false !== strpos($fieldType, 'float') || false !== strpos($fieldType, 'double')) {
+                    $value = floatval($value);
+                } elseif (false !== strpos($fieldType, 'varchar')
+                    || false !== strpos($fieldType, 'char')
+                    || false !== strpos($fieldType, 'text')
+                    || false !== strpos($fieldType, 'datetime')
+                ) {
+                    $value = '\'' . addslashes($value) . '\'';
+                } elseif (false !== strpos($fieldType, 'bool')) {
+                    $value = (bool)$value;
+                }
+            }
+        }
+        return $value;
+    }
 
     // where子单元分析
     protected function parseWhereItem($key,$val) {
@@ -193,6 +225,26 @@ class Model {
         return $this;
     }
 
+    protected function doBeforeQuery($method){
+        yield $this->_setFields();
+    }
+
+
+    protected function _setFields(){
+        if(empty($this->_fields)) {
+            $sql = 'SHOW COLUMNS FROM ' . $this->table;
+            $data = ['sql' => $sql];
+            Db::setSql($sql);
+            $mysqlCoroutine = new MySqlCoroutine($this->mysqlPool);
+            $fieldsRes = yield $mysqlCoroutine->command($data);
+            if(!empty($fieldsRes)){
+                foreach ($fieldsRes['result'] as $key => $value){
+                    $this->_fields[$value['Field']] = $value['Type'];
+                }
+            }
+        }
+    }
+
     /**
      * 获取筛选条件的所有数据
      * @return array
@@ -221,11 +273,12 @@ class Model {
      * @throws \Exception
      */
     public function add($data, $replace=false){
+        yield $this->doBeforeQuery(__METHOD__);
         $fields = [];
         $values = [];
         foreach($data as $key => $value){
             $fields[] = $key;
-            $values[] = $this->parseValue($value);
+            $values[] = $this->_parseType($data, $key);
         }
         $sql = (true===$replace?'REPLACE':'INSERT').' INTO '.$this->table
             .' ('.'`' . implode('`,`', $fields) . '`'.') VALUES ('.implode(',', $values).')';
@@ -241,9 +294,10 @@ class Model {
      * @throws \Exception
      */
     public function save($data){
+        yield $this->doBeforeQuery(__METHOD__);
         $updateField = [];
         foreach($data as $key => $value){
-            $updateField[] = '`' .$key. '` = ' .$this->parseValue($value);
+            $updateField[] = '`' .$key. '` = ' .$this->_parseType($data, $key);
         }
         $sql =  "UPDATE {$this->table} SET ".implode(',', $updateField)." {$this->where}";
         $res = yield $this->query($sql);
