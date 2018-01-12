@@ -4,7 +4,7 @@
  * Date: 13-6-17
  */
 namespace ZPHP\Session;
-use ZPHP\Core\Factory as CFactory,
+use ZPHP\Core\Di,
     ZPHP\Core\Config as ZConfig;
 use ZPHP\Protocol\Request;
 
@@ -20,7 +20,7 @@ class Factory
             }
         }
         $className = __NAMESPACE__ . "\\Adapter\\{$adapter}";
-        return CContainer::make($className, $config);
+        return Di::make($className, $config);
     }
 
     public static function start($sessionType = '', $config = '')
