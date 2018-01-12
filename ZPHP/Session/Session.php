@@ -7,10 +7,7 @@
  */
 
 namespace ZPHP\Session;
-use ZPHP\Core\Config as ZConfig;
 use ZPHP\Core\Config;
-use ZPHP\Core\Log;
-use ZPHP\Core\Rand;
 
 
 class Session
@@ -30,11 +27,11 @@ class Session
      */
     public static function get($sid){
         $session = [];
-        $config = ZConfig::get('session');
+        $config = Config::get('session');
         if(!empty($sid)){
             $sid = $config['name'].$sid;
             $sessionType = $config['adapter'];
-            $handler = Container::make($sessionType, $config);
+            $handler = Factory::getInstance($sessionType, $config);
             $data = yield $handler->read($sid);
             if(!empty($data)) {
                 $session = unserialize($data);
@@ -51,9 +48,9 @@ class Session
      * @throws \Exception
      */
     public static function set($session, $sid){
-        $config = ZConfig::get('session');
+        $config = Config::get('session');
         $sessionType = $config['adapter'];
-        $handler = Container::make($sessionType, $config);
+        $handler = Factory::getInstance($sessionType, $config);
         $sid = $config['name'].$sid;
         $res = yield $handler->write($sid, serialize($session));
         return $res;

@@ -9,9 +9,7 @@
 namespace ZPHP\Template;
 
 use ZPHP\Common\Dir;
-use ZPHP\Core\Container;
 use ZPHP\Core\Di;
-use ZPHP\Core\Factory;
 use ZPHP\ZPHP;
 
 class ViewCache{
