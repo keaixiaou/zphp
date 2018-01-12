@@ -20,7 +20,7 @@ class Rpc implements IServer
 
     public function api($params)
     {
-        Protocol\Request::setServer(Protocol\Factory::getInstance('Rpc'));
+        Protocol\Request::setServer(Protocol\Container::make('Rpc'));
         Protocol\Request::parse($params);
         return Core\Route::route();
     }

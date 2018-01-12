@@ -9,21 +9,15 @@
 
 namespace ZPHP\Core;
 
-class DI{
+abstract class Di{
 
 
-    static protected $closureList;
-    static private $instance = null;
+    private static $closureList;
 
-    private function __construct()
-    {
+    private static $_container;
 
-    }
-
-    public static function getInstance(){
-        if(empty(self::$instance))
-            self::$instance = new DI();
-        return self::$instance;
+    public static function init($container){
+        self::$_container = $container;
     }
 
     /**
@@ -32,10 +26,9 @@ class DI{
      * @param $type
      * @param $objectName
      */
-    static public function set($key, $type, $objectName, $params=[]){
-        $objectName = str_replace("/","\\", $objectName);
-        self::$closureList[$type][$key] = function()use($objectName, $params){
-            return Factory::getInstance($objectName, $params);
+    public static function set($objectName, $params=[]){
+        self::$closureList[$objectName] = function()use($objectName, $params){
+            return self::$_container->make($objectName, $params);
         };
     }
 
@@ -44,11 +37,25 @@ class DI{
      * @param string $type
      * @return mixed
      */
-    static public function get($key, $type='model', $params=[]){
-        if(empty(self::$closureList[$type][$key])){
-            $objectName = $type."\\".$key;
-            self::set($key, $type, $objectName, $params);
+    public static function get($objectName, $params=[]){
+        return self::make($objectName, $params);
+    }
+
+
+    /**
+     * @param $key
+     * @param string $type
+     * @return mixed
+     */
+    public static function make($objectName, $params=[]){
+        if(empty(self::$closureList[$objectName])){
+            self::set($objectName, $params);
         }
-        return call_user_func(self::$closureList[$type][$key]);
+        return call_user_func(self::$closureList[$objectName]);
+    }
+
+
+    public static function clear($objectName){
+
     }
 }

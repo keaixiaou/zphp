@@ -14,7 +14,7 @@ class Cli implements IServer
 {
     public function run()
     {
-        $server = Protocol\Factory::getInstance('Cli');
+        $server = Protocol\Container::make('Cli');
         Protocol\Request::setServer($server);
         Protocol\Request::parse($_SERVER['argv']);
         return Core\Route::route();

@@ -6,13 +6,10 @@
 
 
 namespace ZPHP\Server\Adapter;
-use ZPHP\Protocol\Request;
-use ZPHP\Protocol\Factory as ZProtocol;
-use ZPHP\Socket\Factory as SFactory;
 use ZPHP\Core\Config;
-use ZPHP\Core\Factory as CFactory;
+use ZPHP\Core\Di;
 use ZPHP\Server\IServer;
-use ZPHP\ZPHP;
+use ZPHP\Socket\Factory as SFactory;
 
 class Socket implements IServer
 {
@@ -28,7 +25,7 @@ class Socket implements IServer
         //构造,并且生成该类的client-swooleHttp
         $socket = SFactory::getInstance($config['adapter'], $config);
         if(method_exists($socket, 'setClient')) {
-            $client = CFactory::getInstance('\ZPHP\Client\Swoole'.ucfirst($config['server_type']));
+            $client = Di::make("\\ZPHP\\Client\\Swoole".ucfirst($config['server_type']));
             $socket->setClient($client);
         }
         $socket->run();

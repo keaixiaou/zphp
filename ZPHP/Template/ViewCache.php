@@ -10,6 +10,7 @@ namespace ZPHP\Template;
 
 use ZPHP\Common\Dir;
 use ZPHP\Core\Container;
+use ZPHP\Core\Di;
 use ZPHP\Core\Factory;
 use ZPHP\ZPHP;
 
@@ -24,7 +25,7 @@ class ViewCache{
      * init 初始化
      */
     static public function init(){
-        self::$template = Container::Template('Template');
+        self::$template = Di::make(Template::class);
         self::$originPath = ZPHP::getAppPath().DS.'view'.DS;
         self::$cachePath = ZPHP::getTmpPath().DS.'view'.DS;
     }

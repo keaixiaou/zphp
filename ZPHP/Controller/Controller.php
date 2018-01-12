@@ -10,6 +10,7 @@ namespace ZPHP\Controller;
 
 use ZPHP\Core\Config;
 use ZPHP\Core\Container;
+use ZPHP\Core\Di;
 use ZPHP\Core\Factory;
 use ZPHP\Core\Log;
 use ZPHP\Core\Swoole;
@@ -52,9 +53,9 @@ class Controller extends IController{
     function __construct()
     {
         $vConfig = Config::getField('project', 'view');
-        $this->view = Container::View('View', $vConfig);
-        $this->request = Container::Network('Http/Request');
-        $this->response = Container::Network('Http/Response');
+        $this->view = Di::make(View::class, $vConfig);
+        $this->request = Di::make(Request::class);
+        $this->response = Di::make(Response::class);
     }
 
 
@@ -108,7 +109,7 @@ class Controller extends IController{
         /**
          *  @var Monitor $monitor;
          */
-//        $monitor = Factory::getInstance(\ZPHP\Monitor\Monitor::class);
+//        $monitor = Container::make(\ZPHP\Monitor\Monitor::class);
         $monitor = Container::Monitor('Monitor');
         $monitor->outPutWebStatus();
         $result = ob_get_contents();

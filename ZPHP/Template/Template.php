@@ -8,7 +8,7 @@
 
 namespace ZPHP\Template;
 
-use ZPHP\Core\Factory;
+use ZPHP\Core\Di;
 use ZPHP\Template\Tag\Cx;
 
 class Template{
@@ -137,7 +137,7 @@ class Template{
         /**
          * @var Cx $tLib;
          */
-        $tLib       =   Factory::getInstance("\\ZPHP\\Template\\Tag\\".$tagLib);
+        $tLib       =   Di::make("\\ZPHP\\Template\\Tag\\".$tagLib);
         $that       =   $this;
         foreach ($tLib->getTags() as $name=>$val){
             $tags = array($name);

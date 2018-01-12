@@ -20,6 +20,6 @@ class Factory
     	}
 
         $className = __NAMESPACE__ . "\\Adapter\\{$adapter}";
-        return CFactory::getInstance($className, $config);
+        return CContainer::make($className, $config);
     }
 }

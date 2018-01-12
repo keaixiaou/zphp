@@ -9,6 +9,7 @@
 
 namespace ZPHP\Core;
 
+use Main\Main;
 use ZPHP\Common\Dir;
 use ZPHP\ZPHP;
 
@@ -23,23 +24,11 @@ abstract class App{
     /**
      * 初始化App的容器服务
      */
-    static public function init($di)
+    static public function init()
     {
-        self::$_di = $di;
-        $allList = [];
         foreach (self::$compenontType as $type) {
-            self::initConfigList($type, $allList);
-            self::initDefaultList($type, $allList);
-        }
-        try {
-            //初始化加载
-            foreach ($allList as $key => $value) {
-                foreach($value as $k => $v){
-                    self::$key($v);
-                }
-            }
-        }catch(\Exception $e){
-            echo $e->getMessage()."\n";
+            self::initConfigList($type);
+            self::initDefaultList($type);
         }
     }
 
@@ -49,14 +38,13 @@ abstract class App{
      * @param $type
      * @throws \Exception
      */
-    static public function initDefaultList($type, &$allList){
+    public static function initDefaultList($type){
         $dir = ZPHP::getAppPath().DS.$type;
         if(is_dir($dir)) {
             $classList = Dir::getClass($dir, '/.php$/');
             foreach($classList as $key => $value){
                 $value = self::getComponentName($value);
-                self::$_di->set($value, $type, $type.'\\'.$value);
-                $allList[$type][] = $value;
+                Di::set($type.'\\'.$value);
             }
         }
     }
@@ -66,13 +54,12 @@ abstract class App{
      * @param $type
      * @throws \Exception
      */
-    static public function initConfigList($type, &$allList){
+    public static function initConfigList($type){
         $modelConfig = Config::get($type);
         if(!empty($modelConfig)) {
             foreach ($modelConfig as $key => $value) {
                 $key = self::getComponentName($key);
-                self::$_di->set($key, $type, $value);
-                $allList[$type][] = $key;
+                Di::make($type.'\\'.$value);
             }
         }
     }
@@ -85,7 +72,7 @@ abstract class App{
      * @return mixed
      * @throws \Exception
      */
-    static public function __callStatic($name, $arguments)
+    public static function __callStatic($name, $arguments)
     {
         // TODO: Implement __call() method.
         if(empty($arguments)){
@@ -93,7 +80,7 @@ abstract class App{
         }
         $key = self::getComponentName($arguments[0]);
         $argu = !empty($arguments[1])?$arguments[1]:[];
-        return self::get($key, $name, $argu);
+        return self::get($key.'\\'.$name, $argu);
     }
 
 
@@ -110,16 +97,20 @@ abstract class App{
         return $name;
     }
 
+    static public function make($objectName, $arguments=[]){
+        return Di::make($objectName, $arguments);
+    }
+
     /**
      * get相关的依赖class
      * @param $name
      * @param $type
      */
-    static public function get($name, $type, $argu=[]){
-        $class = self::$_di->get($name, $type, $argu);
+    static public function get($name, $argu=[]){
+        $class = Di::get($name, $argu);
         if(empty($class)){
             if(DEBUG){
-                throw new \Exception($type.':'.$name.' not found!');
+                throw new \Exception($name.' not found!');
             }
         }
         return $class;

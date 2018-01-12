@@ -1,6 +1,6 @@
 <?php
 namespace ZPHP\Log;
-use ZPHP\Core\Factory as CFactory,
+use ZPHP\Core\Di,
 	ZPHP\Core\Config as ZConfig;
 
 class Factory
@@ -14,6 +14,6 @@ class Factory
     		}
     	}
         $className = __NAMESPACE__ . "\\Adapter\\{$adapter}";
-        return CFactory::getInstance($className, $config);
+        return Di::make($className, $config);
     }
 }

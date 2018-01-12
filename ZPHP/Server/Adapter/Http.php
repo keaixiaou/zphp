@@ -16,7 +16,7 @@ class Http implements IServer
     public function run()
     {
         Protocol\Request::setServer(
-            Protocol\Factory::getInstance(
+            Protocol\Container::make(
                 Core\Config::getField('Project', 'protocol', 'Http')
             )
         );

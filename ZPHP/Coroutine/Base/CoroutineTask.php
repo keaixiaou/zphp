@@ -11,8 +11,7 @@ namespace ZPHP\Coroutine\Base;
 
 use ZPHP\Controller\IController;
 use ZPHP\Core\Config;
-use ZPHP\Core\Container;
-use ZPHP\Core\Factory;
+use ZPHP\Core\Di;
 use ZPHP\Core\Log;
 
 class CoroutineTask{
@@ -28,7 +27,7 @@ class CoroutineTask{
     protected $scheduler;
     public function __construct()
     {
-        $this->scheduler = Factory::getInstance(Scheduler::class);
+        $this->scheduler = Di::make(Scheduler::class);
         $this->i = 1;
     }
 

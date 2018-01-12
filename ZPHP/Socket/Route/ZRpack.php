@@ -15,7 +15,7 @@ class ZRpack
 {
     public function run($data, $fd)
     {
-        $server = Protocol\Factory::getInstance('ZRpack');
+        $server = Protocol\Container::make('ZRpack');
         $server->setFd($fd);
         $result = array();
         if(false === $server->parse($data)) {

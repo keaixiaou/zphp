@@ -9,6 +9,7 @@
 namespace ZPHP\Core;
 
 
+use ZPHP\Controller\Controller;
 use ZPHP\Controller\WSController;
 
 class WSRequest extends Request{
@@ -68,12 +69,15 @@ class WSRequest extends Request{
      * @throws \Exception
      */
     public function defaultDistribute($mvc){
-        $controllerClass = $mvc['module'].'\\'.$mvc['controller'];
+        $controllerClass = "controller\\".$mvc['module'].'\\'.$mvc['controller'];
         if(!empty(Config::getField('project','reload')) && extension_loaded('runkit')){
-            App::clear($controllerClass, 'controller');
+            Di::clear($controllerClass);
         }
         try {
-            $FController = App::controller($controllerClass);
+            /**
+             * @var Controller $FController;
+             */
+            $FController = Di::make($controllerClass);
         }catch(\Exception $e) {
             throw new \Exception($e->getMessage());
         }

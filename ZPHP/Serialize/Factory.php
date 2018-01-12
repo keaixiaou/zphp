@@ -11,7 +11,7 @@ class Factory
     public static function getInstance($adapter = 'Php')
     {
         $className = __NAMESPACE__ . "\\Adapter\\{$adapter}";
-        return CFactory::getInstance($className);
+        return CContainer::make($className);
     }
 
     public static function serialize($adapter = 'Php', $data)

@@ -5,8 +5,8 @@
  * 
  */
 namespace ZPHP\Socket;
-use ZPHP\Core\Factory as CFactory,
-	ZPHP\Core\Config as ZConfig;
+use ZPHP\Core\Config as ZConfig;
+use ZPHP\Core\Di;
 
 class Factory
 {
@@ -23,6 +23,6 @@ class Factory
         } else {
             $className = $adapter;
         }
-        return CFactory::getInstance($className, $config);
+        return Di::make($className, $config);
     }
 }

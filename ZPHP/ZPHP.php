@@ -15,6 +15,7 @@ use ZPHP\Monitor\Monitor;
 use ZPHP\Platform\Linux;
 use ZPHP\Platform\Windows;
 use ZPHP\Protocol\Response;
+use ZPHP\Server\Adapter\Socket;
 use ZPHP\Template\Template;
 use ZPHP\Template\ViewCache;
 use ZPHP\View,
@@ -71,7 +72,8 @@ class ZPHP
 
         global $argv;
         if(empty($argv[1])||!in_array($argv[1], self::$cmdArray)){
-            self::getHelp($argv[1]);
+            $param = empty($argv[1])?'':$argv[1];
+            self::getHelp($param);
         }else {
             self::init();
             self::$zPath = $rootPath;
@@ -79,7 +81,7 @@ class ZPHP
 
             \spl_autoload_register(__CLASS__.'::autoLoader');
             $config_path = self::getConfigPath();
-            $allConfig = Config::load($config_path);
+            Config::load($config_path);
 
             //设置app目录
             $projectConfig = Config::get('project', null, true);
@@ -107,7 +109,7 @@ class ZPHP
             self::$server_file = $projectConfig['pid_path']
                 .DS.$projectConfig['project_name'].'.pid';
             self::$server_pid = SwoolePid::getMasterPid(self::$server_file);
-            Container::init(DI::getInstance());
+            Di::init(Container::getInstance());
             self::doCommand($argv[1],$run);
         }
 
@@ -139,8 +141,8 @@ class ZPHP
 
     protected static function serviceStart(){
         if(!file_exists(self::$server_file))file_put_contents(self::$server_file,'');
-        Container::Monitor('Monitor', [self::$monitorname, self::$server_file]);
-//        Factory::getInstance(\ZPHP\Monitor\Monitor::class, );
+        Di::make(Monitor::class, [self::$monitorname, self::$server_file]);
+//        Container::make(\ZPHP\Monitor\Monitor::class, );
         $vcacheConfig = Config::getField('project', 'view');
         if(!empty($vcacheConfig['tag'])) {
             ViewCache::init();
@@ -151,7 +153,7 @@ class ZPHP
     protected static function start($run){
         if(empty(self::$server_pid)){
             self::serviceStart();
-            $service = Container::Server('Adapter/Socket');
+            $service = Di::make(Socket::class);
             if ($run) {
                 echo ( "Service startting success!\n");
                 $service->run();
@@ -203,7 +205,7 @@ class ZPHP
             exit(self::$appName." Has been Shut Down!\n");
         }
         $monitor = Container::Monitor('Monitor', [self::$monitorname, self::$server_file]);
-//        $monitor = Factory::getInstance(\ZPHP\Monitor\Monitor::class, );
+//        $monitor = Container::make(\ZPHP\Monitor\Monitor::class, );
         $monitor->outPutNowStatus();
     }
 
@@ -220,7 +222,7 @@ class ZPHP
 
     }
 
-    protected static function getHelp($param){
+    protected static function getHelp($param = ''){
         echo "=====================================================\n";
         echo "Usage: php {$param} start|stop|reload|restart|status\n";
         echo "=====================================================\n";

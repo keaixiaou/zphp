@@ -17,6 +17,6 @@ class Factory
         } else {
             $className = $adapter;
         }
-        return CFactory::getInstance($className);
+        return CContainer::make($className);
     }
 }

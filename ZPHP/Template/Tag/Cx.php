@@ -7,7 +7,7 @@
  */
 
 namespace ZPHP\Template\Tag;
-use ZPHP\Core\Factory;
+use ZPHP\Core\Di;
 use ZPHP\Template\Template;
 
 /**
@@ -23,7 +23,7 @@ class Cx {
 
     function __construct()
     {
-        $this->tpl = Factory::getInstance(\ZPHP\Template\Template::class);
+        $this->tpl = Di::make(\ZPHP\Template\Template::class);
     }
     // 标签定义
     protected $tags   =  array(

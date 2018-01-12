@@ -22,9 +22,9 @@ class Hprose implements IServer{
         if (empty($config)) {
             throw new \Exception("socket config empty");
         }
-        $socket = SFactory::getInstance($config['adapter'], $config);
+        $socket = SContainer::make($config['adapter'], $config);
         if(method_exists($socket, 'setClient')) {
-            $client = CFactory::getInstance($config['client_class']);
+            $client = CContainer::make($config['client_class']);
             $socket->setClient($client);
         }
         Request::setServer(ZProtocol::getInstance(Config::getField('socket', 'protocol')));

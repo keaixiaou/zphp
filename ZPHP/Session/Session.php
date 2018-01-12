@@ -34,7 +34,7 @@ class Session
         if(!empty($sid)){
             $sid = $config['name'].$sid;
             $sessionType = $config['adapter'];
-            $handler = Factory::getInstance($sessionType, $config);
+            $handler = Container::make($sessionType, $config);
             $data = yield $handler->read($sid);
             if(!empty($data)) {
                 $session = unserialize($data);
@@ -53,7 +53,7 @@ class Session
     public static function set($session, $sid){
         $config = ZConfig::get('session');
         $sessionType = $config['adapter'];
-        $handler = Factory::getInstance($sessionType, $config);
+        $handler = Container::make($sessionType, $config);
         $sid = $config['name'].$sid;
         $res = yield $handler->write($sid, serialize($session));
         return $res;

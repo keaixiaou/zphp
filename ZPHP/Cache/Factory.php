@@ -24,6 +24,6 @@ class Factory
     		}
     	}
         $className = __NAMESPACE__ . "\\Adapter\\{$adapter}";
-        return ZFactory::getInstance($className, $config);
+        return ZContainer::make($className, $config);
     }
 }

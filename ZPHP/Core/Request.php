@@ -101,12 +101,12 @@ class Request{
      */
     public function defaultDistribute($mvc)
     {
-        $controllerClass = $mvc['module'].'\\'.$mvc['controller'];
+        $controllerClass = 'controller\\'.$mvc['module'].'\\'.$mvc['controller'];
 //        if(!empty(Config::getField('project','reload')) && extension_loaded('runkit')){
-//            App::clear($controllerClass, 'controller');
+//            Di::clear($controllerClass, 'controller');
 //        }
         try {
-            $controller = clone App::controller($controllerClass);
+            $controller = clone Di::make($controllerClass);
         }catch(\Exception $e) {
             throw new \Exception('404|'.$e->getMessage());
         }
@@ -138,7 +138,7 @@ class Request{
     public function generatDistribute(\Closure $callback, $paramArray)
     {
 
-        $FController = Factory::getInstance(\ZPHP\Controller\Controller::class);
+        $FController = Container::make(\ZPHP\Controller\Controller::class);
         /**
          * @var Controller $controller
          */

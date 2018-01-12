@@ -18,7 +18,7 @@ class WSController extends IController{
 
     public function __construct()
     {
-        $this->response = Factory::getInstance(\ZPHP\Network\Websocket\WebResponse::class);
+        $this->response = Container::make(\ZPHP\Network\Websocket\WebResponse::class);
     }
 
     public function __clone()

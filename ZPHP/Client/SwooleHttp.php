@@ -13,9 +13,7 @@ use ZPHP\Core\Container;
 use ZPHP\Core\Db;
 use ZPHP\Core\DI;
 use ZPHP\Core\Dispatcher;
-use ZPHP\Core\Factory;
 use ZPHP\Core\Config;
-use ZPHP\Core\Log;
 use ZPHP\Core\Request;
 use ZPHP\Core\Route;
 use ZPHP\Core\Swoole;
@@ -93,15 +91,15 @@ class SwooleHttp extends ZSwooleHttp
         }
 
         if (!$server->taskworker) {
-            App::init(DI::getInstance());
+            App::init();
             //worker进程启动协程调度器
             //work一启动加载连接池的链接、组件容器、路由
             Db::init($server, $workerId);
             Route::init();
             Session::init();
-            $this->coroutineTask = Container::Coroutine('Base/CoroutineTask');
-            $this->dispatcher = Container::Core('Dispatcher');
-            $this->requestDeal = Container::Core('Request', $this->coroutineTask);
+            $this->coroutineTask = Di::make(CoroutineTask::class);
+            $this->dispatcher = Di::make(Dispatcher::class);
+            $this->requestDeal = Di::make(Request::class, $this->coroutineTask);
         }
     }
 
@@ -137,7 +135,7 @@ class SwooleHttp extends ZSwooleHttp
             if(empty($this->taskObjectArray[$data['class']])){
                 $classParam = !empty($data['class_param'])?$data['class_param']:null;
                 $data['class'] = str_replace('/','\\', $data['class']);
-                $this->taskObjectArray[$data['class']] = Factory::getInstance($data['class'],$classParam);
+                $this->taskObjectArray[$data['class']] = Container::make($data['class'],$classParam);
                 $taskObject = $this->taskObjectArray[$data['class']];
                 if(method_exists($taskObject, 'init')){
                     call_user_func([$taskObject, 'init']);
