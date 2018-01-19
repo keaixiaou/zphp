@@ -25,7 +25,7 @@ class Socket implements IServer
         //构造,并且生成该类的client-swooleHttp
         $socket = SFactory::getInstance($config['adapter'], $config);
         if(method_exists($socket, 'setClient')) {
-            $client = Di::make("\\ZPHP\\Client\\Swoole".ucfirst($config['server_type']));
+            $client = Di::make("ZPHP\\Client\\Swoole".ucfirst($config['server_type']));
             $socket->setClient($client);
         }
         $socket->run();

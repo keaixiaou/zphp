@@ -137,7 +137,7 @@ class Template{
         /**
          * @var Cx $tLib;
          */
-        $tLib       =   Di::make("\\ZPHP\\Template\\Tag\\".$tagLib);
+        $tLib       =   Di::make("ZPHP\\Template\\Tag\\".$tagLib);
         $that       =   $this;
         foreach ($tLib->getTags() as $name=>$val){
             $tags = array($name);

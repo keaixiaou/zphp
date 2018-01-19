@@ -14,6 +14,7 @@ use ZPHP\Core\Db;
 use ZPHP\Core\DI;
 use ZPHP\Core\Dispatcher;
 use ZPHP\Core\Config;
+use ZPHP\Core\Log;
 use ZPHP\Core\Request;
 use ZPHP\Core\Route;
 use ZPHP\Core\Swoole;

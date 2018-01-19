@@ -44,7 +44,7 @@ abstract class App{
             $classList = Dir::getClass($dir, '/.php$/');
             foreach($classList as $key => $value){
                 $value = self::getComponentName($value);
-                Di::set($type.'\\'.$value);
+                Di::make($type.'\\'.$value);
             }
         }
     }
