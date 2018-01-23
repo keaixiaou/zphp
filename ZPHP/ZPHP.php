@@ -42,7 +42,7 @@ class ZPHP
     private static $configPath = 'config';
     private static $appPath;
     private static $zPath;
-    private static $libPath='lib';
+    private static $libPath='Common';
     private static $classPath = array();
     private static $os;
     private static $monitorname;
@@ -110,6 +110,7 @@ class ZPHP
                 .DS.$projectConfig['project_name'].'.pid';
             self::$server_pid = SwoolePid::getMasterPid(self::$server_file);
             Di::init(Container::getInstance());
+            require __DIR__.DS."Common".DS."Library.php";
             self::doCommand($argv[1],$run);
         }
 
@@ -204,7 +205,7 @@ class ZPHP
         if(empty(self::$server_pid)){
             exit(self::$appName." Has been Shut Down!\n");
         }
-        $monitor = Container::Monitor('Monitor', [self::$monitorname, self::$server_file]);
+        $monitor = Di::make(Monitor::class, [self::$monitorname, self::$server_file]);
 //        $monitor = Container::make(\ZPHP\Monitor\Monitor::class, );
         $monitor->outPutNowStatus();
     }

@@ -11,23 +11,35 @@ namespace ZPHP\Coroutine\Base;
 
 use ZPHP\Controller\IController;
 use ZPHP\Core\Config;
+use ZPHP\Core\Context;
 use ZPHP\Core\Di;
 use ZPHP\Core\Log;
+use ZPHP\Network\Http\Response;
 
 class CoroutineTask{
+
+    private $callbackData;
     /**
      * @var \Generator $routine;
      */
-    protected $controller;
+    private $routine;
     protected $i;
     protected $timeTickId = 0;
+    protected $exceptFunction;
+    protected $taskId = 0;
     /**
      * @var Scheduler $scheduler
      */
     protected $scheduler;
+    /**
+     * @var Context $context
+     */
+    protected $context;
+
     public function __construct()
     {
         $this->scheduler = Di::make(Scheduler::class);
+        $this->context = Di::make(Context::class);
         $this->i = 1;
     }
 
@@ -36,6 +48,9 @@ class CoroutineTask{
      */
     public function __clone(){
         $this->scheduler = clone $this->scheduler;
+        $this->exceptFunction = [$this, "selfFuntion"];
+        $this->taskId = empty($this->taskId)?TaskId::create():$this->taskId;
+        $this->context = clone $this->context;
     }
 
     /**
@@ -63,18 +78,6 @@ class CoroutineTask{
         }
     }
 
-    /**
-     * 注入controller
-     * @param IController $controller
-     */
-    public function setController(IController &$controller){
-        $this->controller = $controller;
-        $timeOut = Config::getField('project', 'timeout', 3000);
-        $this->timeTickId = \swoole_timer_after($timeOut, function (){
-            $this->onExceptionHandle("服务器超时!");
-        });
-    }
-
 
     public function finish(){
         if(!empty($this->timeTickId)){
@@ -88,38 +91,70 @@ class CoroutineTask{
      * 系统级错误
      * @param $message
      */
-    public function onExceptionHandle($message){
+    public function onExceptionHandle(\Exception $exception){
         $this->finish();
-        $action = 'onSystemException';
-        Log::write('系统级错误:'.$message, Log::ERROR, true);
-        $generator = call_user_func_array([$this->controller, $action], [$message]);
-        if ($generator instanceof \Generator) {
-            $this->setRoutine($generator);
-            $this->work(true);
+        Log::write('系统级错误:'.$exception->getMessage(), Log::ERROR, true);
+        if(!empty($this->exceptFunction)){
+            $generator = call_user_func_array($this->exceptFunction, [$exception]);
+            if ($generator instanceof \Generator) {
+                $this->setRoutine($generator);
+                unset($this->exceptFunction);
+                $this->work(true);
+            }
         }
-    }
 
-    /**
-     * [isFinished 判断该task是否完成]
-     * @return boolean [description]
-     */
-    public function isFinished()
-    {
-        return $this->stack->isEmpty() && !$this->routine->valid();
     }
 
     public function getRoutine()
     {
-        return $this->scheduler->getRoutine();
+        return $this->routine;
     }
 
+    public function setRoutine($routine){
+        $this->routine = $routine;
+    }
 
-    public function setRoutine(\Generator $routine)
+    public function getCallbackData(){
+        return $this->callbackData;
+    }
+
+    public function setCallbackData($value){
+        $this->callbackData = $value;
+    }
+
+    public function setTask(\Generator $routine, $exceptFunction = null)
     {
         $this->i = 1;
-        $this->scheduler->setRoutine($routine);
+        $timeOut = Config::getField('project', 'timeout', 3000);
+        $this->timeTickId = \swoole_timer_after($timeOut, function (){
+            $exception = new \Exception("服务器超时!", Response::HTTP_GATEWAY_TIMEOUT);
+            $this->onExceptionHandle($exception);
+        });
+        $this->routine = $routine;
         $this->scheduler->setTask($this);
-//        $this->routine = $routine;
+        if(!empty($exceptFunction))
+            $this->setExceptionHandle($exceptFunction);
+    }
+
+    public function getContext(){
+        return $this->context;
+    }
+
+    public function send($value){
+        try {
+            $this->routine->send($value);
+            $this->callbackData = $value;
+        }catch (\Exception $e){
+            $this->onExceptionHandle($e);
+        }
+    }
+
+    protected function setExceptionHandle($exceptFunction){
+        $this->exceptFunction = $exceptFunction;
+    }
+
+    public function selfFuntion(\Exception $exception){
+        sysEcho("系统异常:".$exception->getMessage());
     }
 
     public function __destruct()

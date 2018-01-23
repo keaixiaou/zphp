@@ -50,7 +50,7 @@ class MongoAsynPool extends AsynPool implements IOvector{
                 throw new \Exception("Mongo 执行失败");
             }
         } catch (\Exception $e){
-            $data['result']['exception'] = $e->getMessage();
+            $data['result']['exception'] = $e;
             $this->distribute($data);
         }
     }

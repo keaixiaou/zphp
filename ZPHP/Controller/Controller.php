@@ -81,13 +81,9 @@ class Controller extends IController{
         if(method_exists($this, 'init')){
             $initRes = yield $this->init();
         }
-        try{
-            $result = null;
-            if($this->checkResponse() && $initRes){
-                $result = yield call_user_func_array($this->coroutineMethod, $this->coroutineParam);
-            }
-        }catch(\Exception $e){
-            $this->onUserExceptionHandle($e->getMessage());
+        $result = null;
+        if($this->checkResponse() && $initRes){
+            $result = yield call_user_func_array($this->coroutineMethod, $this->coroutineParam);
         }
 
         yield $this->endResponse($result);
@@ -139,7 +135,7 @@ class Controller extends IController{
      * html return
      * @param $data
      */
-    protected function strReturn($data, $code=200){
+    protected function strReturn($data, $code=Response::HTTP_OK){
         if($this->checkResponse()){
             $this->setHeader('Content-Type', 'text/html; charset=utf-8');
             $result = strval($data);
@@ -174,7 +170,7 @@ class Controller extends IController{
     protected function image($content, $type){
         if($this->checkResponse()) {
             $this->setHeader('Content-Type', 'image/' . $type);
-            $this->setStatusCode(200);
+            $this->setStatusCode(Response::STATUS_CODE_NORMAL);
             ob_start();
             $ImageFun = 'image'.$type;
             $ImageFun($content);
@@ -224,7 +220,7 @@ class Controller extends IController{
      */
     protected function redirect($url){
         $this->setHeader('Location', $url);
-        $this->strReturn('', 302);
+        $this->strReturn('', Response::HTTP_FOUND);
     }
 
 
@@ -258,19 +254,13 @@ class Controller extends IController{
 
 
     /**
-     * 异常处理
-     */
-    public function onUserExceptionHandle($message){
-        $this->strReturn($message);
-    }
-
-    /**
      * 系统异常错误处理
      * @param $message
      */
-    public function onSystemException($message){
+    public function onSystemException(\Exception $exception){
+        $message = $exception->getMessage();
         $message = DEBUG===true?$message:'系统出现了异常';
-        $this->strReturn(Swoole::info($message), 500);
+        $this->strReturn(Swoole::info($message), Response::HTTP_INTERNAL_SERVER_ERROR);
         yield $this->endResponse();
     }
 

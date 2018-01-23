@@ -44,11 +44,11 @@ abstract class IController{
     /**
      * 异常处理
      */
-    public function onExceptionHandle($message){
+    public function onExceptionHandle(\Exception $exception){
 
     }
 
-    public function onSystemException($message){
+    public function onSystemException(\Exception $exception){
 
     }
 

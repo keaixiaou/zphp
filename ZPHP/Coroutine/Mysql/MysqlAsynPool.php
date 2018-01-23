@@ -75,7 +75,7 @@ class MysqlAsynPool extends AsynPool implements IOvector{
                 }
             }catch(\Exception $e){
                 if(!empty($data)) {
-                    $data['result']['exception'] = $e->getMessage();
+                    $data['result']['exception'] = $e;
                     $this->distribute($data);
                 }
             }
@@ -147,7 +147,7 @@ class MysqlAsynPool extends AsynPool implements IOvector{
                     $this->distribute($data);
                 }
             }catch(\Exception $e){
-                $data['result']['exception'] = $e->getMessage();
+                $data['result']['exception'] = $e;
                 $this->distribute($data);
             }
         };

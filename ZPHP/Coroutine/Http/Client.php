@@ -61,13 +61,12 @@ class Client implements IOvector{
                     $client = new \swoole_http_client($ip, $data['port'], $data['ssl']);
                     $this->myCurl($client);
                 }catch(\Exception $e){
-                    call_user_func_array($this->data['callback'], ['data'=>['exception'=>$e->getMessage()]]);
+                    call_user_func_array($this->data['callback'], ['data'=>['exception'=>$e]]);
                 }
 
             });
         }catch(\Exception $e){
-            Log::write($e->getMessage());
-            call_user_func_array($this->data['callback'], ['data'=>['exception'=>$e->getMessage()]]);
+            call_user_func_array($this->data['callback'], ['data'=>['exception'=>$e]]);
         }
     }
 

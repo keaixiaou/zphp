@@ -45,7 +45,7 @@ class TaskAsynPool extends AsynPool implements IOvector{
                 throw new \Exception("Task 执行失败");
             }
         } catch (\Exception $e){
-            $data['result']['exception'] = $e->getMessage();
+            $data['result']['exception'] = $e;
             $this->distribute($data);
         }
     }

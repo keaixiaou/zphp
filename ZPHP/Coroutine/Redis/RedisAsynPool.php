@@ -67,7 +67,7 @@ class RedisAsynPool extends AsynPool implements IOvector
                         $this->pushToPool($client);
                     }
                 }catch(\Exception $e){
-                    $data['result']['exception'] = $e->getMessage();
+                    $data['result']['exception'] = $e;
                 }
                 //给worker发消息
                 $this->distribute($data);

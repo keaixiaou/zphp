@@ -9,7 +9,6 @@
 namespace ZPHP\Client;
 
 use ZPHP\Core\App;
-use ZPHP\Core\Container;
 use ZPHP\Core\Db;
 use ZPHP\Core\DI;
 use ZPHP\Core\Dispatcher;
@@ -136,7 +135,7 @@ class SwooleHttp extends ZSwooleHttp
             if(empty($this->taskObjectArray[$data['class']])){
                 $classParam = !empty($data['class_param'])?$data['class_param']:null;
                 $data['class'] = str_replace('/','\\', $data['class']);
-                $this->taskObjectArray[$data['class']] = Container::make($data['class'],$classParam);
+                $this->taskObjectArray[$data['class']] = Di::make($data['class'],$classParam);
                 $taskObject = $this->taskObjectArray[$data['class']];
                 if(method_exists($taskObject, 'init')){
                     call_user_func([$taskObject, 'init']);
@@ -147,7 +146,7 @@ class SwooleHttp extends ZSwooleHttp
             $res = call_user_func_array([$taskObject, $data['method']], $data['param']);
             return ['result'=>$res];
         }catch(\Exception $e){
-            return ['exception'=>$e->getMessage()];
+            return ['exception'=>$e];
         }
     }
 

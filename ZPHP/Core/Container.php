@@ -63,4 +63,7 @@ class Container
         self::$allObject[$keyName] = $class;
         return self::$allObject[$keyName];
     }
+    public function getall(){
+        return self::$allObject;
+    }
 }

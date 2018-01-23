@@ -55,7 +55,7 @@ abstract class AsynPool implements IAsynPool
             $data['token'] = $this->addTokenCallback($callback);
             $this->execute($data);
         }catch(\Exception $e){
-            $data['result']['exception'] = $e->getMessage();
+            $data['result']['exception'] = $e;
             $this->callbackToCoroutine($callback, $data);
         }
     }
@@ -83,13 +83,13 @@ abstract class AsynPool implements IAsynPool
      */
     public function distribute($data, callable $callback=null)
     {
-        if($callback===null){
+        if($callback===null && !empty($this->callBacks[$data['token']])){
             $callback = $this->callBacks[$data['token']];
             unset($this->callBacks[$data['token']]);
             $this->taskNum--;
         }
         if(!empty($data['result']['exception'])){
-            Log::write('Coroutine Exception:'.$data['result']['exception'], Log::ERROR, true);
+            Log::write('Coroutine Exception:'.$data['result']['exception']->getMessage(), Log::ERROR, true);
             if(DEBUG!==true){
                 $data['result']['exception'] = false;
             }
@@ -106,8 +106,10 @@ abstract class AsynPool implements IAsynPool
      */
     public function callbackToCoroutine(callable $callback, $data){
         if(!empty($data['result']['exception'])){
-            $data['AsynName'] = $this->_asynName;
-            Log::write('Coroutine Exception:'.$data['result']['exception'].";Execute:".print_r($data, true), Log::ERROR, true);
+            $data['asynName'] = $this->_asynName;
+            $outputExecute = $data;
+            unset($outputExecute['result']['exception']);
+            Log::write('Coroutine Exception:'.$data['result']['exception']->getMessage().";Execute:".print_r($outputExecute, true), Log::ERROR, true);
         }
         call_user_func_array($callback, [$data['result']]);
     }

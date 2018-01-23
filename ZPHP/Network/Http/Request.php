@@ -10,6 +10,7 @@ namespace ZPHP\Network\Http;
 use ZPHP\Common\Utils;
 use ZPHP\Core\Config;
 use ZPHP\Core\Rand;
+use ZPHP\Coroutine\Base\CoroutineGlobal;
 use ZPHP\Session\Session;
 
 /**
@@ -44,6 +45,10 @@ class Request{
             $this->session = yield Session::get($sid);
         }
         $this->header = $request->header;
+        foreach ($this->header as $key => $value){
+            yield setContext($key, $value);
+        }
+
         //传入请求参数
 
         $this->post = !empty($request->post)?$request->post:[];
@@ -53,6 +58,10 @@ class Request{
         $this->get = !empty($request->get)?$request->get:[];
         $methodType = $request->server['request_method'];
         $this->request = $methodType=='GET'?array_merge($this->get, $this->post):array_merge($this->post, $this->get);
+        foreach ($this->request as $key => $value){
+            yield setContext($key, $value);
+        }
+
         $this->files = !empty($request->files)?$request->files:[];
         $this->server = !empty($request->server)?$request->server:[];
     }
@@ -64,7 +73,7 @@ class Request{
      */
     public function __call($method, $param){
         if(empty($param)){
-            return $this->$method;
+            return empty($this->$method)?null:$this->$method;
         }else {
             return isset($this->$method[$param[0]])?$this->_getHttpVal($this->$method[$param[0]], isset($param[1]) ? $param[1]:true ):null;
         }

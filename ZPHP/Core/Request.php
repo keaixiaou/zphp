@@ -11,9 +11,11 @@ use ZPHP\Controller\Controller;
 use ZPHP\Controller\IController;
 use ZPHP\Controller\WSController;
 use ZPHP\Coroutine\Base\CoroutineTask;
+use ZPHP\Network\Http\Response;
 
 class Request{
 
+    const RETURN_NULL = 'NULL';
     /**
      * @var CoroutineTask $coroutineTask;
      */
@@ -83,13 +85,13 @@ class Request{
      * @return mixed|string
      */
     protected function executeGeneratorScheduler(IController $controller){
-        $action = 'coroutineStart';
-        $returnRes = 'NULL';
+        $action = "coroutineStart";
+        $returnRes = Request::RETURN_NULL;
         $generator = call_user_func([$controller, $action]);
         if ($generator instanceof \Generator) {
             $task = clone $this->coroutineTask;
-            $task->setController($controller);
-            $task->setRoutine($generator);
+            $action = "onSystemException";
+            $task->setTask($generator, [$controller, $action]);
             $task->work();
         }else{
             $returnRes = $generator;
@@ -108,11 +110,11 @@ class Request{
         try {
             $controller = clone Di::make($controllerClass);
         }catch(\Exception $e) {
-            throw new \Exception('404|'.$e->getMessage());
+            throw new \Exception(strval(Response::HTTP_NOT_FOUND)."|".$e->getMessage());
         }
         $action = $mvc['action'];
         if(!method_exists($controller, $action)){
-            throw new \Exception(404);
+            throw new \Exception(strval(Response::HTTP_NOT_FOUND)."|$action not found");
         }
         /**
          * @var Controller $controller
@@ -138,7 +140,7 @@ class Request{
     public function generatDistribute(\Closure $callback, $paramArray)
     {
 
-        $FController = Container::make(\ZPHP\Controller\Controller::class);
+        $FController = Di::make(\ZPHP\Controller\Controller::class);
         /**
          * @var Controller $controller
          */

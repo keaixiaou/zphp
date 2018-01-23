@@ -39,7 +39,7 @@ class MemcachedAsynPool extends AsynPool implements IOvector{
             $client = $this->pool->dequeue();
         }
         $execute = [];
-        $execute['class'] = '\ZPHP\Coroutine\Memcached\MemcachedTask';
+        $execute['class'] = MemcachedTask::class;
         $execute['class_param'] = ['taskId'=>$client->taskId, 'config'=>$client->config];
         $execute['method'] = $data['execute']['method'];
         $execute['param'] = $data['execute']['param'];
@@ -57,7 +57,7 @@ class MemcachedAsynPool extends AsynPool implements IOvector{
                 throw new \Exception("Memcached 执行失败");
             }
         } catch (\Exception $e){
-            $data['result']['exception'] = $e->getMessage();
+            $data['result']['exception'] = $e;
             $this->distribute($data);
         }
     }
