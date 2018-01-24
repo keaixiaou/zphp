@@ -127,7 +127,6 @@ abstract class AsynPool implements IAsynPool
             if(!empty($command)){
                 $this->execute($command);
             }
-
         }
     }
 

@@ -53,38 +53,49 @@ class RedisAsynPool extends AsynPool implements IOvector
      */
     public function execute($data)
     {
-        if ($this->pool->isEmpty()) {//代表目前没有可用的连接
-            $this->prepareOne($data);
-//            $this->commands->push($data);
-        } else {
+        $needCreateClient = true;
+        $client = null;
+        //代表目前没有可用的连接
+        while(!$this->pool->isEmpty()){
             $client = $this->pool->dequeue();
-            $callback = function ($client, $result) use ($data) {
-                try {
-                    if ($result === false) {
-                        throw new \Exception("[redis客户端操作失败]");
-                    } else {
-                        $data['result'] = $result;
-                        $this->pushToPool($client);
-                    }
-                }catch(\Exception $e){
-                    $data['result']['exception'] = $e;
-                }
-                //给worker发消息
-                $this->distribute($data);
-            };
-            try{
-                $execute = $data['execute'];
-                $command = array_shift($execute);
-
-                $execute[] = $callback;
-                $res = call_user_func_array([$client, $command], $execute);
-                if(empty($res)){
-                    throw new \Exception("redis客户端操作失败");
+            if($client->isActive===true){
+                $needCreateClient = false;
+                break;
+            }else{
+                unset($client);
+            }
+        }
+        if($needCreateClient){
+            $this->prepareOne($data);
+            return;
+        }
+        $callback = function ($client, $result) use ($data) {
+            try {
+                if ($result === false) {
+                    $this->max_count--;
+                    throw new \Exception("[redis客户端操作失败]");
+                } else {
+                    $data['result'] = $result;
+                    $this->pushToPool($client);
                 }
             }catch(\Exception $e){
-                $data['result']['exception'] = $e->getMessage();
-                $this->distribute($data);
+                $data['result']['exception'] = $e;
             }
+            //给worker发消息
+            $this->distribute($data);
+        };
+        try{
+            $execute = $data['execute'];
+            $command = array_shift($execute);
+
+            $execute[] = $callback;
+            $res = call_user_func_array([$client, $command], $execute);
+            if(empty($res)){
+                throw new \Exception("redis客户端操作失败");
+            }
+        }catch(\Exception $e){
+            $data['result']['exception'] = $e;
+            $this->distribute($data);
         }
     }
 
@@ -96,8 +107,10 @@ class RedisAsynPool extends AsynPool implements IOvector
 
         $client = new \swoole_redis;
         $client->on('Close', function($client){
-            call_user_func([$this, 'clearPool']);
+            $client->isActive = false;
+            $this->max_count --;
         });
+        $client->isActive = true;
         if ($this->connect == null) {
             $this->connect = [$this->config['ip'], $this->config['port']];
         }
@@ -110,7 +123,7 @@ class RedisAsynPool extends AsynPool implements IOvector
                 $this->initRedis($client, 'password', $nowConnectNo, $data);
             } catch (\Exception $e) {
                 if(!empty($data)){
-                    $data['result']['exception'] = $e->getMessage();
+                    $data['result']['exception'] = $e;
                     $this->distribute($data);
                 }
 
@@ -142,7 +155,7 @@ class RedisAsynPool extends AsynPool implements IOvector
                     $this->initRedis( $client, $this->operator[$now]['next'], $nowConnectNo, $data);
                 }catch(\Exception $e){
                     if(!empty($data)) {
-                        $data['result']['exception'] = $e->getMessage();
+                        $data['result']['exception'] = $e;
                         $this->distribute($data);
                     }
                 }

@@ -94,10 +94,11 @@ class MysqlAsynPool extends AsynPool implements IOvector{
             $client = $this->_transList[$data['trans_id']];
         }else{
             //代表目前没有可用的连接
-            if(!$this->pool->isEmpty()){
+            while(!$this->pool->isEmpty()){
                 $client = $this->pool->dequeue();
                 if($client->isActive===true){
                     $needCreateClient = false;
+                    break;
                 }else{
                     unset($client);
                 }
