@@ -9,7 +9,6 @@
 namespace ZPHP\Controller;
 
 use ZPHP\Core\Config;
-use ZPHP\Core\Container;
 use ZPHP\Core\Di;
 use ZPHP\Core\Factory;
 use ZPHP\Core\Log;
@@ -106,7 +105,7 @@ class Controller extends IController{
          *  @var Monitor $monitor;
          */
 //        $monitor = Container::make(\ZPHP\Monitor\Monitor::class);
-        $monitor = Container::Monitor('Monitor');
+        $monitor = Di::make(Monitor::class);
         $monitor->outPutWebStatus();
         $result = ob_get_contents();
         ob_end_clean();
