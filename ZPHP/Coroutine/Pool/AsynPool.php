@@ -83,16 +83,13 @@ abstract class AsynPool implements IAsynPool
      */
     public function distribute($data, callable $callback=null)
     {
-        if($callback===null && !empty($this->callBacks[$data['token']])){
+        if($callback===null &&!empty($data['token']) &&!empty($this->callBacks[$data['token']])){
             $callback = $this->callBacks[$data['token']];
             unset($this->callBacks[$data['token']]);
             $this->taskNum--;
         }
         if(!empty($data['result']['exception'])){
             Log::write('Coroutine Exception:'.$data['result']['exception']->getMessage(), Log::ERROR, true);
-            if(DEBUG!==true){
-                $data['result']['exception'] = false;
-            }
         }
 
         if (!empty($callback)) {

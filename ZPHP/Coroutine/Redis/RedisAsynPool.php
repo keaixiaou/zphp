@@ -118,7 +118,7 @@ class RedisAsynPool extends AsynPool implements IOvector
             try {
                 if (!$result) {
                     $this->max_count--;
-                    throw new \Exception('[redis连接失败]' . $client->errMsg);
+                    throw new \Exception('[redis reconnect连接失败]' . $client->errMsg);
                 }
                 $this->initRedis($client, 'password', $nowConnectNo, $data);
             } catch (\Exception $e) {
@@ -150,14 +150,12 @@ class RedisAsynPool extends AsynPool implements IOvector
                         $errMsg = $client->errMsg;
                         $this->max_count--;
                         unset($client);
-                        throw new \Exception('[redis连接失败]'.$errMsg);
+                        throw new \Exception('[redis initRedis连接失败]'.$errMsg);
                     }
                     $this->initRedis( $client, $this->operator[$now]['next'], $nowConnectNo, $data);
                 }catch(\Exception $e){
-                    if(!empty($data)) {
-                        $data['result']['exception'] = $e;
-                        $this->distribute($data);
-                    }
+                    $data['result']['exception'] = $e;
+                    $this->distribute($data);
                 }
             });
             }else{
