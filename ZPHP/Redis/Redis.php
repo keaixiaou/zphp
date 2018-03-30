@@ -56,7 +56,7 @@ class Redis{
         $commandData = $param;
         array_unshift($commandData, $method);
         $redisCoroutine = new RedisCoroutine($this->_pool);
-        return $redisCoroutine->command(['execute'=>$commandData]);
+        return $redisCoroutine->command($commandData);
     }
 
 

@@ -12,11 +12,19 @@ namespace ZPHP\Coroutine\Http;
 use ZPHP\Coroutine\Base\CoroutineBase;
 
 class HttpClientCoroutine extends CoroutineBase{
+    protected $carrier = "http";
     public function __construct(){
         $this->ioVector = new Client();
     }
 
-
+    public function getParam(){
+        if(!empty($this->data["postdata"])){
+            $param = $this->data["url"] ." ".json_encode($this->data["postdata"]);
+        }else{
+            $param = $this->data["url"];
+        }
+        return $param;
+    }
     /**
      * @param $url
      * @param array $postData

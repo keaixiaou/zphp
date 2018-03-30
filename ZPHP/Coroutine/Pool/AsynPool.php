@@ -111,7 +111,7 @@ abstract class AsynPool implements IAsynPool
             unset($outputExecute['result']['exception']);
             Log::write('Coroutine Exception:'.$data['result']['exception']->getMessage().";Execute:".print_r($outputExecute, true), Log::ERROR, true);
         }
-        call_user_func_array($callback, [$data['result']]);
+        call_user_func_array($callback, [$data['result'], $data["execute"]]);
     }
 
 

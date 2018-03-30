@@ -10,6 +10,7 @@ namespace ZPHP\Coroutine\Base;
 
 abstract class CoroutineBase implements ICoroutineBase{
 
+    protected $carrier = "";
     /**
      * @var IOvector
      */
@@ -23,6 +24,26 @@ abstract class CoroutineBase implements ICoroutineBase{
     public function command($data){
         $this->data = $data;
         return $this;
+    }
+
+    public function getExecute(){
+        return serialize($this->data);
+    }
+
+    public function getParam(){
+        return "";
+    }
+
+    public function getDebugKey(){
+        return md5($this->getExecute());
+    }
+
+    public function getDebugTrace(){
+        $trace = [
+            "carrier" => $this->carrier,
+            "param" => $this->getParam(),
+        ];
+        return $trace;
     }
 
 

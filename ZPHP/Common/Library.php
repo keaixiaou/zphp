@@ -10,14 +10,19 @@ function sysEcho($info){
     \ZPHP\Core\Log::write($info."\n", \ZPHP\Core\Log::ERROR, true);
 }
 
-function getContext($key, $default = null){
+function getContext($key=null, $default = null){
     return new \ZPHP\Coroutine\Base\CoroutineGlobal(function (\ZPHP\Coroutine\Base\CoroutineTask $task) use ($key, $default) {
-        $res = $task->getContext()->getAll($key);
+        if(is_null($key)){
+            $res = $task->getContext()->getAll();
+        }else {
+            $res = $task->getContext()->get($key);
+        }
         $task->send($res);
 
         return \ZPHP\Coroutine\Base\Signa::SCONTINUE;
     });
 }
+
 
 function setContext($key, $value){
     return new \ZPHP\Coroutine\Base\CoroutineGlobal(function (\ZPHP\Coroutine\Base\CoroutineTask $task) use ($key, $value) {

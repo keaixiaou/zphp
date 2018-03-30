@@ -36,7 +36,7 @@ class MysqlAsynPool extends AsynPool implements IOvector{
      */
     public function command(callable $callback=null,  $data = [])
     {
-        $this->checkAndExecute($data, $callback);
+        $this->checkAndExecute(["execute"=>$data], $callback);
     }
 
 
@@ -89,9 +89,10 @@ class MysqlAsynPool extends AsynPool implements IOvector{
      */
     public function execute($data)
     {
+        $execute = $data["execute"];
         $needCreateClient = true;
-        if(!empty($data['trans_id']) && !empty($this->_transList[$data['trans_id']])){
-            $client = $this->_transList[$data['trans_id']];
+        if(!empty($execute['trans_id']) && !empty($this->_transList[$execute['trans_id']])){
+            $client = $this->_transList[$execute['trans_id']];
         }else{
             //代表目前没有可用的连接
             while(!$this->pool->isEmpty()){
@@ -107,19 +108,19 @@ class MysqlAsynPool extends AsynPool implements IOvector{
                 $this->prepareOne($data);
                 return;
             }
-            if(!empty($data['trans_id'])) {
-                $this->_transList[$data['trans_id']] = $client;
+            if(!empty($execute['trans_id'])) {
+                $this->_transList[$execute['trans_id']] = $client;
             }
         }
 
-        $sql = $data['sql'];
-        $queryCallback = function ($client, $result) use ($data) {
+        $sql = $execute['sql'];
+        $queryCallback = function ($client, $result) use ($execute, $data) {
             try {
-                $sql = strtolower($data['sql']);
+                $sql = strtolower($execute['sql']);
                 if ($result === false) {
-                    if(!empty($data['trans_id'])){
+                    if(!empty($execute['trans_id'])){
                         if($sql==='rollback'||$sql==='commit') {
-                            unset($this->_transList[$data['trans_id']]);
+                            unset($this->_transList[$execute['trans_id']]);
                             $this->max_count--;
                         }
                     }else{
@@ -129,7 +130,7 @@ class MysqlAsynPool extends AsynPool implements IOvector{
                 } else {
 
                     if($sql==='begin'){
-                        $data['result']['result'] = $data['trans_id'];
+                        $data['result']['result'] = $execute['trans_id'];
                     }else{
                         $data['result']['result'] = $result;
                     }
@@ -138,11 +139,11 @@ class MysqlAsynPool extends AsynPool implements IOvector{
                     $data['result']['insert_id'] = $client->insert_id;
 //                    unset($data['sql']);
                     //不是绑定的连接就回归连接
-                    if(empty($data['trans_id'])) {
+                    if(empty($execute['trans_id'])) {
                         $this->pushToPool($client);
                     }else{
                         if($sql==='rollback' || $sql==='commit'){
-                            $this->freeTransConnect($data);
+                            $this->freeTransConnect($execute);
                         }
                     }
                     $this->distribute($data);

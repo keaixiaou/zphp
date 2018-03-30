@@ -48,7 +48,6 @@ class Controller extends IController{
     protected $tcontroller;
     protected $tmethod;
 
-
     function __construct()
     {
         $vConfig = Config::getField('project', 'view');
@@ -75,6 +74,7 @@ class Controller extends IController{
      * @return \Generator
      */
     public function coroutineStart(){
+
         yield $this->doBeforeExecute();
         $initRes = true;
         if(method_exists($this, 'init')){
@@ -114,6 +114,9 @@ class Controller extends IController{
 
 
     protected function setResponseContent($content){
+        /**
+         * @var $this->response Response
+         */
         $this->response->setReponseContent($content);
     }
 
@@ -151,13 +154,10 @@ class Controller extends IController{
      */
     protected function jsonReturn($data){
         if($this->checkResponse()) {
-            $result = json_encode($data);
-            if (!empty(Config::get('response_filter'))) {
-                $result = $this->strNull($result);
-            }
-            $this->setStatusCode(200);
+            $this->setApi();
+            $this->setStatusCode(Response::HTTP_OK);
             $this->setHeader('Content-Type',   'application/json');
-            $this->setResponseContent($result);
+            $this->setResponseContent($data);
         }
     }
 

@@ -14,6 +14,7 @@ use ZPHP\Core\Config;
 use ZPHP\Core\Context;
 use ZPHP\Core\Di;
 use ZPHP\Core\Log;
+use ZPHP\Extend\DebugTrace;
 use ZPHP\Network\Http\Response;
 
 class CoroutineTask{

@@ -14,6 +14,9 @@ abstract class Di{
 
     private static $closureList;
 
+    /**
+     * @var $_container Container
+     */
     private static $_container;
 
     public static function init($container){

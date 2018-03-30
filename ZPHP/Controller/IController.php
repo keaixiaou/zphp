@@ -52,15 +52,6 @@ abstract class IController{
 
     }
 
-    /**
-     * 返回null 替换
-     * @access protected
-     * @return String
-     */
-    protected function strNull($str){
-        return str_replace(array('NULL', 'null'), '""', $str);
-    }
-
 
     /**
      * 检测response是否结束

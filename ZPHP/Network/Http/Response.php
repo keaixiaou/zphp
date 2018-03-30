@@ -10,6 +10,7 @@ namespace ZPHP\Network\Http;
 
 use ZPHP\Core\Config;
 use ZPHP\Core\Rand;
+use ZPHP\Extend\DebugTrace;
 use ZPHP\Network\BaseResponse;
 use ZPHP\Session\Session;
 
@@ -75,6 +76,39 @@ class Response extends BaseResponse{
     const HTTP_LOOP_DETECTED = 508;                                               // RFC5842
     const HTTP_NOT_EXTENDED = 510;                                                // RFC2774
     const HTTP_NETWORK_AUTHENTICATION_REQUIRED = 511;
+
+    public static $HTTP_HEADERS_CONTENT = array(
+        100 => "100 Continue",
+        101 => "101 Switching Protocols",
+        200 => "200 OK",
+        201 => "201 Created",
+        204 => "204 No Content",
+        206 => "206 Partial Content",
+        300 => "300 Multiple Choices",
+        301 => "301 Moved Permanently",
+        302 => "302 Found",
+        303 => "303 See Other",
+        304 => "304 Not Modified",
+        307 => "307 Temporary Redirect",
+        400 => "400 Bad Request",
+        401 => "401 Unauthorized",
+        402 => "402 Address error",
+        403 => "403 Forbidden",
+        404 => "404 Not Found",
+        405 => "405 Method Not Allowed",
+        406 => "406 Not Acceptable",
+        408 => "408 Request Timeout",
+        410 => "410 Gone",
+        413 => "413 Request Entity Too Large",
+        414 => "414 Request URI Too Long",
+        415 => "415 Unsupported Media Type",
+        416 => "416 Requested Range Not Satisfiable",
+        417 => "417 Expectation Failed",
+        500 => "500 Internal Server Error",
+        501 => "501 Method Not Implemented",
+        503 => "503 Service Unavailable",
+        506 => "506 Variant Also Negotiates",
+    );
 
     private $header = ['Connection'=>'keep-alive'];
 
@@ -162,11 +196,32 @@ class Response extends BaseResponse{
         }
     }
 
+    /**
+     * 返回null 替换
+     * @access protected
+     * @return String
+     */
+    protected function strNull($str){
+        return str_replace(array('NULL', 'null'), '""', $str);
+    }
+
     public function finish($swResponse){
         $this->swResponse = $swResponse;
         $this->responseHeader();
         yield $this->responseSession();
         $this->swResponse->status($this->code);
+        if($this->checkApi()){
+            $debugValid = yield getContext(DebugTrace::Valid);
+            if($debugValid){
+                $debugTrace = yield getContext(DebugTrace::Name);
+                $this->content[DebugTrace::Name] = $debugTrace->getAll();
+            }
+            $this->content = json_encode($this->content);
+            if (!empty(Config::get('response_filter'))) {
+                $this->content = $this->strNull($this->content);
+            }
+        }
         $this->swResponse->end($this->content);
     }
+
 }

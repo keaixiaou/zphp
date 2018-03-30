@@ -12,7 +12,6 @@ namespace ZPHP\Model;
 
 
 use ZPHP\Core\Db;
-use ZPHP\Core\Log;
 use ZPHP\Coroutine\Mysql\MysqlAsynPool;
 use ZPHP\Coroutine\Mysql\MySqlCoroutine;
 
@@ -402,7 +401,7 @@ class Model {
         if(empty($this->_transId)){
             throw new \Exception("You must setTransId before execute sql[$sql]!");
         }
-        $data = yield $this->command(['trans_id'=>$this->_transId,'sql'=>$sql]);
+        $data = yield $this->query($sql);
         return $data['result']===false?false:$data['result'];
     }
 

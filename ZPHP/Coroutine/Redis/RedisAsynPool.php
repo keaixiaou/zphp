@@ -43,7 +43,7 @@ class RedisAsynPool extends AsynPool implements IOvector
      */
     public function command(callable $callback=null, $data)
     {
-        $this->checkAndExecute($data, $callback);
+        $this->checkAndExecute(["execute"=>$data], $callback);
     }
 
 

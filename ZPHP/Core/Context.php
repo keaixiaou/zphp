@@ -10,6 +10,14 @@ namespace ZPHP\Core;
 
 class Context{
     private $map = [];
+    public function __construct($content=[])
+    {
+        foreach ($content as $key => $value){
+            $this->set($key, $value);
+        }
+    }
+
+
     public function get($key, $default = null)
     {
         $default = isset($this->map[$key])?$this->map[$key]:$default;

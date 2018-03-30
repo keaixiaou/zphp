@@ -8,6 +8,7 @@
 namespace ZPHP\Coroutine\Base;
 
 use ZPHP\Core\Log;
+use ZPHP\Extend\DebugTrace;
 
 class Scheduler{
     /**
@@ -100,6 +101,11 @@ class Scheduler{
         //异步IO的父类
         if(is_object($value) && is_subclass_of($value, ICoroutineBase::class)){
 //            Log::write('AsyIo');
+            /**
+             * @var $debugTrace DebugTrace
+             */
+            $debugTrace = $this->coroutineTask->getContext()->get(DebugTrace::Name);
+            $debugTrace->addParam($value->getDebugKey(), $value->getDebugTrace());
             $this->stack->push($routine);
             $value->sendCallback([$this, "callback"]);
             $sign = Signa::SRETURN;
@@ -163,10 +169,15 @@ class Scheduler{
      * @param  [type]   $res      [description]
      * @return function           [description]
      */
-    public function callback($data)
+    public function callback($data,$execute)
     {
+        /**
+         * @var $debugTrace DebugTrace
+         */
+        $debugTrace = $this->coroutineTask->getContext()->get(DebugTrace::Name);
+        $debugTrace->addResult(md5(serialize($execute)),  $data);
         /*
-            继续work的函数实现 ，栈结构得到保存
+         *  继续work的函数实现 ，栈结构得到保存
          */
         if(!empty($data['exception'])){
             $this->coroutineTask->onExceptionHandle($data['exception']);

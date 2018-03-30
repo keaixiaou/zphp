@@ -11,6 +11,7 @@ use ZPHP\Common\Utils;
 use ZPHP\Core\Config;
 use ZPHP\Core\Rand;
 use ZPHP\Coroutine\Base\CoroutineGlobal;
+use ZPHP\Extend\DebugTrace;
 use ZPHP\Session\Session;
 
 /**
@@ -64,6 +65,16 @@ class Request{
 
         $this->files = !empty($request->files)?$request->files:[];
         $this->server = !empty($request->server)?$request->server:[];
+        foreach($this->server as $key => $value){
+            yield setContext($key, $value);
+        }
+
+        $debugKey = Config::getField("project", "debug_trace", "debug_trace");
+        $debugValid = yield getContext($debugKey);
+        $valid = (!empty($debugValid)&&($debugValid==="t1"||$debugValid=="t2"))?true:false;
+        yield setContext(DebugTrace::Valid, $valid);
+        yield setContext(DebugTrace::Name, new DebugTrace($valid));
+
     }
 
     /**

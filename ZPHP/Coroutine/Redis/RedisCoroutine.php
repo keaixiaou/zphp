@@ -13,12 +13,22 @@ use ZPHP\Coroutine\Base\CoroutineResult;
 
 class RedisCoroutine extends CoroutineBase{
 
+    protected $carrier = "redis";
     /**
      * @var data => ['key'=>'','value'=>'','expire'=>''];
      */
     public function __construct(RedisAsynPool $redisAsynPool)
     {
         $this->ioVector = $redisAsynPool;
+    }
+
+
+    public function getParam(){
+        $param = "";
+        foreach ($this->data as $val){
+            $param .= " ".$val;
+        }
+        return $param;
     }
 
 }

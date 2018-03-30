@@ -19,7 +19,7 @@ class Client implements IOvector{
      * @param $callback
      */
     protected function initHttpClient($callback, $data){
-        $this->data = $data;
+        $this->data = ["execute" => $data];
         $this->data['callback'] = $callback;
     }
 
@@ -36,10 +36,9 @@ class Client implements IOvector{
      */
     public function getHttpClient()
     {
-
         try {
-
-            $parseUrl = parse_url($this->data['url']);
+            $execute = $this->data["execute"];
+            $parseUrl = parse_url($execute['url']);
             if (empty($parseUrl['host'])) {
                 throw new \Exception("输入地址有误");
             }
@@ -61,12 +60,12 @@ class Client implements IOvector{
                     $client = new \swoole_http_client($ip, $data['port'], $data['ssl']);
                     $this->myCurl($client);
                 }catch(\Exception $e){
-                    call_user_func_array($this->data['callback'], ['data'=>['exception'=>$e]]);
+                    call_user_func_array($this->data['callback'], [['exception'=>$e], $this->data["execute"]]);
                 }
 
             });
         }catch(\Exception $e){
-            call_user_func_array($this->data['callback'], ['data'=>['exception'=>$e]]);
+            call_user_func_array($this->data['callback'], [['exception'=>$e], $this->data["execute"]]);
         }
     }
 
@@ -75,18 +74,18 @@ class Client implements IOvector{
      * http 请求的过程
      */
     public function myCurl($swoolehttpclient){
-        if(!empty($this->data['postdata'])) {
+        $execute = $this->data["execute"];
+        $callback = function ($swoolehttpclient) {
+            call_user_func_array($this->data['callback'], [$swoolehttpclient->body, $this->data["execute"]]);
+        };
+        if(!empty($execute['postdata'])) {
             $swoolehttpclient->setHeaders([
                 'Host'=>$this->data['host'],
                 'Content-Type'=>'application/x-www-form-urlencoded']);
-            $swoolehttpclient->post($this->data['path'], $this->data['postdata'],
-                function ($swoolehttpclient) {
-                    call_user_func_array($this->data['callback'], ['data'=>$swoolehttpclient->body]);
-                });
+            $swoolehttpclient->post($this->data['path'], $execute['postdata'],$callback);
+
         }else{
-            $swoolehttpclient->get($this->data['path'], function ($swoolehttpclient) {
-                call_user_func_array($this->data['callback'], ['data'=>$swoolehttpclient->body]);
-            });
+            $swoolehttpclient->get($this->data['path'],$callback);
         }
     }
 

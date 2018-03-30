@@ -18,7 +18,7 @@ use ZPHP\Core\Request;
 use ZPHP\Core\Route;
 use ZPHP\Core\Swoole;
 use ZPHP\Coroutine\Base\CoroutineTask;
-use ZPHP\Protocol\Response;
+use ZPHP\Network\Http\Response;
 use ZPHP\Session\Session;
 use ZPHP\Socket\Callback\SwooleHttp as ZSwooleHttp;
 use ZPHP\Socket\IClient;
@@ -44,7 +44,7 @@ class SwooleHttp extends ZSwooleHttp
     {
         try {
             if(strpos($request->server['path_info'],'.')!==false){
-                throw new \Exception(403);
+                throw new \Exception(Response::HTTP_FORBIDDEN);
             }
             $requestDeal = clone $this->requestDeal;
             $requestDeal->init($request, $response);
@@ -57,19 +57,19 @@ class SwooleHttp extends ZSwooleHttp
                         $httpResult = strval($httpResult);
                     }
                 }
-                $response->status(200);
+                $response->status(Response::HTTP_OK);
                 $response->end($httpResult);
             }
         } catch (\Exception $e) {
             $message = explode('|',$e->getMessage());
             $code = intval($message[0]);
             if($code==0){
-                $response->status(500);
+                $response->status(Response::HTTP_INTERNAL_SERVER_ERROR);
                 $httpResult = Swoole::info($e->getMessage());
             }else {
                 $response->status($code);
                 $otherMessage = !empty($message[1])?' '.$message[1]:'';
-                $httpResult = Swoole::info(Response::$HTTP_HEADERS[$code].$otherMessage);
+                $httpResult = Swoole::info(Response::$HTTP_HEADERS_CONTENT[$code].$otherMessage);
             }
             $response->end($httpResult);
         }

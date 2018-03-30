@@ -13,11 +13,15 @@ use ZPHP\Core\Log;
 use ZPHP\Coroutine\Base\CoroutineBase;
 
 class MySqlCoroutine extends CoroutineBase{
+    protected $carrier = "mysql";
     public $bind_id;
     /*
      * $this->data = $sql;
      */
 
+    public function getParam(){
+        return $this->data["sql"];
+    }
 
     public function __construct(MysqlAsynPool $mysqlAsynPool)
     {
