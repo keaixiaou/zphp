@@ -13,9 +13,11 @@ class DebugTrace{
     const Valid = "DebugValid";
     private $_content = [];
     private $_valid = false;
-    public function __construct($valid=false)
+    private $_level = "t1";
+    public function __construct($valid=false, $level="t1")
     {
         $this->_valid = $valid;
+        $this->_level = $level;
     }
     public function __clone()
     {
@@ -50,6 +52,10 @@ class DebugTrace{
     public function getAll(){
         $content = [];
         foreach ($this->_content as $val){
+            if($this->_level == "t2"){
+                //result内容太大
+                unset($val["result"]);
+            }
             $content[] = $val;
         }
         return $content;

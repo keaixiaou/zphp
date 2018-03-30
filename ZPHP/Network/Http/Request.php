@@ -73,7 +73,7 @@ class Request{
         $debugValid = yield getContext($debugKey);
         $valid = (!empty($debugValid)&&($debugValid==="t1"||$debugValid=="t2"))?true:false;
         yield setContext(DebugTrace::Valid, $valid);
-        yield setContext(DebugTrace::Name, new DebugTrace($valid));
+        yield setContext(DebugTrace::Name, new DebugTrace($valid, $debugValid));
 
     }
 
